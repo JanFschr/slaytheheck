@@ -15,9 +15,9 @@
  * @prop {Record<string, TriggerAction|TriggerAction[]>} [triggers]
  */
 
-/** @param {import('./actions.js').State & {relics?: TriggerSource[], equipment?: TriggerSource[]}} state */
+/** @param {import('./actions.js').State & {relics?: TriggerSource[], equipment?: TriggerSource[], modifiers?: TriggerSource[]}} state */
 export function getTriggerSources(state) {
-	return [...(state.relics || []), ...(state.equipment || [])]
+	return [...(state.relics || []), ...(state.equipment || []), ...(state.modifiers || [])]
 }
 
 /**
