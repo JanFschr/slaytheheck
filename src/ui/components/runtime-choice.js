@@ -51,13 +51,7 @@ function RuntimeChoice({gameState, choice}) {
 			>
 				<header class="RuntimeChoice-header">
 					<h2 id="runtime-choice-title">${choice.prompt}</h2>
-					<p>
-						${min === max
-							? min === 0
-								? 'Optional choice'
-								: `Choose ${min}`
-							: `Choose ${min}–${max}`}
-					</p>
+					<p>${min === max ? (min === 0 ? 'Optional choice' : `Choose ${min}`) : `Choose ${min}–${max}`}</p>
 				</header>
 
 				${
