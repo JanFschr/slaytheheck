@@ -20,7 +20,8 @@ export default class SlayTheWeb extends Component {
 	constructor() {
 		super()
 		const urlParams = new URLSearchParams(window.location.search)
-		const initialGameMode = urlParams.has('debug') ? GameModes.gameplay : GameModes.splash
+		const contentConfig = globalThis.__SLAY_CONTENT_PACK__ || {}
+		const initialGameMode = urlParams.has('debug') || contentConfig.autoStart ? GameModes.gameplay : GameModes.splash
 
 		this.state = {
 			gameMode: initialGameMode,
@@ -39,8 +40,8 @@ export default class SlayTheWeb extends Component {
 			gameMode: GameModes.gameplay,
 			selectedDeck,
 		})
-		// Clear any previous saved game.
-		window.history.pushState('', document.title, window.location.pathname)
+		// Keep content-pack seed/config query parameters intact on dedicated test pages.
+		if (!globalThis.__SLAY_CONTENT_PACK__) window.history.pushState('', document.title, window.location.pathname)
 	}
 
 	handleContinue() {
