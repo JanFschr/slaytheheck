@@ -45,7 +45,7 @@ function clone(value) {
  * @param {object} [intent]
  */
 export function normalizeMonsterIntent(intent = {}) {
-	let actions = Array.isArray(intent.actions) ? clone(intent.actions) : []
+	const actions = Array.isArray(intent.actions) ? clone(intent.actions) : []
 	if (!actions.length) {
 		if (intent.block) actions.push(monsterAction.block(intent.block))
 		if (intent.damage) actions.push(monsterAction.damage(intent.damage))
@@ -90,7 +90,8 @@ export function MonsterIntent(...actions) {
  * @param {{int: (min: number, max: number) => number}} rng
  */
 function randomizeIntentDamage(intent, variance, rng) {
-	const actions = intent.actions.map((action) => {
+	const normalized = normalizeMonsterIntent(intent)
+	const actions = normalized.actions.map((action) => {
 		if (action.type !== 'dealDamage' || action.parameter?.source !== 'self') return action
 		const next = clone(action)
 		const baseDamage = next.parameter.amount
@@ -99,24 +100,18 @@ function randomizeIntentDamage(intent, variance, rng) {
 		next.parameter.amount = rng.int(min, max)
 		return next
 	})
-	return normalizeMonsterIntent({...intent, actions})
+	return normalizeMonsterIntent({...normalized, actions})
 }
 
 /**
- * A monster has health and a list of declarative intents. Legacy intent objects
- * remain accepted, but are normalized immediately to core action descriptors.
+ * A monster has health and a list of intents. Legacy intent objects are stored
+ * unchanged for save/test compatibility and normalized only when executed.
+ * Action-authored content is already canonical at construction time.
  * @param {MONSTER} props
  * @param {{rng?: ReturnType<typeof createRng>}} [options]
  * @returns {MONSTER}
  */
-export function Monster(
-	props = {
-		currentHealth: 42,
-		maxHealth: 42,
-		intents: [],
-	},
-	options = {},
-) {
+export function Monster(props = {}, options = {}) {
 	const fallbackSeed = deriveSeed(
 		'monster-fallback',
 		props.name || 'monster',
@@ -124,17 +119,20 @@ export function Monster(
 		JSON.stringify(props.intents || []),
 	)
 	const rng = options.rng || createRng(fallbackSeed)
-	let intents = (props.intents || []).map((intent) => normalizeMonsterIntent(intent))
+	let intents = clone(props.intents || [])
 
 	if (typeof props.random === 'number') {
 		intents = intents.map((intent) => randomizeIntentDamage(intent, props.random, rng))
 	}
 
+	const currentHealth = props.hp ?? props.currentHealth ?? 42
+	const maxHealth = props.hp ?? props.maxHealth ?? currentHealth
+
 	return {
 		name: props.name,
 		sprite: props.sprite,
-		currentHealth: props.hp ?? props.currentHealth,
-		maxHealth: props.hp ?? props.maxHealth,
+		currentHealth,
+		maxHealth,
 		block: props.block || 0,
 		powers: {...(props.powers || {})},
 		intents,
