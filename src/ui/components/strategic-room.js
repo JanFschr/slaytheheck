@@ -1,3 +1,4 @@
+import {createPortal} from 'preact/compat'
 import {economy} from '../../content/economy.js'
 import {getEventById} from '../../content/events.js'
 import {getShopInventory} from '../../content/shop.js'
@@ -54,6 +55,7 @@ function MerchantRoomView({gameState, onRun, onContinue}) {
 	const offers = getShopInventory(gameState)
 	const purchased = new Set(room.purchasedOffers || [])
 	const usedServices = new Set(room.usedServices || [])
+	const owned = new Set([...(gameState.relics || []).map((item) => item.id), ...(gameState.equipment || []).map((item) => item.id)])
 	const gold = gameState.gold || 0
 	const canUpgrade = gameState.deck.some((card) => !card.upgraded)
 
@@ -98,13 +100,14 @@ function MerchantRoomView({gameState, onRun, onContinue}) {
 			<div class="MerchantGrid">
 				${offers.map((offer) => {
 					const sold = purchased.has(offer.id)
-					const disabled = sold || gold < offer.price
+					const alreadyOwned = offer.kind !== 'card' && owned.has(offer.id)
+					const disabled = sold || alreadyOwned || gold < offer.price
 					return html`
 						<button class="MerchantOffer" disabled=${disabled} onClick=${() => onRun('buyShopOffer', {offerId: offer.id})}>
 							<span class="MerchantOffer-kind">${offer.kind}${offer.slot ? ` · ${offer.slot}` : ''}</span>
 							<strong>${offer.icon || ''} ${offer.name}</strong>
 							<span>${offer.description}</span>
-							<b>${sold ? 'SOLD' : `${offer.price} gold`}</b>
+							<b>${sold ? 'SOLD' : alreadyOwned ? 'OWNED' : `${offer.price} gold`}</b>
 						</button>
 					`
 				})}
@@ -161,4 +164,16 @@ export default function StrategicRoom(props) {
 	if (room.type === 'merchant') return html`<${MerchantRoomView} ...${props} />`
 	if (room.type === 'treasure') return html`<${TreasureRoomView} ...${props} />`
 	return null
+}
+
+export function StrategicRoomPortal({gameState}) {
+	if (!gameState?.dungeon || typeof document === 'undefined') return null
+	const room = getCurrRoom(gameState)
+	if (!['event', 'merchant', 'treasure'].includes(room.type)) return null
+	const run = (type, parameter) => globalThis.window?.stw?.run?.(type, parameter)
+	const continueToMap = () => document.querySelector('#Map > button')?.click()
+	return createPortal(
+		html`<div class="StrategicRoom-backdrop"><${StrategicRoom} gameState=${gameState} onRun=${run} onContinue=${continueToMap} /></div>`,
+		document.body,
+	)
 }
