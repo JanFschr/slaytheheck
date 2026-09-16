@@ -165,7 +165,7 @@ export default function StrategicRoom(props) {
 export function StrategicRoomPortal({gameState}) {
 	if (!gameState?.dungeon || typeof document === 'undefined') return null
 	const room = getCurrRoom(gameState)
-	if (!['event', 'merchant', 'treasure'].includes(room.type)) return null
+	if (!['event', 'merchant', 'treasure'].includes(room.type) || room.dismissed) return null
 
 	const run = (type, parameter) => {
 		const runner = globalThis.window?.stw?.run
@@ -173,8 +173,11 @@ export function StrategicRoomPortal({gameState}) {
 		return runner(type, parameter)
 	}
 	const continueToMap = () => {
-		const map = document.querySelector('#Map')
-		if (!map?.hasAttribute('open')) map?.querySelector(':scope > button')?.click()
+		run('dismissStrategicRoom')
+		requestAnimationFrame(() => {
+			const map = document.querySelector('#Map')
+			if (!map?.hasAttribute('open')) map?.querySelector(':scope > button')?.click()
+		})
 	}
 
 	return createPortal(
