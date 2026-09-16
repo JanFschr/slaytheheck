@@ -48,6 +48,7 @@ function RuntimeChoice({gameState, choice}) {
 				aria-modal="true"
 				aria-labelledby="runtime-choice-title"
 				data-choice-kind=${choice.kind}
+				onKeyDown=${(event) => event.stopPropagation()}
 			>
 				<header class="RuntimeChoice-header">
 					<h2 id="runtime-choice-title">${choice.prompt}</h2>
