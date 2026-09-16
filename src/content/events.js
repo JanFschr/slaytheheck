@@ -9,7 +9,7 @@ export const events = [
 				label: 'Strip the terminal',
 				description: 'Lose 8 HP. Gain 55 gold.',
 				actions: [
-					{type: 'removeHealth', target: 'player', amount: 8},
+					{type: 'losePlayerHealth', amount: 8},
 					{type: 'addGold', amount: 55},
 					{type: 'completeEvent', choice: 'strip'},
 				],
@@ -123,7 +123,7 @@ export const events = [
 				label: 'Drain the core',
 				description: 'Lose 12 HP. Gain 70 gold.',
 				actions: [
-					{type: 'removeHealth', target: 'player', amount: 12},
+					{type: 'losePlayerHealth', amount: 12},
 					{type: 'addGold', amount: 70},
 					{type: 'completeEvent', choice: 'drain'},
 				],
