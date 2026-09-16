@@ -9,7 +9,7 @@ import createNewGame from '../src/game/new-game.js'
 
 function eligibleState(seed) {
 	const game = createNewGame(false, {seed})
-	const state = game.state
+	const state = structuredClone(game.state)
 	state.dungeon.y = 3
 	state.dungeon.x = state.dungeon.graph[3].findIndex((node) => node.type)
 	return state
@@ -76,6 +76,7 @@ test('player damage semantic events can drive equipment triggers', (t) => {
 	let state = actions.createNewState()
 	state.relics = []
 	state.equipment = []
+	state = actions.setDungeon(state)
 	state.drawPile = [createCard('core:strike')]
 
 	manager.enqueue({type: 'equipItem', id: 'equipment:pain-editor'})
