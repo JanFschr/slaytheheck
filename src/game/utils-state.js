@@ -96,11 +96,12 @@ export function isRoomCompleted(room) {
 	if (room.type === 'monster') {
 		const deadMonsters = room.monsters.filter((m) => m.currentHealth < 1)
 		return deadMonsters.length === room.monsters.length
-	} else if (room.type === 'campfire') {
-		return room.choice === 'rest' || Boolean(room.reward)
-	} else if (room.type === 'start') {
-		return true
 	}
+	if (room.type === 'campfire') return room.choice === 'rest' || Boolean(room.reward)
+	if (room.type === 'event') return Boolean(room.choice)
+	if (room.type === 'merchant') return Boolean(room.closed)
+	if (room.type === 'treasure') return Boolean(room.claimed)
+	if (room.type === 'start') return true
 	throw new Error(`Could not check if room has been completed: "${room.type}"`)
 }
 
