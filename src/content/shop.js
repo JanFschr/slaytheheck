@@ -9,12 +9,17 @@ function cardPrice(card) {
 	return 45
 }
 
+function itemPoolForState(items, state) {
+	if (state.contentPack === 'mechanics-mvp') return items.filter((item) => item.tags?.includes('mvp'))
+	return items.filter((item) => !item.tags?.includes('mvp'))
+}
+
 export function getShopInventory(state) {
 	const runSeed = state.seed ?? state.createdAt ?? 'legacy'
 	const roomKey = `${state.dungeon.y}:${state.dungeon.x}`
 	const rng = createRng(deriveSeed(runSeed, 'shop', roomKey))
 
-	const cardOffers = getCardRewards(3, rng.next).map((card, index) => ({
+	const cardOffers = getCardRewards(3, rng.next, {contentPack: state.contentPack}).map((card, index) => ({
 		id: deterministicId('shop-card', runSeed, roomKey, index, card.definitionId),
 		kind: 'card',
 		definitionId: card.definitionId,
@@ -26,8 +31,8 @@ export function getShopInventory(state) {
 
 	// Do not filter by current ownership here. Shop stock must remain identical
 	// before and after a purchase; the UI/action layer marks owned items instead.
-	const availableRelics = rng.shuffle(relics)
-	const availableEquipment = rng.shuffle(equipment)
+	const availableRelics = rng.shuffle(itemPoolForState(relics, state))
+	const availableEquipment = rng.shuffle(itemPoolForState(equipment, state))
 	const offers = [...cardOffers]
 
 	if (availableRelics[0]) {
