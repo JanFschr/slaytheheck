@@ -28,6 +28,14 @@ export const Player = (props) => {
 
 const visibleIntentTypes = ['damage', 'block', 'weak', 'vulnerable', 'poison']
 
+function SpecialIntent({label, tooltip}) {
+	return html`
+		<div class="Target-intent Target-intent--text ${tooltip && 'tooltipped tooltipped-n'}" aria-label=${tooltip}>
+			${label}
+		</div>
+	`
+}
+
 export const Monster = (props) => {
 	const monster = props.model
 	const state = props.gameState
@@ -59,10 +67,25 @@ export const Monster = (props) => {
 	const visibleIntents = intent
 		? visibleIntentTypes.filter((type) => intent[type]).map((type) => [type, intent[type]])
 		: []
+	const specialIntents = (intent?.actions || []).flatMap((action) => {
+		const parameter = action.parameter || {}
+		if (action.type === 'addResource' && parameter.resource) {
+			const name = parameter.resource === 'corruption' ? 'Void' : parameter.resource[0].toUpperCase() + parameter.resource.slice(1)
+			return [
+				{
+					label: `${name} +${parameter.amount || 0}`,
+					tooltip: `Will add ${parameter.amount || 0} ${name} to your combat resources`,
+				},
+			]
+		}
+		if (action.type === 'summon') return [{label: 'Summon', tooltip: 'Will summon another enemy'}]
+		return []
+	})
 
 	return html`
 		<${Target} ...${props} type="enemy" name=${monster.name}>
 			${visibleIntents.map((entry) => MonsterIntent(entry))}
+			${specialIntents.map((entry) => html`<${SpecialIntent} ...${entry} />`)}
 		<//>
 	`
 }
