@@ -27,7 +27,7 @@ function equipItem(state, {id}) {
 }
 
 function claimBuildReward(state, {kind, id}) {
-	let nextState = kind === 'equipment' ? equipItem(state, {id}) : addRelic(state, {id})
+	const nextState = kind === 'equipment' ? equipItem(state, {id}) : addRelic(state, {id})
 	return produce(nextState, (draft) => {
 		const room = getCurrRoom(draft)
 		room.buildRewardClaimed = id
