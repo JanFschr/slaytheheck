@@ -1,18 +1,19 @@
 import {Queue} from '../utils.js'
 import {executeActionLifecycle} from './action-runtime.js'
 import actions from './actions.js'
+import runActions from './run-actions.js'
 
 /** @typedef {import('./actions.js').State} State */
 
 /**
  * @typedef {object} FutureAction
- * @prop {string} type - the name of a function in actions.js
+ * @prop {string} type - the name of a game action
  * @prop {any} [any] - arguments are passed to the action
  */
 
 /**
  * @typedef {object} PastAction
- * @prop {string} type - the name of a function in actions.js
+ * @prop {string} type - the name of a game action
  * @prop {State} state
  */
 
@@ -38,6 +39,7 @@ export default function ActionManager(props) {
 	const future = new Queue()
 	const past = new Queue()
 	const redoStack = new Queue()
+	const registry = {...actions, ...runActions}
 
 	/**
 	 * Enqueued items are added to the "future" list
@@ -63,7 +65,7 @@ export default function ActionManager(props) {
 
 		let nextState
 		try {
-			nextState = executeActionLifecycle(state, action, actions, {origin: 'queue'})
+			nextState = executeActionLifecycle(state, action, registry, {origin: 'queue'})
 		} catch (err) {
 			console.warn('am:Failed running action', action)
 			throw new Error(err)

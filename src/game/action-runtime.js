@@ -20,9 +20,24 @@ function getBlockAmount(state, target) {
 	}
 }
 
+function getEnemyHealth(state) {
+	try {
+		return getRoomTargets(state, 'allEnemies').map((enemy) => enemy.currentHealth)
+	} catch {
+		return []
+	}
+}
+
 function semanticEvents(beforeState, afterState, action) {
 	const parameter = action.parameter || {}
 	const events = []
+
+	if (action.type === 'playCard' && parameter.card) {
+		const card = parameter.card
+		events.push({event: triggerEvent.cardPlayed, data: {card}})
+		if (card.type) events.push({event: triggerEvent.cardPlayedType(card.type), data: {card}})
+		for (const tag of card.tags || []) events.push({event: triggerEvent.cardPlayedTag(tag), data: {card, tag}})
+	}
 
 	if (action.type === 'addPower' && parameter.power) {
 		events.push({event: triggerEvent.powerApplied(parameter.power), data: {power: parameter.power}})
@@ -48,6 +63,27 @@ function semanticEvents(beforeState, afterState, action) {
 				},
 			})
 		}
+
+		if (parameter.target === 'player') {
+			const lostHealth = Math.max(0, beforeState.player.currentHealth - afterState.player.currentHealth)
+			if (lostHealth > 0) {
+				events.push({
+					event: triggerEvent.playerDamaged,
+					data: {amount: lostHealth, source: parameter.source},
+				})
+			}
+		}
+
+		const beforeEnemies = getEnemyHealth(beforeState)
+		const afterEnemies = getEnemyHealth(afterState)
+		beforeEnemies.forEach((health, index) => {
+			if (health > 0 && (afterEnemies[index] ?? health) <= 0) {
+				events.push({
+					event: triggerEvent.enemyKilled,
+					data: {target: `enemy${index}`, source: parameter.source},
+				})
+			}
+		})
 	}
 
 	if (action.type === 'summon') events.push({event: triggerEvent.spawned, data: {source: parameter.source}})

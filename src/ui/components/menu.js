@@ -1,6 +1,7 @@
 import {html, useState} from '../lib.js'
 import {saveToUrl} from '../save-load.js'
 import {toggleMute} from '../sounds.js'
+import BuildHud from './build-hud.js'
 import RuntimeChoicePortal from './runtime-choice.js'
 
 // @ts-expect-error
@@ -27,6 +28,7 @@ export default function Menu({gameState}) {
 
 	return html`
 		<${RuntimeChoicePortal} gameState=${gameState} />
+		<${BuildHud} gameState=${gameState} />
 		<div class="Container">
 			<br />
 			<br />
