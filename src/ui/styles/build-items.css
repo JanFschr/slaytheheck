@@ -35,7 +35,7 @@
 	font-size: 0.78rem;
 }
 
-.BuildHud-chip[data-kind='equipment'] {
+.BuildHud-chip[data-kind="equipment"] {
 	outline: 1px solid color-mix(in oklab, var(--color-info), transparent 55%);
 }
 
