@@ -1,4 +1,5 @@
 import {canPlay} from '../../game/conditions.js'
+import {imageUrl} from '../assets.js'
 import {Component, html} from '../lib.js'
 
 export default class Cards extends Component {
@@ -18,10 +19,10 @@ export default class Cards extends Component {
  */
 export function Card(props) {
 	// export class Card extends Component {
-	// 	render() {
+	// \trender() {
 	const {card, gameState} = props
 	const isDisabled = !canPlay(gameState, card)
-	const image = card.image ? `/images/cards/${card.image}` : '/images/cards/fallback.jpg'
+	const image = imageUrl(`cards/${card.image || 'fallback.jpg'}`)
 
 	return html`
 		<stw-card

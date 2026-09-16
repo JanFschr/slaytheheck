@@ -11,6 +11,7 @@
 @import "./map.css";
 @import "./tooltipped.css";
 @import "./console.css";
+@import "./mobile.css";
 
 /** Styles in this file should probably be moved into dedicated files */
 

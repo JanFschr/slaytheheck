@@ -1,0 +1,486 @@
+/* Mobile-first interaction and layout overrides.
+ * The game keeps one DOM/state tree; media queries only change presentation. */
+
+html,
+body,
+slay-the-web,
+.App {
+	min-height: 100vh;
+	min-height: 100dvh;
+}
+
+body {
+	overflow-x: hidden;
+	overscroll-behavior: none;
+}
+
+button,
+[role="button"] {
+	-webkit-tap-highlight-color: transparent;
+}
+
+.Hand .Card.is-tapSelected {
+	z-index: 20;
+	box-shadow:
+		0 0 0 3px var(--color-focus),
+		0 0 1.25rem var(--color-accent);
+	transform: translateY(-1rem) scale(1.06) !important;
+}
+
+.Target.is-tapTarget {
+	cursor: pointer;
+	outline: 3px solid var(--color-focus);
+	outline-offset: -0.25rem;
+	filter: drop-shadow(0 0 0.7rem var(--color-accent));
+}
+
+.Target.is-tapTarget .Healthbar {
+	box-shadow:
+		0 0 0 2px var(--color-focus),
+		0 0 1rem var(--color-accent);
+}
+
+@media (pointer: coarse) {
+	html {
+		cursor: auto;
+	}
+
+	button,
+	.Button,
+	.Overlay > button,
+	slay-map-node[can-visit],
+	.Target,
+	.Hand .Card {
+		min-width: var(--tap-target);
+		min-height: var(--tap-target);
+	}
+
+	.Hand .Card {
+		cursor: pointer;
+		touch-action: pan-x;
+	}
+
+	.Target.is-tapTarget {
+		touch-action: manipulation;
+	}
+}
+
+/* Shared compact layout for phones, tablets and short landscape viewports. */
+@media (max-width: 900px), (max-height: 600px) {
+	.App {
+		box-sizing: border-box;
+		padding-top: var(--safe-top);
+		padding-right: var(--safe-right);
+		padding-bottom: var(--safe-bottom);
+		padding-left: var(--safe-left);
+	}
+
+	.App-background {
+		height: 100dvh;
+	}
+
+	.Overlay[open] {
+		position: fixed;
+		inset: 0;
+		width: auto;
+		height: auto;
+		padding:
+			var(--safe-top)
+			var(--safe-right)
+			var(--safe-bottom)
+			var(--safe-left);
+	}
+
+	.Overlay > button {
+		min-width: var(--tap-target);
+		min-height: var(--tap-target);
+		padding: 0.55rem 0.65rem;
+		font-size: 0.8rem;
+		line-height: 1;
+		border-radius: 0.5rem;
+		background: var(--color-panel);
+		backdrop-filter: blur(8px);
+	}
+
+	.Overlay[open] > button {
+		background: var(--color-panel-strong);
+	}
+
+	.Overlay[open] .Overlay-content {
+		padding:
+			calc(var(--safe-top) + 2.75rem)
+			calc(var(--safe-right) + 0.5rem)
+			calc(var(--safe-bottom) + 0.5rem)
+			calc(var(--safe-left) + 0.5rem);
+	}
+
+	/* Old fixed offsets collide quickly on narrow screens. */
+	.Overlay[topright2] > button {
+		right: calc(var(--safe-right) + 3.75rem);
+	}
+
+	.Overlay[topleft2] > button {
+		left: calc(var(--safe-left) + 3.75rem);
+	}
+
+	.Cards--grid,
+	.Overlay[open] .Cards {
+		justify-content: center;
+		padding-inline: 0.25rem;
+	}
+
+	.Box,
+	.Box--text {
+		min-width: 0;
+		max-width: min(100%, 60ch);
+	}
+
+	.Form label {
+		grid-template-columns: minmax(5rem, 35%) 1fr;
+	}
+
+	/* The map remains vertically scrollable, while node sizes adapt to width. */
+	slay-map {
+		--nodeSize: clamp(1rem, 4.5vw, 1.5rem);
+		min-height: max(100dvh, calc(var(--rows) * 4.25rem));
+		width: 100%;
+		padding: 0.5rem;
+	}
+
+	slay-map-row {
+		min-height: clamp(3.5rem, 9dvh, 5rem);
+	}
+
+	slay-map-node {
+		width: clamp(2.75rem, 11vw, 4rem);
+		height: clamp(2.75rem, 11vw, 4rem);
+	}
+
+	slay-map-node[node-type="start"],
+	slay-map-node[node-type="boss"] {
+		width: clamp(4rem, 18vw, 6.5rem);
+		height: clamp(4rem, 18vw, 6.5rem);
+	}
+
+	slay-map-node[node-type="boss"] {
+		font-size: clamp(2.25rem, 10vw, 4rem);
+	}
+}
+
+/* Portrait: player info becomes a compact HUD, enemies own the battlefield,
+ * the hand becomes a horizontal scroll strip and actions sit in a safe-area bar. */
+@media (max-width: 700px) and (orientation: portrait) {
+	:root {
+		--card-width: clamp(6.5rem, 29vw, 7.5rem);
+		--card-height: clamp(10.8rem, 47vw, 12.6rem);
+	}
+
+	.Targets {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr);
+		min-height: 0;
+		padding-top: 3.4rem;
+		padding-bottom: calc(var(--card-height) + 5.5rem + var(--safe-bottom));
+		overflow: visible;
+	}
+
+	.Targets-group {
+		min-width: 0;
+	}
+
+	/* Player target -> compact HUD below the menu button. */
+	.Targets-group:first-child {
+		position: absolute;
+		top: calc(var(--safe-top) + 0.35rem);
+		left: calc(var(--safe-left) + 3.4rem);
+		right: calc(var(--safe-right) + 7.5rem);
+		z-index: 4;
+		justify-content: flex-start;
+		pointer-events: none;
+	}
+
+	.Targets-group:first-child .Target {
+		width: 100%;
+		max-width: 15rem;
+		margin: 0;
+		padding: 0.25rem 0.4rem;
+		pointer-events: auto;
+		background: var(--color-panel);
+		border-radius: 0.6rem;
+		backdrop-filter: blur(8px);
+	}
+
+	.Targets-group:first-child .Target-header {
+		display: none;
+	}
+
+	.Targets-group:first-child .Target-powers {
+		min-height: 0;
+		margin: 0.2rem 0 0;
+		font-size: 0.72rem;
+		white-space: nowrap;
+		overflow-x: auto;
+	}
+
+	.Targets-group:first-child .Healthbar {
+		margin-top: 0;
+	}
+
+	/* Enemies scroll horizontally when an encounter has multiple targets. */
+	.Targets-group:last-child {
+		align-items: center;
+		justify-content: flex-start;
+		gap: 0.4rem;
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding: 0.75rem 0.6rem 0;
+		scroll-snap-type: x proximity;
+		scrollbar-width: none;
+	}
+
+	.Targets-group:last-child::-webkit-scrollbar,
+	.Hand .Cards::-webkit-scrollbar {
+		display: none;
+	}
+
+	.Targets-group:last-child .Target {
+		flex: 0 0 min(74vw, 18rem);
+		max-width: min(74vw, 18rem);
+		margin: 0;
+		padding: 1rem 0.55rem 0.7rem;
+		scroll-snap-align: center;
+	}
+
+	.Targets-group:last-child .Target:only-child {
+		margin-inline: auto;
+	}
+
+	.Target-sprite {
+		max-width: 42vw;
+	}
+
+	/* Energy + End Turn are direct siblings immediately after .Targets. */
+	.Targets + .Split {
+		position: fixed;
+		left: var(--safe-left);
+		right: var(--safe-right);
+		bottom: var(--safe-bottom);
+		z-index: 30;
+		min-height: 4rem;
+		align-items: center;
+		padding: 0.35rem 0.55rem;
+		background: linear-gradient(to top, var(--color-panel-strong), var(--color-panel));
+		backdrop-filter: blur(12px);
+		border-top: 1px solid color-mix(in oklab, var(--color-text), transparent 75%);
+	}
+
+	.Targets + .Split .EnergyBadge {
+		margin-left: 0.4rem;
+		font-size: 1.1rem;
+	}
+
+	.Targets + .Split .Actions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		margin: 0;
+	}
+
+	.Targets + .Split .EndTurn {
+		min-height: var(--tap-target);
+		padding-inline: 1rem;
+	}
+
+	.Hand {
+		position: fixed;
+		left: var(--safe-left);
+		right: var(--safe-right);
+		bottom: calc(var(--safe-bottom) + 4rem);
+		z-index: 25;
+		margin: 0;
+		transform: none;
+		background: linear-gradient(to top, var(--color-panel-strong), transparent);
+		pointer-events: none;
+	}
+
+	.Hand .Cards {
+		justify-content: flex-start;
+		min-height: calc(var(--card-height) + 2rem);
+		padding: 1.5rem 1rem 0.45rem;
+		overflow-x: auto;
+		overflow-y: visible;
+		scroll-snap-type: x proximity;
+		scroll-padding-inline: 1rem;
+		pointer-events: auto;
+	}
+
+	.Hand .Card {
+		flex: 0 0 var(--card-width);
+		margin-left: -0.9rem;
+		scroll-snap-align: center;
+	}
+
+	.Hand .Card:first-child {
+		margin-left: 0;
+	}
+
+	.Card-media img {
+		height: clamp(58px, 18vw, 78px);
+	}
+
+	.Card-name {
+		padding-top: 0.32rem;
+		font-size: 0.95rem;
+		line-height: 1.05;
+	}
+
+	.Card-type {
+		font-size: 0.62rem;
+	}
+
+	.Card-description {
+		font-size: clamp(0.62rem, 2.6vw, 0.74rem);
+		line-height: 1.12;
+	}
+
+	/* Move pile toggles above the hand instead of under the browser/home bar. */
+	.Overlay[bottomleft] > button,
+	.Overlay[bottomright] > button {
+		position: fixed;
+		bottom: calc(var(--safe-bottom) + var(--card-height) + 6.35rem);
+		z-index: 31;
+		max-width: 7.75rem;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.Overlay[bottomleft] > button {
+		left: calc(var(--safe-left) + 0.35rem);
+	}
+
+	.Overlay[bottomright] > button {
+		right: calc(var(--safe-right) + 0.35rem);
+	}
+
+	.RewardsBox h2 {
+		margin-bottom: 1.5rem;
+	}
+
+	.RewardsBox .Cards {
+		justify-content: flex-start;
+		overflow-x: auto;
+		padding: 1rem;
+		scroll-snap-type: x mandatory;
+	}
+
+	.RewardsBox .CardBox {
+		flex: 0 0 auto;
+		scroll-snap-align: center;
+	}
+}
+
+/* Landscape on phones: preserve the wide battlefield and reserve a compact
+ * right rail for energy/end-turn. The hand can scroll without covering it. */
+@media (max-height: 600px) and (orientation: landscape) {
+	:root {
+		--card-width: clamp(5.6rem, 12vw, 6.7rem);
+		--card-height: clamp(9.4rem, 21vw, 11.3rem);
+	}
+
+	.Targets {
+		min-height: 0;
+		padding-top: 0.35rem;
+		padding-bottom: calc(var(--card-height) + 0.75rem + var(--safe-bottom));
+	}
+
+	.Target {
+		margin-top: 0;
+		padding: 0.6rem 0.5rem 0.45rem;
+	}
+
+	.Targets + .Split {
+		position: fixed;
+		right: var(--safe-right);
+		bottom: var(--safe-bottom);
+		z-index: 30;
+		width: 7.6rem;
+		min-height: calc(var(--card-height) + 0.25rem);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.7rem;
+		padding: 0.5rem;
+		background: var(--color-panel);
+		backdrop-filter: blur(10px);
+	}
+
+	.Targets + .Split .EnergyBadge,
+	.Targets + .Split .Actions {
+		margin: 0;
+	}
+
+	.Targets + .Split .EndTurn {
+		min-width: 6.5rem;
+		min-height: var(--tap-target);
+	}
+
+	.Hand {
+		position: fixed;
+		left: var(--safe-left);
+		right: calc(var(--safe-right) + 7.6rem);
+		bottom: var(--safe-bottom);
+		z-index: 25;
+		margin: 0;
+		transform: none;
+		background: linear-gradient(to top, var(--color-panel-strong), transparent);
+	}
+
+	.Hand .Cards {
+		justify-content: flex-start;
+		min-height: calc(var(--card-height) + 0.3rem);
+		padding: 0.25rem 1rem;
+		overflow-x: auto;
+		overflow-y: visible;
+		scroll-snap-type: x proximity;
+	}
+
+	.Hand .Card {
+		flex: 0 0 var(--card-width);
+		margin-left: -0.8rem;
+		scroll-snap-align: center;
+	}
+
+	.Hand .Card:first-child {
+		margin-left: 0;
+	}
+
+	.Card-media img {
+		height: 58px;
+	}
+
+	.Card-name {
+		font-size: 0.82rem;
+	}
+
+	.Card-description {
+		font-size: 0.62rem;
+	}
+
+	.Overlay[bottomleft] > button,
+	.Overlay[bottomright] > button {
+		bottom: calc(var(--safe-bottom) + var(--card-height) + 0.6rem);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.Hand .Card,
+	.Target,
+	.Target-sprite,
+	.Overlay-content {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+	}
+}
