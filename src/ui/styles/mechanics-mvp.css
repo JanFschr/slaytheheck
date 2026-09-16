@@ -1,0 +1,120 @@
+.MechanicsMvpHud {
+	position: fixed;
+	top: calc(max(0.5rem, var(--safe-top)) + 3rem);
+	left: 50%;
+	z-index: 6;
+	width: min(46rem, calc(100vw - 2rem));
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.7rem;
+	padding: 0.45rem 0.6rem;
+	transform: translateX(-50%);
+	border: 1px solid color-mix(in oklab, var(--color-info), transparent 58%);
+	border-radius: 0.8rem;
+	background: color-mix(in oklab, var(--color-panel-strong), transparent 4%);
+	backdrop-filter: blur(9px);
+	box-shadow: 0 0.8rem 2.2rem rgb(0 0 0 / 25%);
+}
+
+.MechanicsMvpHud-label {
+	font-size: 0.68rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--color-info);
+}
+
+.MechanicsMvpHud-resources {
+	display: flex;
+	justify-content: center;
+	gap: 0.45rem;
+	min-width: 0;
+}
+
+.MechanicsMvpHud-resource {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.25rem 0.45rem;
+	border-radius: 999px;
+	background: var(--color-panel);
+	font-size: 0.76rem;
+	white-space: nowrap;
+}
+
+.MechanicsMvpHud-resource strong {
+	color: var(--color-accent);
+}
+
+.MechanicsMvpHud-seed {
+	display: flex;
+	align-items: end;
+	gap: 0.35rem;
+}
+
+.MechanicsMvpHud-seed label {
+	display: grid;
+	gap: 0.1rem;
+	font-size: 0.62rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.MechanicsMvpHud-seed input {
+	width: 8.5rem;
+	min-height: 2rem;
+	padding: 0.25rem 0.45rem;
+	font-size: 0.75rem;
+}
+
+.MechanicsMvpHud-seed .Button {
+	min-height: 2rem;
+	padding: 0.3rem 0.55rem;
+	font-size: 0.72rem;
+}
+
+@media (max-width: 700px) {
+	.MechanicsMvpHud {
+		top: max(0.45rem, var(--safe-top));
+		width: calc(100vw - 0.8rem - var(--safe-left) - var(--safe-right));
+		grid-template-columns: 1fr auto;
+		gap: 0.4rem;
+		padding: 0.35rem 0.45rem;
+	}
+
+	.MechanicsMvpHud-label {
+		display: none;
+	}
+
+	.MechanicsMvpHud-resources {
+		justify-content: flex-start;
+		overflow-x: auto;
+	}
+
+	.MechanicsMvpHud-resource {
+		font-size: 0.7rem;
+	}
+
+	.MechanicsMvpHud-seed label > span {
+		display: none;
+	}
+
+	.MechanicsMvpHud-seed input {
+		width: 6.2rem;
+	}
+}
+
+@media (orientation: landscape) and (max-height: 540px) {
+	.MechanicsMvpHud {
+		left: max(0.4rem, var(--safe-left));
+		top: max(0.4rem, var(--safe-top));
+		width: auto;
+		max-width: calc(100vw - 8rem - var(--safe-left) - var(--safe-right));
+		transform: none;
+	}
+
+	.MechanicsMvpHud-seed {
+		display: none;
+	}
+}
