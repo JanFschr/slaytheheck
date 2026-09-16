@@ -1,6 +1,6 @@
 import {bosses, elites, monsters} from '../content/monster-rooms.js'
-import {CampfireRoom, StartRoom} from './rooms.js'
 import {createRng, deriveSeed, deterministicId} from './rng.js'
+import {CampfireRoom, StartRoom} from './rooms.js'
 
 /**
  * A procedural generated dungeon map for Slay the Web. Again, heavily inspired by Slay the Spire.
