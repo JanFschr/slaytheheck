@@ -1,9 +1,31 @@
 import Dungeon from '../game/dungeon.js'
 import {Monster} from '../game/monster.js'
-import {MonsterRoom} from '../game/rooms.js'
+import {createRng, deriveSeed} from '../game/rng.js'
+import {EventRoom, MerchantRoom, MonsterRoom, TreasureRoom} from '../game/rooms.js'
+import {eventIds} from './events.js'
+
+function reachableColumns(dungeon, floor) {
+	const columns = dungeon.paths.map((path) => path[floor - 1]?.[1]?.[1]).filter((column) => Number.isInteger(column))
+	return [...new Set(columns)]
+}
+
+function replaceReachableRoom(dungeon, floor, roomFactory, rng) {
+	const columns = reachableColumns(dungeon, floor)
+	// A strategic room should be a route decision, never a mandatory stop shared
+	// by every generated path on that floor.
+	if (columns.length < 2 || !dungeon.graph[floor]) return false
+	const column = rng.pick(columns)
+	const node = dungeon.graph[floor][column]
+	if (!node?.type) return false
+	// Keep special content behind the existing mystery-node icon. The room type
+	// itself tells the UI whether this particular mystery is an event, merchant or treasure.
+	node.type = 'Q'
+	node.room = roomFactory()
+	return true
+}
 
 export const createDefaultDungeon = (options = {}) => {
-	return Dungeon({
+	const dungeon = Dungeon({
 		width: 6,
 		height: 10,
 		minRooms: 3,
@@ -11,6 +33,14 @@ export const createDefaultDungeon = (options = {}) => {
 		customPaths: '0235',
 		seed: options.seed,
 	})
+	const rng = createRng(deriveSeed(dungeon.seed, 'strategic-rooms'))
+
+	// Put special rooms on reachable but optional paths. Other routes on the same
+	// floors remain ordinary combat/campfire/elite choices.
+	replaceReachableRoom(dungeon, 3, () => EventRoom(rng.pick(eventIds)), rng)
+	replaceReachableRoom(dungeon, 5, () => MerchantRoom(), rng)
+	replaceReachableRoom(dungeon, 7, () => TreasureRoom(), rng)
+	return dungeon
 }
 
 // This is the dungeon used in tests. Don't change it without running tests.

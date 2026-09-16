@@ -1,3 +1,4 @@
+import {economy} from '../content/economy.js'
 import ActionManager from './action-manager.js'
 import actions from './actions.js'
 import {createRunSeed} from './rng.js'
@@ -34,6 +35,7 @@ export default function createNewGame(debug = false, options = {}) {
 		// Store the seed as ordinary serializable state. Subsystems can derive their
 		// own deterministic RNG stream from it without sharing mutable global RNG.
 		state.seed = seed
+		state.gold = economy.startingGold
 		state.relics = []
 		state.equipment = []
 		state = actions.setDungeon(state)

@@ -1,3 +1,4 @@
+import {createPortal} from 'preact/compat'
 import {html} from '../lib.js'
 
 function ItemChip({item, kind}) {
@@ -10,17 +11,23 @@ function ItemChip({item, kind}) {
 	`
 }
 
-export default function BuildHud({gameState}) {
+function BuildHudContent({gameState}) {
 	const relics = gameState.relics || []
 	const equipment = gameState.equipment || []
-	if (!relics.length && !equipment.length) return null
 
 	return html`
-		<aside class="BuildHud" aria-label="Current build">
+		<aside class="BuildHud" aria-label="Current build and gold">
+			<span class="BuildHud-gold" title="Gold">💰 ${gameState.gold || 0}</span>
 			${relics.length ? html`<span class="BuildHud-count">Relics ${relics.length}</span>` : null}
 			${relics.map((item) => html`<${ItemChip} item=${item} kind="relic" />`)}
 			${equipment.length ? html`<span class="BuildHud-count">Gear ${equipment.length}</span>` : null}
 			${equipment.map((item) => html`<${ItemChip} item=${item} kind="equipment" />`)}
 		</aside>
 	`
+}
+
+/** The menu is always mounted; portal the HUD so its visibility is independent of the menu overlay. */
+export default function BuildHud({gameState}) {
+	if (!gameState || typeof document === 'undefined') return null
+	return createPortal(html`<${BuildHudContent} gameState=${gameState} />`, document.body)
 }
