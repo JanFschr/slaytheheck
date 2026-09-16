@@ -3,6 +3,7 @@ import {saveToUrl} from '../save-load.js'
 import {toggleMute} from '../sounds.js'
 import BuildHud from './build-hud.js'
 import RuntimeChoicePortal from './runtime-choice.js'
+import {StrategicRoomPortal} from './strategic-room.js'
 
 // @ts-expect-error
 const abandonGame = () => {
@@ -28,6 +29,7 @@ export default function Menu({gameState}) {
 
 	return html`
 		<${RuntimeChoicePortal} gameState=${gameState} />
+		<${StrategicRoomPortal} gameState=${gameState} />
 		<${BuildHud} gameState=${gameState} />
 		<div class="Container">
 			<br />
