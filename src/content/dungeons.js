@@ -11,13 +11,15 @@ function reachableColumns(dungeon, floor) {
 	return [...new Set(columns)]
 }
 
-function replaceReachableRoom(dungeon, floor, type, roomFactory, rng) {
+function replaceReachableRoom(dungeon, floor, roomFactory, rng) {
 	const columns = reachableColumns(dungeon, floor)
 	if (!columns.length || !dungeon.graph[floor]) return
 	const column = rng.pick(columns)
 	const node = dungeon.graph[floor][column]
 	if (!node?.type) return
-	node.type = type
+	// Keep special content behind the existing mystery-node icon. The room type
+	// itself tells the UI whether this particular mystery is an event, merchant or treasure.
+	node.type = 'Q'
 	node.room = roomFactory()
 }
 
@@ -34,9 +36,9 @@ export const createDefaultDungeon = (options = {}) => {
 
 	// Put special rooms on reachable but optional paths. Other routes on the same
 	// floors remain ordinary combat/campfire/elite choices.
-	replaceReachableRoom(dungeon, 3, 'Q', () => EventRoom(rng.pick(eventIds)), rng)
-	replaceReachableRoom(dungeon, 5, 'S', () => MerchantRoom(), rng)
-	replaceReachableRoom(dungeon, 7, 'T', () => TreasureRoom(), rng)
+	replaceReachableRoom(dungeon, 3, () => EventRoom(rng.pick(eventIds)), rng)
+	replaceReachableRoom(dungeon, 5, () => MerchantRoom(), rng)
+	replaceReachableRoom(dungeon, 7, () => TreasureRoom(), rng)
 	return dungeon
 }
 
