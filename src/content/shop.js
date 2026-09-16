@@ -13,7 +13,6 @@ export function getShopInventory(state) {
 	const runSeed = state.seed ?? state.createdAt ?? 'legacy'
 	const roomKey = `${state.dungeon.y}:${state.dungeon.x}`
 	const rng = createRng(deriveSeed(runSeed, 'shop', roomKey))
-	const owned = new Set([...(state.relics || []).map((item) => item.id), ...(state.equipment || []).map((item) => item.id)])
 
 	const cardOffers = getCardRewards(3, rng.next).map((card, index) => ({
 		id: deterministicId('shop-card', runSeed, roomKey, index, card.definitionId),
@@ -25,8 +24,10 @@ export function getShopInventory(state) {
 		price: cardPrice(card),
 	}))
 
-	const availableRelics = rng.shuffle(relics.filter((item) => !owned.has(item.id)))
-	const availableEquipment = rng.shuffle(equipment.filter((item) => !owned.has(item.id)))
+	// Do not filter by current ownership here. Shop stock must remain identical
+	// before and after a purchase; the UI/action layer marks owned items instead.
+	const availableRelics = rng.shuffle(relics)
+	const availableEquipment = rng.shuffle(equipment)
 	const offers = [...cardOffers]
 
 	if (availableRelics[0]) {
