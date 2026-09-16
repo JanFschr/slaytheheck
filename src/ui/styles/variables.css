@@ -1,14 +1,35 @@
 :root {
 	--card-width: 10em;
 	--card-height: 17em;
-	--yellow: #ffc107;
-	--teal: #116f54;
-	--lightblue: hsl(194.7, 53.3%, 79%);
-	--purple: hsl(245, 20%, 49%);
-	--red: hsl(0, 77%, 29%);
-	--bg: hsl(0, 30%, 8%);
-	--text: hsl(34, 78%, 85%);
-	--text-inverse: hsla(0, 0%, 0%, 0.95);
+
+	/* Semantic theme tokens. Keep the legacy aliases below while the existing
+	 * UI is migrated component-by-component. A reskin can override this block. */
+	--color-accent: #ffc107;
+	--color-primary: #116f54;
+	--color-info: hsl(194.7, 53.3%, 79%);
+	--color-secondary: hsl(245, 20%, 49%);
+	--color-danger: hsl(0, 77%, 29%);
+	--color-background: hsl(0, 30%, 8%);
+	--color-text: hsl(34, 78%, 85%);
+	--color-text-inverse: hsla(0, 0%, 0%, 0.95);
+	--color-panel: hsla(0, 18%, 8%, 0.86);
+	--color-panel-strong: hsla(0, 18%, 5%, 0.95);
+	--color-focus: color-mix(in oklab, var(--color-accent), white 20%);
+
+	--yellow: var(--color-accent);
+	--teal: var(--color-primary);
+	--lightblue: var(--color-info);
+	--purple: var(--color-secondary);
+	--red: var(--color-danger);
+	--bg: var(--color-background);
+	--text: var(--color-text);
+	--text-inverse: var(--color-text-inverse);
 	--text-stroke: var(--text-inverse);
+
+	--safe-top: env(safe-area-inset-top, 0px);
+	--safe-right: env(safe-area-inset-right, 0px);
+	--safe-bottom: env(safe-area-inset-bottom, 0px);
+	--safe-left: env(safe-area-inset-left, 0px);
+	--tap-target: 44px;
 	--easing: cubic-bezier(0.23, 1, 0.32, 1);
 }
