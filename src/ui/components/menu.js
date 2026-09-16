@@ -2,6 +2,7 @@ import {html, useState} from '../lib.js'
 import {saveToUrl} from '../save-load.js'
 import {toggleMute} from '../sounds.js'
 import BuildHud from './build-hud.js'
+import MechanicsMvpHud from './mechanics-mvp-hud.js'
 import RuntimeChoicePortal from './runtime-choice.js'
 import {StrategicRoomPortal} from './strategic-room.js'
 
@@ -31,6 +32,7 @@ export default function Menu({gameState}) {
 		<${RuntimeChoicePortal} gameState=${gameState} />
 		<${StrategicRoomPortal} gameState=${gameState} />
 		<${BuildHud} gameState=${gameState} />
+		<${MechanicsMvpHud} gameState=${gameState} />
 		<div class="Container">
 			<br />
 			<br />
