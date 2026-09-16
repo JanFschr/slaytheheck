@@ -197,6 +197,15 @@ function claimTreasure(state) {
 	})
 }
 
+function dismissStrategicRoom(state) {
+	const room = getCurrRoom(state)
+	if (!['event', 'merchant', 'treasure'].includes(room.type)) throw new Error('Current room is not strategic')
+	if (!isRoomCompleted(room)) throw new Error('Strategic room must be completed before leaving')
+	return produce(state, (draft) => {
+		getCurrRoom(draft).dismissed = true
+	})
+}
+
 export const runActions = {
 	addGold,
 	addRelic,
@@ -208,6 +217,7 @@ export const runActions = {
 	claimTreasure,
 	closeMerchant,
 	completeEvent,
+	dismissStrategicRoom,
 	equipItem,
 	losePlayerHealth,
 	markShopService,
