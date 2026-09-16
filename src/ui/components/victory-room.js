@@ -35,7 +35,7 @@ export default function VictoryRoom(props) {
 	const introText = copyRng.pick(victoryRoomIntroTexts)
 
 	return html`
-		<div class="Container Container--center">
+		<div class="Container Container--center VictoryRoom">
 			<h1 center>Victory!</h1>
 			<h2 center>${introText}</h2>
 
