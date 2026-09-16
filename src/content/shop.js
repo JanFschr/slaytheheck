@@ -48,6 +48,12 @@ export function getShopInventory(state) {
 	return offers
 }
 
+export function isShopOfferOwned(state, offer) {
+	if (offer.kind === 'relic') return (state.relics || []).some((item) => item.id === offer.id)
+	if (offer.kind === 'equipment') return (state.equipment || []).some((item) => item.id === offer.id)
+	return false
+}
+
 export function createShopCard(offer) {
 	if (offer.kind !== 'card') throw new Error('Shop offer is not a card')
 	return createCard(offer.definitionId, false, {instanceId: offer.id})
