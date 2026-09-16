@@ -447,7 +447,7 @@ test('summer of sam card gains 1 life', (t) => {
 	const test3 = a.removeHealth(state2, {target: 'player', amount: 72 / 2 + 5})
 	t.is(test3.player.currentHealth, 31)
 	const test4 = a.playCard(test3, {target: 'player', card})
-	t.is(test4.player.currentHealth, 33, 'gain 2 life, because hp was below 50%')
+	t.is(test4.player.currentHealth, 32, 'gain 1 life; low health only controls the conditional draw')
 })
 
 test('vulnerable is working', (t) => {
