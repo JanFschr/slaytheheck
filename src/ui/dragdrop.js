@@ -34,8 +34,12 @@ function hasCoarsePointer() {
 
 /** @param {Element} container */
 function clearTapSelection(container) {
-	container.querySelectorAll(`.${selectedClass}`).forEach((card) => card.classList.remove(selectedClass))
-	container.querySelectorAll(`.${tapTargetClass}`).forEach((target) => target.classList.remove(tapTargetClass))
+	container.querySelectorAll(`.${selectedClass}`).forEach((card) => {
+		card.classList.remove(selectedClass)
+	})
+	container.querySelectorAll(`.${tapTargetClass}`).forEach((target) => {
+		target.classList.remove(tapTargetClass)
+	})
 }
 
 /**

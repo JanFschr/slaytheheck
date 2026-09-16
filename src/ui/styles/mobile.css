@@ -5,7 +5,6 @@ html,
 body,
 slay-the-web,
 .App {
-	min-height: 100vh;
 	min-height: 100dvh;
 }
 
@@ -84,11 +83,7 @@ button,
 		inset: 0;
 		width: auto;
 		height: auto;
-		padding:
-			var(--safe-top)
-			var(--safe-right)
-			var(--safe-bottom)
-			var(--safe-left);
+		padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
 	}
 
 	.Overlay > button {
@@ -107,10 +102,7 @@ button,
 	}
 
 	.Overlay[open] .Overlay-content {
-		padding:
-			calc(var(--safe-top) + 2.75rem)
-			calc(var(--safe-right) + 0.5rem)
-			calc(var(--safe-bottom) + 0.5rem)
+		padding: calc(var(--safe-top) + 2.75rem) calc(var(--safe-right) + 0.5rem) calc(var(--safe-bottom) + 0.5rem)
 			calc(var(--safe-left) + 0.5rem);
 	}
 
