@@ -1,5 +1,6 @@
 import {cards, cardUpgrades} from '../content/cards.js'
 import {uuid} from '../utils.js'
+import {createRng} from './rng.js'
 
 // This file contains the logic to create cards.
 // While cards are described in plain object form, they are always converted to a class equivalent.
@@ -73,7 +74,7 @@ export const CardTargets = {
 export class Card {
 	/** @param {CARD} props */
 	constructor(props) {
-		this.id = uuid()
+		this.id = props.id || uuid()
 		this.definitionId = props.definitionId
 		this.name = props.name
 		this.type = CardTypes[props.type]
@@ -114,12 +115,13 @@ export function getCardDefinition(identifier) {
  * Both stable definition ids (`core:strike`) and legacy display names (`Strike`) are accepted.
  * @param {string} identifier - stable definition id or exact display name
  * @param {boolean} [shouldUpgrade] - whether to upgrade the card
+ * @param {{instanceId?: string}} [options] - optional deterministic run-local instance id
  * @returns {CARD} a new card
  */
-export function createCard(identifier, shouldUpgrade) {
+export function createCard(identifier, shouldUpgrade, options = {}) {
 	if (identifier.includes('+')) {
 		const baseIdentifier = upgradeNameMap[identifier] || identifier.replace('+', '')
-		return createCard(baseIdentifier, true)
+		return createCard(baseIdentifier, true, options)
 	}
 
 	const definition = getCardDefinition(identifier)
@@ -133,6 +135,7 @@ export function createCard(identifier, shouldUpgrade) {
 		card.upgraded = true
 		if (!card.name.includes('+')) card.name += '+'
 	}
+	if (options.instanceId) card.id = options.instanceId
 	return new Card(card)
 }
 
@@ -158,10 +161,11 @@ cards.forEach((card) => {
  * @param {() => number} [random]
  * @returns {Array<CARD>} results
  */
-export function getRandomCards(list, amount, random = Math.random) {
+export function getRandomCards(list, amount, random) {
+	const randomFn = random || createRng(`fallback:random-cards:${list.length}:${amount}`).next
 	const results = []
 	for (let i = 0; i < amount; i++) {
-		const randomIndex = Math.floor(random() * list.length)
+		const randomIndex = Math.floor(randomFn() * list.length)
 		const definition = list[randomIndex]
 		results.push(createCard(definition.definitionId))
 	}
@@ -174,12 +178,13 @@ export function getRandomCards(list, amount, random = Math.random) {
  * @param {() => number} [random]
  * @returns {Array<CARD>} a list of cards
  */
-export function getCardRewards(amount = 3, random = Math.random) {
+export function getCardRewards(amount = 3, random) {
+	const randomFn = random || createRng(`fallback:card-rewards:${amount}`).next
 	const excluded = new Set(['core:strike', 'core:defend'])
 	const niceCards = cards.filter((card) => !excluded.has(card.definitionId))
 	const rewards = []
 	while (rewards.length < amount) {
-		const card = getRandomCards(niceCards, 1, random)[0]
+		const card = getRandomCards(niceCards, 1, randomFn)[0]
 		const isDuplicate = rewards.some((reward) => reward.definitionId === card.definitionId)
 		if (!isDuplicate) rewards.push(card)
 	}
