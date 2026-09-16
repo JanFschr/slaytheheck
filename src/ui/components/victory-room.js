@@ -1,6 +1,9 @@
+import {getBuildRewards, isBuildRewardEligible} from '../../content/build-rewards.js'
 import {getCardRewards} from '../../game/cards.js'
 import {createRng, hashSeed} from '../../game/rng.js'
+import {getCurrRoom} from '../../game/utils-state.js'
 import {html} from '../lib.js'
+import BuildRewardChooser from './build-reward-chooser.js'
 import CardChooser from './card-chooser.js'
 
 /**
@@ -11,6 +14,7 @@ import CardChooser from './card-chooser.js'
  */
 export default function VictoryRoom(props) {
 	const state = props.gameState
+	const room = getCurrRoom(state)
 	const runSeed = state.seed ?? state.createdAt ?? 'legacy'
 	const roomKey = `${state.dungeon.y}:${state.dungeon.x}`
 	const rewardRng = createRng(`${runSeed}:reward:${roomKey}`)
@@ -19,6 +23,7 @@ export default function VictoryRoom(props) {
 		card.id = `reward-${hashSeed(`${runSeed}:${roomKey}:${index}:${card.definitionId}`).toString(36)}`
 		return card
 	})
+	const buildRewards = isBuildRewardEligible(state) && !room.buildRewardClaimed ? getBuildRewards(state, 3) : []
 	const introText = copyRng.pick(victoryRoomIntroTexts)
 
 	return html`
@@ -37,6 +42,8 @@ export default function VictoryRoom(props) {
 				/>
 			`
 			}
+			${buildRewards.length ? html`<${BuildRewardChooser} rewards=${buildRewards} />` : null}
+			${room.buildRewardClaimed ? html`<p center>Build reward installed.</p>` : null}
 			<ul class="Options">
 				<button class="Button" onClick=${props.onContinue}>Continue to the next room</button>
 			</ul>
