@@ -217,6 +217,12 @@ tbody {
 	margin-top: 1rem;
 	transform: translateY(2rem);
 }
+
+/* Reward choices should be visually isolated from the combat hand. */
+.App:has(.VictoryRoom) .Hand {
+	display: none;
+}
+
 .Hand .Cards {
 	padding-left: 4rem;
 	padding-right: 4rem;
