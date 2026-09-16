@@ -1,5 +1,26 @@
 // A collection of utility functions.
 
+let entropyCounter = 0
+
+/**
+ * Non-gameplay entropy for legacy utility callers such as temporary UI ids.
+ * Gameplay code should use game/rng.js and an explicit run seed instead.
+ */
+function systemRandom() {
+	const cryptoApi = globalThis.crypto
+	if (cryptoApi?.getRandomValues) {
+		const value = new Uint32Array(1)
+		cryptoApi.getRandomValues(value)
+		return value[0] / 4294967296
+	}
+	entropyCounter = (entropyCounter + 0x6d2b79f5) >>> 0
+	let value = ((Date.now() >>> 0) ^ entropyCounter) >>> 0
+	value ^= value << 13
+	value ^= value >>> 17
+	value ^= value << 5
+	return (value >>> 0) / 4294967296
+}
+
 /**
  * Creates a random-looking string for ids.
  * @param {number} [a]
@@ -7,7 +28,7 @@
  */
 export function uuid(a) {
 	return a
-		? (a ^ ((Math.random() * 16) >> (a / 4))).toString(16)
+		? (a ^ ((systemRandom() * 16) >> (a / 4))).toString(16)
 		: // @ts-ignore
 			([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, uuid)
 }
@@ -16,21 +37,17 @@ export function uuid(a) {
  * Returns a new, shuffled version of an array.
  * See https://bost.ocks.org/mike/shuffle/
  * @param {Array} array
+ * @param {() => number} [randomFn]
  * @returns {Array}
  */
-export function shuffle(array) {
-	// Make a copy
+export function shuffle(array, randomFn = systemRandom) {
 	array = array.slice()
 	let m = array.length
 	let t
 	let i
 
-	// While there remain elements to shuffle…
 	while (m) {
-		// Pick a remaining element…
-		i = Math.floor(Math.random() * m--)
-
-		// And swap it with the current element.
+		i = Math.floor(randomFn() * m--)
 		t = array[m]
 		array[m] = array[i]
 		array[i] = t
@@ -54,12 +71,12 @@ export function range(size, startAt = 0) {
 /**
  * @param {number} from
  * @param {number} to
+ * @param {() => number} [randomFn]
  * @returns {number} a random number within the range
  */
-export function random(from, to) {
-	const r = range(1 + to - from, from) // random(2,4) = range(3,2)
-	if (from === to) return from // e.g. 5-5 returns 5 instead of 0
-	return shuffle(r)[0]
+export function random(from, to, randomFn = systemRandom) {
+	if (from === to) return from
+	return from + Math.floor(randomFn() * (to - from + 1))
 }
 
 export function clamp(x, lower, upper) {
@@ -68,10 +85,12 @@ export function clamp(x, lower, upper) {
 
 /**
  * @param {Array|string} list
+ * @param {() => number} [randomFn]
  * @returns {any} random item from the list
  */
-export function pick(list) {
-	return shuffle(Array.from(list))[0]
+export function pick(list, randomFn = systemRandom) {
+	const values = Array.from(list)
+	return values[Math.floor(randomFn() * values.length)]
 }
 
 /**
