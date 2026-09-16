@@ -31,7 +31,9 @@ export function getTriggerSources(state) {
  */
 export function runTriggers(state, event, context, execute) {
 	let nextState = state
+	const activeSources = context?.meta?.triggerStack || []
 	for (const source of getTriggerSources(state)) {
+		if (activeSources.includes(source.id)) continue
 		const configured = source.triggers?.[event]
 		if (!configured) continue
 		const triggerActions = Array.isArray(configured) ? configured : [configured]
@@ -46,4 +48,9 @@ export function runTriggers(state, event, context, execute) {
 export const triggerEvent = {
 	beforeAction: (actionType) => `before:${actionType}`,
 	afterAction: (actionType) => `after:${actionType}`,
+	powerApplied: (power) => `powerApplied:${power}`,
+	enemyAppliedPower: (power) => `enemyApplied:${power}`,
+	damageBlocked: 'damageBlocked',
+	spawned: 'spawned',
+	bossPhaseChanged: 'bossPhaseChanged',
 }
