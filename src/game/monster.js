@@ -12,24 +12,30 @@ import {createRng, deriveSeed} from './rng.js'
  * @prop {Array} [intents]
  * @prop {number} [nextIntent]
  * @prop {object} [powers]
+ * @prop {Array} [phases]
+ * @prop {number} [phase]
  */
 
 /** Declarative action builders shared by monster content. */
 export const monsterAction = {
 	damage: (amount) => ({type: 'dealDamage', parameter: {source: 'self', target: 'player', amount}}),
-	block: (amount) => ({type: 'addBlock', parameter: {target: 'self', amount}}),
+	block: (amount) => ({type: 'addBlock', parameter: {source: 'self', target: 'self', amount}}),
 	power: (power, amount, target = 'player') => ({
 		type: 'addPower',
-		parameter: {target, power, amount, turnEndCompensation: true},
+		parameter: {source: 'self', target, power, amount, turnEndCompensation: target === 'player'},
 	}),
 	weak: (amount) => ({
 		type: 'addPower',
-		parameter: {target: 'player', power: 'weak', amount, turnEndCompensation: true},
+		parameter: {source: 'self', target: 'player', power: 'weak', amount, turnEndCompensation: true},
 	}),
 	vulnerable: (amount) => ({
 		type: 'addPower',
-		parameter: {target: 'player', power: 'vulnerable', amount, turnEndCompensation: true},
+		parameter: {source: 'self', target: 'player', power: 'vulnerable', amount, turnEndCompensation: true},
 	}),
+	heal: (amount, target = 'self') => ({type: 'heal', parameter: {source: 'self', target, amount}}),
+	summon: (monster) => ({type: 'summon', parameter: {source: 'self', monster}}),
+	changeIntent: (index) => ({type: 'changeIntent', parameter: {source: 'self', target: 'self', index}}),
+	changePhase: (phase) => ({type: 'changeBossPhase', parameter: {source: 'self', target: 'self', phase}}),
 }
 
 /** @param {object} value */
@@ -103,10 +109,21 @@ function randomizeIntentDamage(intent, variance, rng) {
 	return normalizeMonsterIntent({...normalized, actions})
 }
 
+function normalizePhases(phases, variance, rng) {
+	return clone(phases || []).map((phase) => {
+		const next = {...phase}
+		if (Array.isArray(next.intents) && typeof variance === 'number') {
+			next.intents = next.intents.map((intent) => randomizeIntentDamage(intent, variance, rng))
+		}
+		return next
+	})
+}
+
 /**
  * A monster has health and a list of intents. Legacy intent objects are stored
  * unchanged for save/test compatibility and normalized only when executed.
- * Action-authored content is already canonical at construction time.
+ * Boss phases are optional; later phases can define `atHealthRatio`, replacement
+ * intents and `onEnter` action descriptors.
  * @param {MONSTER} props
  * @param {{rng?: ReturnType<typeof createRng>}} [options]
  * @returns {MONSTER}
@@ -116,10 +133,13 @@ export function Monster(props = {}, options = {}) {
 		'monster-fallback',
 		props.name || 'monster',
 		props.hp ?? props.currentHealth ?? 42,
-		JSON.stringify(props.intents || []),
+		JSON.stringify(props.intents || props.phases || []),
 	)
 	const rng = options.rng || createRng(fallbackSeed)
-	let intents = clone(props.intents || [])
+	const phases = normalizePhases(props.phases, props.random, rng)
+	const initialPhase = props.phase ?? 0
+	const initialPhaseIntents = phases[initialPhase]?.intents
+	let intents = clone(props.intents || initialPhaseIntents || [])
 
 	if (typeof props.random === 'number') {
 		intents = intents.map((intent) => randomizeIntentDamage(intent, props.random, rng))
@@ -127,6 +147,13 @@ export function Monster(props = {}, options = {}) {
 
 	const currentHealth = props.hp ?? props.currentHealth ?? 42
 	const maxHealth = props.hp ?? props.maxHealth ?? currentHealth
+	const phaseState = phases.length
+		? {
+				phases,
+				phase: initialPhase,
+				phaseId: phases[initialPhase]?.id,
+			}
+		: {}
 
 	return {
 		name: props.name,
@@ -136,6 +163,7 @@ export function Monster(props = {}, options = {}) {
 		block: props.block || 0,
 		powers: {...(props.powers || {})},
 		intents,
-		nextIntent: 0,
+		nextIntent: props.nextIntent ?? 0,
+		...phaseState,
 	}
 }
