@@ -173,17 +173,32 @@ export function getRandomCards(list, amount, random) {
 }
 
 /**
+ * Resolve the reward pool for the active content pack.
+ * @param {{contentPack?: string}} [options]
+ * @returns {Array<CARD>}
+ */
+export function getCardRewardPool(options = {}) {
+	const excluded = new Set(['core:strike', 'core:defend'])
+	if (options.contentPack === 'mechanics-mvp') {
+		return cards.filter((card) => card.tags?.includes('mvp'))
+	}
+	return cards.filter((card) => !excluded.has(card.definitionId) && !card.tags?.includes('mvp'))
+}
+
+/**
  * Returns X random, nicer and unique cards.
  * @param {number} [amount]
  * @param {() => number} [random]
+ * @param {{contentPack?: string}} [options]
  * @returns {Array<CARD>} a list of cards
  */
-export function getCardRewards(amount = 3, random) {
+export function getCardRewards(amount = 3, random, options = {}) {
 	const randomFn = random || createRng(`fallback:card-rewards:${amount}`).next
-	const excluded = new Set(['core:strike', 'core:defend'])
-	const niceCards = cards.filter((card) => !excluded.has(card.definitionId))
+	const niceCards = getCardRewardPool(options)
+	if (!niceCards.length) return []
+	const targetAmount = Math.min(amount, niceCards.length)
 	const rewards = []
-	while (rewards.length < amount) {
+	while (rewards.length < targetAmount) {
 		const card = getRandomCards(niceCards, 1, randomFn)[0]
 		const isDuplicate = rewards.some((reward) => reward.definitionId === card.definitionId)
 		if (!isDuplicate) rewards.push(card)
