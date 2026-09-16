@@ -401,11 +401,15 @@ export function useCardActions(state, {target, card}) {
 	card.actions.forEach((action) => {
 		if (action.conditions && !conditionsAreValid(state, action.conditions)) return
 		const parameter = {...(action.parameter || {}), target}
-		nextState = executeActionDescriptor(nextState, {...action, parameter}, {
-			source: 'player',
-			extra: {card},
-			origin: 'card',
-		})
+		nextState = executeActionDescriptor(
+			nextState,
+			{...action, parameter},
+			{
+				source: 'player',
+				extra: {card},
+				origin: 'card',
+			},
+		)
 	})
 	return nextState
 }
