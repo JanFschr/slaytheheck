@@ -46,6 +46,15 @@
 .Target-intent {
 	display: inline-block;
 }
+.Target-intent--text {
+	padding: 0.18em 0.38em;
+	border: 1px solid color-mix(in oklab, var(--color-info), transparent 45%);
+	border-radius: 0.35em;
+	background: var(--color-panel);
+	font-size: 0.62em;
+	line-height: 1.1;
+	white-space: nowrap;
+}
 .Target-intent img {
 	vertical-align: bottom;
 	height: 1.2em;
