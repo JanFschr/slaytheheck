@@ -1,5 +1,6 @@
 import {Queue} from '../utils.js'
 import actions from './actions.js'
+import {runTriggers, triggerEvent} from './triggers.js'
 
 /** @typedef {import('./actions.js').State} State */
 
@@ -28,6 +29,8 @@ import actions from './actions.js'
 
 /**
  * The action manager makes use of queues to keep track of future and past actions in the game state + undo.
+ * It also exposes a lifecycle seam around queued actions so relics/equipment can react without hard-coding
+ * item-specific conditions into actions.js.
  * @param {object} props
  * @param {boolean} props.debug - whether to log actions to the console
  * @returns {ActionManager} action manager
@@ -36,6 +39,18 @@ export default function ActionManager(props) {
 	const future = new Queue()
 	const past = new Queue()
 	const redoStack = new Queue()
+
+	/**
+	 * Execute a trigger action directly against core actions. Trigger-generated
+	 * actions intentionally do not recurse through the lifecycle system yet.
+	 * @param {State} state
+	 * @param {{type: string, parameter?: object}} triggerAction
+	 */
+	function executeTriggerAction(state, triggerAction) {
+		const action = actions[triggerAction.type]
+		if (!action) throw new Error(`Unknown trigger action: ${triggerAction.type}`)
+		return action(state, triggerAction.parameter || {})
+	}
 
 	/**
 	 * Enqueued items are added to the "future" list
@@ -55,19 +70,22 @@ export default function ActionManager(props) {
 	 * @returns {State} new state
 	 */
 	function dequeue(state) {
-		// Get the oldest action
 		const {action} = future.dequeue() || {}
 		if (props.debug) console.log('am:dequeue', action)
 		if (!action) return state
-		// Run it on the state
+
 		let nextState
 		try {
-			nextState = actions[action.type](state, action)
+			const context = {action}
+			nextState = runTriggers(state, 'beforeAction', context, executeTriggerAction)
+			nextState = runTriggers(nextState, triggerEvent.beforeAction(action.type), context, executeTriggerAction)
+			nextState = actions[action.type](nextState, action)
+			nextState = runTriggers(nextState, triggerEvent.afterAction(action.type), context, executeTriggerAction)
+			nextState = runTriggers(nextState, 'afterAction', context, executeTriggerAction)
 		} catch (err) {
 			console.warn('am:Failed running action', action)
 			throw new Error(err)
 		}
-		// Move the action along with its state to the past
 		past.enqueue({action, state})
 		return nextState
 	}
@@ -79,10 +97,7 @@ export default function ActionManager(props) {
 	function undo() {
 		if (props.debug) console.log('am:undo')
 		const item = this.past.list.pop()
-		// Push to redo stack when undoing
-		if (item) {
-			redoStack.enqueue(item)
-		}
+		if (item) redoStack.enqueue(item)
 		return item
 	}
 
@@ -93,10 +108,7 @@ export default function ActionManager(props) {
 	function redo() {
 		if (props.debug) console.log('am:redo')
 		const item = redoStack.list.pop()
-		// Push back to past when redoing
-		if (item) {
-			past.enqueue(item)
-		}
+		if (item) past.enqueue(item)
 		return item
 	}
 

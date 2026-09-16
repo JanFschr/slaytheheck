@@ -25,25 +25,27 @@ const cardIndex = [
 
 /**
  * A collection of all existing cards in this game.
- * @type {import("../game/cards.js").CARD[]}
+ * Every definition gets a stable, setting-independent id based on its content file.
+ * @type {import('../game/cards.js').CARD[]}
  */
 export const cards = []
 
-/**
- * A map of card names to their upgrade function.
- */
+/** A map of stable definition ids and legacy display names to upgrade functions. */
 export const cardUpgrades = {}
-
-// Use Vite's glob import to import all cards. We don't use this because it'll make the project dependent on vite.
-// const modules = import.meta.glob('./cards/*.js', {eager: true})
-// for (const module of Object.values(modules)) {
-// 	cards.push(module.default)
-// 	cardUpgrades[module.default.name] = module.upgrade
-// }
 
 // Fill out the cards and upgrades maps.
 for (const fileName of cardIndex) {
 	const module = await import(`./cards/${fileName}.js`)
-	cards.push(module.default)
-	cardUpgrades[module.default.name] = module.upgrade
+	const definitionId = module.default.definitionId || `core:${fileName}`
+	const definition = {
+		rarity: 'common',
+		tags: [],
+		keywords: [],
+		...module.default,
+		definitionId,
+	}
+	cards.push(definition)
+	cardUpgrades[definitionId] = module.upgrade
+	// Backward compatibility for old saves, deck definitions and console commands.
+	cardUpgrades[definition.name] = module.upgrade
 }
