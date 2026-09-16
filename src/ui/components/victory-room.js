@@ -1,10 +1,9 @@
 import {getCardRewards} from '../../game/cards.js'
-import {pick} from '../../utils.js'
+import {createRng, hashSeed} from '../../game/rng.js'
 import {html} from '../lib.js'
 import CardChooser from './card-chooser.js'
 
 /**
- *
  * @param {object} props
  * @prop {function} props.onSelectCard
  * @prop {object} props.gameState
@@ -12,16 +11,26 @@ import CardChooser from './card-chooser.js'
  */
 export default function VictoryRoom(props) {
 	const state = props.gameState
+	const runSeed = state.seed ?? state.createdAt ?? 'legacy'
+	const roomKey = `${state.dungeon.y}:${state.dungeon.x}`
+	const rewardRng = createRng(`${runSeed}:reward:${roomKey}`)
+	const copyRng = createRng(`${runSeed}:victory-copy:${roomKey}`)
+	const rewards = getCardRewards(3, rewardRng.next).map((card, index) => {
+		card.id = `reward-${hashSeed(`${runSeed}:${roomKey}:${index}:${card.definitionId}`).toString(36)}`
+		return card
+	})
+	const introText = copyRng.pick(victoryRoomIntroTexts)
+
 	return html`
 		<div class="Container Container--center">
 			<h1 center>Victory!</h1>
-			<h2 center>${pick(victoryRoomIntroTexts)}</h2>
+			<h2 center>${introText}</h2>
 			${
 				!state.didPickCard &&
 				html`
 				<${CardChooser}
 					animate
-					cards=${getCardRewards(3)}
+					cards=${rewards}
 					didSelectCard=${(card) => props.onSelectCard(card)}
 					buttonLabel="Add to deck"
 					showUpgrades=${false}

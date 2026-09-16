@@ -18,8 +18,6 @@ export default class Cards extends Component {
  * @returns {?} what?
  */
 export function Card(props) {
-	// export class Card extends Component {
-	// \trender() {
 	const {card, gameState} = props
 	const isDisabled = !canPlay(gameState, card)
 	const image = imageUrl(`cards/${card.image || 'fallback.jpg'}`)
@@ -29,6 +27,9 @@ export function Card(props) {
 			class="Card"
 			data-card-type=${card.type}
 			data-card-target=${card.target}
+			data-definition-id=${card.definitionId}
+			data-rarity=${card.rarity}
+			data-tags=${card.tags?.join(' ') || ''}
 			key=${card.id}
 			data-id=${card.id}
 			upgraded=${card.upgraded ? '' : null}
@@ -48,4 +49,3 @@ export function Card(props) {
 		</stw-card>
 	`
 }
-// }

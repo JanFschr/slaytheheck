@@ -14,6 +14,16 @@ export const CardTypes = {
 	curse: 'curse',
 }
 
+/** @enum {string} */
+export const CardRarities = {
+	basic: 'basic',
+	special: 'special',
+	common: 'common',
+	uncommon: 'uncommon',
+	rare: 'rare',
+	curse: 'curse',
+}
+
 /** @enum {string} - must be either "player", "enemyx" (where x is the index) or "allEnemies" */
 export const CardTargets = {
 	player: 'player',
@@ -37,31 +47,39 @@ export const CardTargets = {
 
 /**
  * All cards extend this class.
+ * `id` identifies one card instance in a run; `definitionId` identifies the
+ * stable content definition and must not change when display names are reskinned.
  * @typedef CARD
  * @prop {string=} id
+ * @prop {string} definitionId
  * @prop {string} name
  * @prop {string} description
  * @prop {string} image
  * @prop {number} energy
  * @prop {CardTypes} type - specifies the type of card
+ * @prop {CardRarities} rarity
+ * @prop {string[]} tags - build/archetype tags, e.g. "tech" or "poison"
+ * @prop {string[]} keywords - rules keywords rendered/explained by the UI
  * @prop {number} [damage] - damages the target.
  * @prop {number} [block] - applies block to the target.
  * @prop {CardTargets} target - a special "target" string to specify which targets the card affects.
- * color = [RED, GREEN, BLUE, PURPLE, COLORLESS, CURSE]
- * rarity = [BASIC, SPECIAL, COMMON, UNCOMMON, RARE, CURSE]
  * @prop {boolean=} exhaust - whether the card will exhaust when played.
  * @prop {boolean=} upgraded
- * @prop {CardPowers} [powers] - Cards can apply POWERS with the `powers` object. Powers are hardcoded in the game actions, but feel free to add more.
- * @prop {Array<CardAction>} [actions] - Cards can _optionally_ define a list of `actions`. These actions will be run, in defined order, when the card is played.
- * @prop {Array<{type: string}>} [conditions] - In the same way, you can define a list of `conditions` that have to pass for the card to be playable. You can even add conditions directly on your actions.
+ * @prop {CardPowers} [powers] - Cards can apply POWERS with the `powers` object.
+ * @prop {Array<CardAction>} [actions] - Cards can _optionally_ define a list of `actions`.
+ * @prop {Array<{type: string}>} [conditions] - Conditions that have to pass for the card to be playable.
  */
 
 export class Card {
 	/** @param {CARD} props */
 	constructor(props) {
 		this.id = uuid()
+		this.definitionId = props.definitionId
 		this.name = props.name
 		this.type = CardTypes[props.type]
+		this.rarity = CardRarities[props.rarity] || CardRarities.common
+		this.tags = [...(props.tags || [])]
+		this.keywords = [...(props.keywords || [])]
 		this.energy = props.energy
 		this.target = CardTargets[props.target]
 		this.damage = props.damage || 0
@@ -76,63 +94,76 @@ export class Card {
 	}
 }
 
+/** @param {object} card */
+function cloneDefinition(card) {
+	if (typeof structuredClone === 'function') return structuredClone(card)
+	return JSON.parse(JSON.stringify(card))
+}
+
+/**
+ * Resolve a stable definition id or the legacy display name to a card definition.
+ * @param {string} identifier
+ * @returns {CARD|undefined}
+ */
+export function getCardDefinition(identifier) {
+	return cards.find((card) => card.definitionId === identifier || card.name === identifier)
+}
+
 /**
  * Creates a new card. Turns a plain object card into a class-based one.
- * Very important, we clone the object. Otherwise, all cards would share the same object.
- * We do this so we can define the cards without using class syntax.
- * @param {string} name - exact name of the Card
+ * Both stable definition ids (`core:strike`) and legacy display names (`Strike`) are accepted.
+ * @param {string} identifier - stable definition id or exact display name
  * @param {boolean} [shouldUpgrade] - whether to upgrade the card
  * @returns {CARD} a new card
  */
-export function createCard(name, shouldUpgrade) {
-	if (name.includes('+')) {
-		// If it's in the map, use that, otherwise remove the + and set shouldUpgrade
-		const baseName = upgradeNameMap[name] || name.replace('+', '')
-		return createCard(baseName, true)
+export function createCard(identifier, shouldUpgrade) {
+	if (identifier.includes('+')) {
+		const baseIdentifier = upgradeNameMap[identifier] || identifier.replace('+', '')
+		return createCard(baseIdentifier, true)
 	}
 
-	let card = cards.find((card) => card.name === name)
-	if (!card) throw new Error(`Card not found: ${name}`)
+	const definition = getCardDefinition(identifier)
+	if (!definition) throw new Error(`Card not found: ${identifier}`)
 
+	let card = cloneDefinition(definition)
 	if (shouldUpgrade) {
-		const upgradeFn = cardUpgrades[name]
+		const upgradeFn = cardUpgrades[card.definitionId] || cardUpgrades[card.name]
+		if (!upgradeFn) throw new Error(`Card has no upgrade function: ${card.definitionId}`)
 		card = upgradeFn(card)
 		card.upgraded = true
 		if (!card.name.includes('+')) card.name += '+'
-	} else {
-		// Clone it.
-		card = {...card}
 	}
 	return new Card(card)
 }
 
 const upgradeNameMap = {}
 
-// Build the map automatically from cards and their upgrade functions
+// Build the map automatically from cards and their upgrade functions.
 cards.forEach((card) => {
-	const upgradeFn = cardUpgrades[card.name]
+	const upgradeFn = cardUpgrades[card.definitionId] || cardUpgrades[card.name]
 	if (upgradeFn) {
-		const upgradedCard = upgradeFn(card)
+		const upgradedCard = upgradeFn(cloneDefinition(card))
 		if (upgradedCard.name !== `${card.name}+`) {
-			upgradeNameMap[upgradedCard.name] = card.name
+			upgradeNameMap[upgradedCard.name] = card.definitionId
 		}
 	}
 })
 
 /**
- * Returns X random cards from a list of cards.
- * @param {Array} list - collection of POJO cards
+ * Returns X random cards from a list of card definitions.
+ * Injecting a random function makes rewards deterministic without coupling this
+ * module to one global RNG implementation.
+ * @param {Array<CARD>} list - collection of POJO cards
  * @param {number} amount - how many
- * @returns {Array} results
+ * @param {() => number} [random]
+ * @returns {Array<CARD>} results
  */
-export function getRandomCards(list, amount) {
-	const cardNames = list.map((card) => card.name)
+export function getRandomCards(list, amount, random = Math.random) {
 	const results = []
 	for (let i = 0; i < amount; i++) {
-		const randomIndex = Math.floor(Math.random() * cardNames.length)
-		const name = cardNames[randomIndex]
-		const card = createCard(name)
-		results.push(card)
+		const randomIndex = Math.floor(random() * list.length)
+		const definition = list[randomIndex]
+		results.push(createCard(definition.definitionId))
 	}
 	return results
 }
@@ -140,20 +171,17 @@ export function getRandomCards(list, amount) {
 /**
  * Returns X random, nicer and unique cards.
  * @param {number} [amount]
- * @returns {Array.<CARD>} a list of cards
+ * @param {() => number} [random]
+ * @returns {Array<CARD>} a list of cards
  */
-export function getCardRewards(amount = 3) {
-	// Remove boring cards from rewards.
-	const niceCards = cards.filter((card) => card.name !== 'Strike').filter((card) => card.name !== 'Defend')
-	// List of random card rewards.
+export function getCardRewards(amount = 3, random = Math.random) {
+	const excluded = new Set(['core:strike', 'core:defend'])
+	const niceCards = cards.filter((card) => !excluded.has(card.definitionId))
 	const rewards = []
 	while (rewards.length < amount) {
-		const card = getRandomCards(niceCards, 1)[0]
-		// Avoid duplicates
-		const isDuplicate = Boolean(rewards.find((c) => c.name === card.name))
-		if (!isDuplicate) {
-			rewards.push(card)
-		}
+		const card = getRandomCards(niceCards, 1, random)[0]
+		const isDuplicate = rewards.some((reward) => reward.definitionId === card.definitionId)
+		if (!isDuplicate) rewards.push(card)
 	}
 	return rewards
 }

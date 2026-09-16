@@ -1,6 +1,9 @@
 export default {
 	name: 'Adrenaline',
 	type: 'skill',
+	rarity: 'rare',
+	tags: ['tempo', 'draw', 'energy'],
+	keywords: ['exhaust'],
 	energy: 0,
 	damage: 0,
 	target: 'player',
