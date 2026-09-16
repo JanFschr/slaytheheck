@@ -1,3 +1,4 @@
+import mechanicsActions from './mechanics-actions.js'
 import {deterministicId} from './rng.js'
 import {runTriggers, triggerEvent} from './triggers.js'
 import {getRoomTargets} from './utils-state.js'
@@ -296,6 +297,10 @@ function resolveChoice(state, parameter, registry, meta) {
  * both the choice's onResolve actions and all captured continuations through this
  * exact lifecycle again.
  *
+ * Mechanics actions are a small extension registry for concrete content systems.
+ * They can compose ordinary core actions through the injected runtime executor,
+ * so scaled damage/block still travels through the same trigger and power rules.
+ *
  * @param {object} state
  * @param {{type: string, parameter?: object}} action
  * @param {Record<string, Function>} registry
@@ -310,7 +315,7 @@ export function executeActionLifecycle(state, action, registry, meta = {}) {
 	if (state.pendingChoice) return appendPausedAction(state, action, meta)
 	if (action.type === 'requestChoice') return requestChoice(state, parameterFromAction(action), meta)
 
-	const actionFn = registry[action.type]
+	const actionFn = registry[action.type] || mechanicsActions[action.type]
 	if (!actionFn) throw new Error(`Unknown action: ${action.type}`)
 
 	const depth = meta.depth || 0
@@ -318,6 +323,14 @@ export function executeActionLifecycle(state, action, registry, meta = {}) {
 
 	const runtimeAction = {type: action.type, parameter: parameterFromAction(action)}
 	const context = {action: runtimeAction, meta}
+	const executeNestedAction = (nestedState, nestedAction, nestedMeta = {}) =>
+		executeActionLifecycle(nestedState, nestedAction, registry, {
+			depth: depth + 1,
+			origin: nestedMeta.origin || 'mechanics',
+			parent: runtimeAction,
+			triggerStack: [...(meta.triggerStack || [])],
+			...nestedMeta,
+		})
 	const executeTriggerAction = (nextState, triggerAction, triggerMeta) => {
 		const sourceId = triggerMeta.source?.id
 		return executeActionLifecycle(nextState, triggerAction, registry, {
@@ -332,7 +345,7 @@ export function executeActionLifecycle(state, action, registry, meta = {}) {
 	nextState = runTriggers(nextState, triggerEvent.beforeAction(runtimeAction.type), context, executeTriggerAction)
 
 	const beforeCoreAction = nextState
-	nextState = actionFn(nextState, runtimeAction.parameter)
+	nextState = actionFn(nextState, runtimeAction.parameter, {execute: executeNestedAction, action: runtimeAction, meta})
 
 	for (const semantic of semanticEvents(beforeCoreAction, nextState, runtimeAction)) {
 		nextState = runTriggers(nextState, semantic.event, {...context, semantic: semantic.data}, executeTriggerAction)
