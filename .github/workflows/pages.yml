@@ -76,7 +76,7 @@ jobs:
       - name: Trigger production deployment
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --ref main
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
 
   deploy:
     if: github.event_name != 'pull_request'
