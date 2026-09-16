@@ -47,9 +47,17 @@ export default function createNewGame(debug = false, options = {}) {
 		seed,
 		actions,
 		enqueue(action) {
-			if (this.state.pendingChoice && action.type !== 'resolveChoice') {
-				if (debug) console.warn('game: action blocked while choice is pending', action)
-				return false
+			if (this.state.pendingChoice) {
+				if (action.type !== 'resolveChoice') {
+					if (debug) console.warn('game: action blocked while choice is pending', action)
+					return false
+				}
+				// A choice response must run before any already queued top-level actions;
+				// otherwise the next dequeue would only capture that older action as a
+				// continuation and require an unnecessary second confirmation.
+				actionManager.future.list.unshift({action})
+				actionManager.redoStack.list = []
+				return true
 			}
 			actionManager.enqueue(action)
 			return true
