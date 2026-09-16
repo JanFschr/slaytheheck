@@ -1,4 +1,4 @@
-import {range, shuffle} from '../utils.js'
+import {createRng, deriveSeed} from './rng.js'
 
 /**
  * @typedef MONSTER
@@ -14,45 +14,128 @@ import {range, shuffle} from '../utils.js'
  * @prop {object} [powers]
  */
 
+/** Declarative action builders shared by monster content. */
+export const monsterAction = {
+	damage: (amount) => ({type: 'dealDamage', parameter: {source: 'self', target: 'player', amount}}),
+	block: (amount) => ({type: 'addBlock', parameter: {target: 'self', amount}}),
+	power: (power, amount, target = 'player') => ({
+		type: 'addPower',
+		parameter: {target, power, amount, turnEndCompensation: true},
+	}),
+	weak: (amount) => ({
+		type: 'addPower',
+		parameter: {target: 'player', power: 'weak', amount, turnEndCompensation: true},
+	}),
+	vulnerable: (amount) => ({
+		type: 'addPower',
+		parameter: {target: 'player', power: 'vulnerable', amount, turnEndCompensation: true},
+	}),
+}
+
+/** @param {object} value */
+function clone(value) {
+	if (typeof structuredClone === 'function') return structuredClone(value)
+	return JSON.parse(JSON.stringify(value))
+}
+
 /**
- * A monster has health, probably some damage and a list of intents.
-	Use a list of intents to describe what the monster should do each turn.
-	Supported intents: block, damage, vulnerable and weak.
-	Intents are cycled through as the monster plays its turn.
+ * Convert old `{damage, block, weak, vulnerable}` intents and new action-based
+ * intents into one canonical representation. The summary properties are kept so
+ * the current intent UI and old save data remain backwards compatible.
+ * @param {object} [intent]
+ */
+export function normalizeMonsterIntent(intent = {}) {
+	const actions = Array.isArray(intent.actions) ? clone(intent.actions) : []
+	if (!actions.length) {
+		if (intent.block) actions.push(monsterAction.block(intent.block))
+		if (intent.damage) actions.push(monsterAction.damage(intent.damage))
+		if (intent.vulnerable) actions.push(monsterAction.vulnerable(intent.vulnerable))
+		if (intent.weak) actions.push(monsterAction.weak(intent.weak))
+	}
+
+	const summary = {}
+	for (const action of actions) {
+		const parameter = action.parameter || {}
+		if (action.type === 'addBlock' && parameter.target === 'self') {
+			summary.block = (summary.block || 0) + (parameter.amount || 0)
+		}
+		if (action.type === 'dealDamage' && parameter.target === 'player') {
+			summary.damage = (summary.damage || 0) + (parameter.amount || 0)
+		}
+		if (action.type === 'addPower' && parameter.target === 'player') {
+			if (parameter.power === 'weak') summary.weak = (summary.weak || 0) + (parameter.amount || 0)
+			if (parameter.power === 'vulnerable') {
+				summary.vulnerable = (summary.vulnerable || 0) + (parameter.amount || 0)
+			}
+		}
+	}
+
+	return {...intent, ...summary, actions}
+}
+
+/**
+ * Author a monster intent directly in the same action language used by cards,
+ * relics and the action manager.
+ * @param {...object} actions
+ */
+export function MonsterIntent(...actions) {
+	return normalizeMonsterIntent({actions})
+}
+
+/**
+ * Preserve the legacy random-damage range exactly, but draw it from the injected
+ * run RNG rather than global randomness.
+ * @param {object} intent
+ * @param {number} variance
+ * @param {{int: (min: number, max: number) => number}} rng
+ */
+function randomizeIntentDamage(intent, variance, rng) {
+	const normalized = normalizeMonsterIntent(intent)
+	const actions = normalized.actions.map((action) => {
+		if (action.type !== 'dealDamage' || action.parameter?.source !== 'self') return action
+		const next = clone(action)
+		const baseDamage = next.parameter.amount
+		const min = baseDamage - variance
+		const max = min + 4
+		next.parameter.amount = rng.int(min, max)
+		return next
+	})
+	return normalizeMonsterIntent({...normalized, actions})
+}
+
+/**
+ * A monster has health and a list of intents. Legacy intent objects are stored
+ * unchanged for save/test compatibility and normalized only when executed.
+ * Action-authored content is already canonical at construction time.
  * @param {MONSTER} props
+ * @param {{rng?: ReturnType<typeof createRng>}} [options]
  * @returns {MONSTER}
  */
-export function Monster(
-	props = {
-		currentHealth: 42,
-		maxHealth: 42,
-		intents: [],
-	},
-) {
-	// By setting props.random to a number, all damage intents will be randomized with this range.
-	let randomIntents
+export function Monster(props = {}, options = {}) {
+	const fallbackSeed = deriveSeed(
+		'monster-fallback',
+		props.name || 'monster',
+		props.hp ?? props.currentHealth ?? 42,
+		JSON.stringify(props.intents || []),
+	)
+	const rng = options.rng || createRng(fallbackSeed)
+	let intents = clone(props.intents || [])
+
 	if (typeof props.random === 'number') {
-		randomIntents = props.intents.map((intent) => {
-			if (intent.damage) {
-				const newDamage = shuffle(range(5, intent.damage - props.random))[0]
-				intent.damage = newDamage
-			}
-			return intent
-		})
+		intents = intents.map((intent) => randomizeIntentDamage(intent, props.random, rng))
 	}
+
+	const currentHealth = props.hp ?? props.currentHealth ?? 42
+	const maxHealth = props.hp ?? props.maxHealth ?? currentHealth
 
 	return {
 		name: props.name,
 		sprite: props.sprite,
-		currentHealth: props.hp || props.currentHealth,
-		maxHealth: props.hp || props.maxHealth,
+		currentHealth,
+		maxHealth,
 		block: props.block || 0,
-		powers: props.powers || {},
-		// A list of "actions" the monster will take each turn.
-		// Example: [{damage: 6}, {block: 2}, {}, {weak: 2}]
-		// ... meaning turn 1, deal 6 damage, turn 2 gain 2 block, turn 3 do nothing, turn 4 apply 2 weak
-		intents: randomIntents || props.intents,
-		// A counter to keep track of which intent to run next.
+		powers: {...(props.powers || {})},
+		intents,
 		nextIntent: 0,
 	}
 }

@@ -26,6 +26,8 @@ export const Player = (props) => {
 	return html`<${Target} ...${props} type="player" />`
 }
 
+const visibleIntentTypes = ['damage', 'block', 'weak', 'vulnerable', 'poison']
+
 export const Monster = (props) => {
 	const monster = props.model
 	const state = props.gameState
@@ -45,7 +47,6 @@ export const Monster = (props) => {
 		if (type === 'vulnerable') tooltip = `Will apply ${amount} Vulnerable`
 		if (type === 'poison') tooltip = `Will apply ${amount} Poison`
 
-		// Don't reveal how many stacks will be applied.
 		if (type === 'vulnerable' || type === 'weak') amount = undefined
 
 		return html`
@@ -55,21 +56,21 @@ export const Monster = (props) => {
 		`
 	}
 
+	const visibleIntents = intent
+		? visibleIntentTypes.filter((type) => intent[type]).map((type) => [type, intent[type]])
+		: []
+
 	return html`
 		<${Target} ...${props} type="enemy" name=${monster.name}>
-			${intent && Object.entries(intent).map((intent) => MonsterIntent(intent))}
+			${visibleIntents.map((entry) => MonsterIntent(entry))}
 		<//>
 	`
 }
 
 class Target extends Component {
 	componentDidUpdate(prevProps) {
-		// Keep track of how much hp we might have lost.
 		const lostHealth = prevProps.model.currentHealth - this.props.model.currentHealth
 		if (lostHealth > 0) this.setState({lostHealth})
-		// Keep track of how much block we gained.
-		// const gainedBlock = this.props.model.block - prevProps.model.block
-		// if (gainedBlock > 0) this.setState({gainedBlock})
 	}
 
 	render({model, type, name, children}, state) {
@@ -96,7 +97,6 @@ class Target extends Component {
 	}
 }
 
-// A bar that shows the player's current and maximum health as well as any block.
 function Healthbar({value, max, block}) {
 	return html`
 		<div class="Healthbar ${block ? `Healthbar--hasBlock` : ''}">
@@ -111,7 +111,6 @@ function Healthbar({value, max, block}) {
 	`
 }
 
-// Shows currently active powers.
 const Powers = (props) => {
 	return html`
 		<div class="Target-powers">
@@ -131,9 +130,7 @@ const Power = ({power, amount}) => {
 	</span>`
 }
 
-// Floating Combat Text. Give it a number and it'll animate it.
 function FCT(props) {
-	// This avoids animation the value "0".
 	if (!props.value) return html`<p></p>`
 	return html`<p class="FCT" ...${props}>${props.value}</p>`
 }

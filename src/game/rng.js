@@ -1,8 +1,10 @@
 /**
  * Small deterministic pseudo-random number generator for reproducible game content.
- * The generator is intentionally framework-independent and can be derived from a
- * string seed for subsystem-specific streams (for example rewards for one room).
+ * A run owns one stable seed and derives independent streams for maps, encounters,
+ * deck shuffles, rewards and any future procedural subsystem.
  */
+
+let fallbackSeedCounter = 0
 
 /** @param {string|number} seed */
 export function hashSeed(seed) {
@@ -13,6 +15,26 @@ export function hashSeed(seed) {
 		hash = Math.imul(hash, 16777619)
 	}
 	return hash >>> 0
+}
+
+/**
+ * Derive a readable, stable child seed without sharing mutable RNG state between
+ * unrelated systems. Adding reward rolls must therefore never change the map.
+ * @param {string|number} seed
+ * @param {...(string|number)} parts
+ */
+export function deriveSeed(seed, ...parts) {
+	return [String(seed), ...parts.map((part) => String(part))].join(':')
+}
+
+/**
+ * Produce a deterministic id from the same seed material used by the run.
+ * @param {string} prefix
+ * @param {string|number} seed
+ * @param {...(string|number)} parts
+ */
+export function deterministicId(prefix, seed, ...parts) {
+	return `${prefix}-${hashSeed(deriveSeed(seed, ...parts)).toString(36)}`
 }
 
 /**
@@ -64,8 +86,9 @@ export function createRng(seed) {
 }
 
 /**
- * Generates a seed for a new run. Reproducibility starts once the seed is stored
- * in the game state; this function only creates the initial value.
+ * Generates the initial seed for a new run. The run is deterministic after this
+ * value has been stored. Math.random is deliberately not used anywhere in the
+ * RNG layer so gameplay never accidentally falls back to the global PRNG.
  * @returns {string}
  */
 export function createRunSeed() {
@@ -75,5 +98,6 @@ export function createRunSeed() {
 		cryptoApi.getRandomValues(values)
 		return `${values[0].toString(36)}-${values[1].toString(36)}`
 	}
-	return `${Date.now().toString(36)}-${Math.floor(Math.random() * 0xffffffff).toString(36)}`
+	fallbackSeedCounter++
+	return `${Date.now().toString(36)}-${fallbackSeedCounter.toString(36)}`
 }
