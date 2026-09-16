@@ -46,7 +46,14 @@ export default function createNewGame(debug = false, options = {}) {
 		state: createNewState(),
 		seed,
 		actions,
-		enqueue: actionManager.enqueue,
+		enqueue(action) {
+			if (this.state.pendingChoice && action.type !== 'resolveChoice') {
+				if (debug) console.warn('game: action blocked while choice is pending', action)
+				return false
+			}
+			actionManager.enqueue(action)
+			return true
+		},
 		dequeue() {
 			try {
 				const nextState = actionManager.dequeue(this.state)
