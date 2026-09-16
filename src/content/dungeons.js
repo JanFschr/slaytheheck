@@ -13,14 +13,17 @@ function reachableColumns(dungeon, floor) {
 
 function replaceReachableRoom(dungeon, floor, roomFactory, rng) {
 	const columns = reachableColumns(dungeon, floor)
-	if (!columns.length || !dungeon.graph[floor]) return
+	// A strategic room should be a route decision, never a mandatory stop shared
+	// by every generated path on that floor.
+	if (columns.length < 2 || !dungeon.graph[floor]) return false
 	const column = rng.pick(columns)
 	const node = dungeon.graph[floor][column]
-	if (!node?.type) return
+	if (!node?.type) return false
 	// Keep special content behind the existing mystery-node icon. The room type
 	// itself tells the UI whether this particular mystery is an event, merchant or treasure.
 	node.type = 'Q'
 	node.room = roomFactory()
+	return true
 }
 
 export const createDefaultDungeon = (options = {}) => {
