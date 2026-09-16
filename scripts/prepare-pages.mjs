@@ -31,8 +31,11 @@ if (!base) {
 }
 
 const localPrefixPattern = localPrefixes.join('|')
-const rootLocalUrl = new RegExp(`/(?!${base.slice(1)}/)(?=(?:${localPrefixPattern})(?:[/?#]|["'\\x60]|$))`, 'g')
-const unresolvedLocalUrl = new RegExp(`/(?!${base.slice(1)}/)(?:${localPrefixPattern})(?:[/?#]|["'\\x60]|$)`)
+// Only treat a slash as a URL root when it begins a quoted URL or url(...).
+// This avoids matching the `/images` segment inside an already-correct
+// `/slaytheheck/images/...` URL.
+const rootLocalUrl = new RegExp(`([=\"'\\x60(])/(?=(?:${localPrefixPattern})(?:[/?#]|[\"'\\x60]|$))`, 'g')
+const unresolvedLocalUrl = new RegExp(`([=\"'\\x60(])/(?:${localPrefixPattern})(?:[/?#]|[\"'\\x60]|$)`)
 
 async function walk(directory) {
 	const entries = await readdir(directory, {withFileTypes: true})
@@ -52,7 +55,7 @@ let changedFiles = 0
 
 for (const file of files) {
 	const original = await readFile(file, 'utf8')
-	let content = original.replace(rootLocalUrl, `${base}/`)
+	let content = original.replace(rootLocalUrl, `$1${base}/`)
 
 	// The home route is the only root-only URL we rewrite. Restrict it to HTML
 	// attributes so JavaScript path comparisons such as `pathname === '/'` stay intact.
