@@ -53,9 +53,9 @@ function semanticEvents(beforeState, afterState, action) {
 	if (action.type === 'summon') events.push({event: triggerEvent.spawned, data: {source: parameter.source}})
 	if (action.type === 'changeBossPhase') {
 		events.push({
-				event: triggerEvent.bossPhaseChanged,
-				data: {source: parameter.source, target: parameter.target, phase: parameter.phase},
-			})
+			event: triggerEvent.bossPhaseChanged,
+			data: {source: parameter.source, target: parameter.target, phase: parameter.phase},
+		})
 	}
 
 	return events
