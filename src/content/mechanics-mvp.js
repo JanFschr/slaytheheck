@@ -128,9 +128,7 @@ function CoreArchitect(rng) {
 						id: 'collapse',
 						atHealthRatio: 0.3,
 						intents: [I(A.damage(16)), I(A.damage(10), A.vulnerable(1)), I(A.damage(20))],
-						onEnter: [
-							{type: 'addPower', parameter: {source: 'self', target: 'self', power: 'strength', amount: 2}},
-						],
+						onEnter: [{type: 'addPower', parameter: {source: 'self', target: 'self', power: 'strength', amount: 2}}],
 					},
 				],
 			},
