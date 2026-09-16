@@ -1,4 +1,4 @@
-import {Monster, MonsterIntent, monsterAction as A} from '../game/monster.js'
+import {monsterAction as A, Monster, MonsterIntent} from '../game/monster.js'
 import {createRng} from '../game/rng.js'
 import {MonsterRoom} from '../game/rooms.js'
 
@@ -219,18 +219,9 @@ elites['Two-Headed Ettin'] = (inputRng) => {
 elites['Dark Covenant'] = (inputRng) => {
 	const rng = fallbackRng(inputRng, 'dark-covenant')
 	return MonsterRoom(
-		Monster(
-			{name: 'Ghost Cultist', sprite: [5, 3], hp: rng.int(39, 46), intents: [weak(1), hit(10)]},
-			{rng},
-		),
-		Monster(
-			{name: 'Hag', sprite: [5, 4], hp: rng.int(39, 46), intents: [hit(10), weak(1), hit(4)]},
-			{rng},
-		),
-		Monster(
-			{name: 'Wraith', sprite: [5, 2], hp: rng.int(39, 46), intents: [hit(2), hit(10), hit(8)]},
-			{rng},
-		),
+		Monster({name: 'Ghost Cultist', sprite: [5, 3], hp: rng.int(39, 46), intents: [weak(1), hit(10)]}, {rng}),
+		Monster({name: 'Hag', sprite: [5, 4], hp: rng.int(39, 46), intents: [hit(10), weak(1), hit(4)]}, {rng}),
+		Monster({name: 'Wraith', sprite: [5, 2], hp: rng.int(39, 46), intents: [hit(2), hit(10), hit(8)]}, {rng}),
 	)
 }
 
