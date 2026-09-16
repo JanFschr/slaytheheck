@@ -1,6 +1,6 @@
 import {Queue} from '../utils.js'
+import {executeActionLifecycle} from './action-runtime.js'
 import actions from './actions.js'
-import {runTriggers, triggerEvent} from './triggers.js'
 
 /** @typedef {import('./actions.js').State} State */
 
@@ -29,8 +29,7 @@ import {runTriggers, triggerEvent} from './triggers.js'
 
 /**
  * The action manager makes use of queues to keep track of future and past actions in the game state + undo.
- * It also exposes a lifecycle seam around queued actions so relics/equipment can react without hard-coding
- * item-specific conditions into actions.js.
+ * Every queued action goes through the same recursive lifecycle runtime as card and enemy descriptors.
  * @param {object} props
  * @param {boolean} props.debug - whether to log actions to the console
  * @returns {ActionManager} action manager
@@ -39,18 +38,6 @@ export default function ActionManager(props) {
 	const future = new Queue()
 	const past = new Queue()
 	const redoStack = new Queue()
-
-	/**
-	 * Execute a trigger action directly against core actions. Trigger-generated
-	 * actions intentionally do not recurse through the lifecycle system yet.
-	 * @param {State} state
-	 * @param {{type: string, parameter?: object}} triggerAction
-	 */
-	function executeTriggerAction(state, triggerAction) {
-		const action = actions[triggerAction.type]
-		if (!action) throw new Error(`Unknown trigger action: ${triggerAction.type}`)
-		return action(state, triggerAction.parameter || {})
-	}
 
 	/**
 	 * Enqueued items are added to the "future" list
@@ -76,12 +63,7 @@ export default function ActionManager(props) {
 
 		let nextState
 		try {
-			const context = {action}
-			nextState = runTriggers(state, 'beforeAction', context, executeTriggerAction)
-			nextState = runTriggers(nextState, triggerEvent.beforeAction(action.type), context, executeTriggerAction)
-			nextState = actions[action.type](nextState, action)
-			nextState = runTriggers(nextState, triggerEvent.afterAction(action.type), context, executeTriggerAction)
-			nextState = runTriggers(nextState, 'afterAction', context, executeTriggerAction)
+			nextState = executeActionLifecycle(state, action, actions, {origin: 'queue'})
 		} catch (err) {
 			console.warn('am:Failed running action', action)
 			throw new Error(err)

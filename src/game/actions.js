@@ -1,9 +1,10 @@
 import {produce} from 'immer'
 import {createDefaultDungeon} from '../content/dungeons.js'
 import {clamp} from '../utils.js'
+import {executeActionLifecycle} from './action-runtime.js'
 import {CardTargets, createCard} from './cards.js'
 import {conditionsAreValid} from './conditions.js'
-import {normalizeMonsterIntent} from './monster.js'
+import {Monster, normalizeMonsterIntent} from './monster.js'
 import powers from './powers.js'
 import {createRng, deriveSeed, deterministicId} from './rng.js'
 import {getCurrRoom, getRoomTargets, isDungeonCompleted} from './utils-state.js'
@@ -38,6 +39,8 @@ import {getCurrRoom, getRoomTargets, isDungeonCompleted} from './utils-state.js'
  * @prop {Array} exhaustPile
  * @prop {Player} player
  * @prop {Dungeon} [dungeon]
+ * @prop {Array} [relics]
+ * @prop {Array} [equipment]
  * @prop {boolean} didCheat
  */
 
@@ -88,18 +91,31 @@ function createRunCards(state, identifiers) {
 	return {cards, nextCounter: firstIndex + identifiers.length}
 }
 
+function createRunCard(state, identifier, upgraded = false) {
+	const index = getRngCounter(state, 'cardInstances')
+	const seed = getStateSeed(state)
+	return {
+		card: createCard(identifier, upgraded, {
+			instanceId: deterministicId('card', seed, 'instance', index, identifier),
+		}),
+		nextCounter: index + 1,
+	}
+}
+
 function resolveSelf(value, selfTarget) {
 	return value === 'self' ? selfTarget : value
 }
 
-/** Execute one declarative action descriptor from a card or monster intent. */
+/** Execute one declarative action descriptor through the shared lifecycle runtime. */
 function executeActionDescriptor(state, action, context = {}) {
-	const actionFn = allActions[action.type]
-	if (!actionFn) throw new Error(`Unknown action descriptor: ${action.type}`)
-	const parameter = {...(action.parameter || {})}
+	const parameter = {...(action.parameter || {}), ...(context.extra || {})}
 	if (parameter.target) parameter.target = resolveSelf(parameter.target, context.self)
 	if (parameter.source) parameter.source = resolveSelf(parameter.source, context.self)
-	return actionFn(state, {...parameter, ...(context.extra || {})})
+	if (!parameter.source && context.source) parameter.source = context.source
+	if (!parameter.source && context.self) parameter.source = context.self
+	return executeActionLifecycle(state, {...action, parameter}, allActions, {
+		origin: context.origin || 'descriptor',
+	})
 }
 
 /**
@@ -188,10 +204,82 @@ function drawCards(state, options) {
 	})
 }
 
+/** Declarative alias for drawCards. */
+function draw(state, {amount = 1} = {}) {
+	return drawCards(state, {amount})
+}
+
 /** @type {ActionFn<{card: CARD}>} */
 function addCardToHand(state, {card}) {
 	return produce(state, (draft) => {
 		draft.hand.push(card)
+	})
+}
+
+function cardPileKey(pile = 'discard') {
+	const aliases = {
+		deck: 'deck',
+		draw: 'drawPile',
+		drawPile: 'drawPile',
+		hand: 'hand',
+		discard: 'discardPile',
+		discardPile: 'discardPile',
+		exhaust: 'exhaustPile',
+		exhaustPile: 'exhaustPile',
+	}
+	const key = aliases[pile]
+	if (!key) throw new Error(`Unknown card pile: ${pile}`)
+	return key
+}
+
+/**
+ * Add a deterministic card instance to any combat/deck pile.
+ * @type {ActionFn<{card?: CARD, definitionId?: string, name?: string, pile?: string, upgraded?: boolean}>}
+ */
+function addCard(state, {card, definitionId, name, pile = 'discard', upgraded = false} = {}) {
+	const pileKey = cardPileKey(pile)
+	let nextCard = card
+	let nextCounter = null
+	if (!nextCard?.id) {
+		const identifier = definitionId || nextCard?.definitionId || name || nextCard?.name
+		if (!identifier) throw new Error('addCard requires a card, definitionId or name')
+		const created = createRunCard(state, identifier, upgraded)
+		nextCard = created.card
+		nextCounter = created.nextCounter
+	}
+
+	return produce(state, (draft) => {
+		draft[pileKey].push(nextCard)
+		if (nextCounter !== null) setRngCounter(draft, 'cardInstances', nextCounter)
+	})
+}
+
+/**
+ * Exhaust one known card from combat piles or the first N cards from a chosen pile.
+ * @type {ActionFn<{card?: CARD, cardId?: string, amount?: number, from?: string}>}
+ */
+function exhaust(state, {card, cardId, amount = 1, from} = {}) {
+	const id = cardId || card?.id
+	const explicitPile = from ? cardPileKey(from) : null
+	const searchPiles = explicitPile ? [explicitPile] : ['hand', 'drawPile', 'discardPile']
+
+	return produce(state, (draft) => {
+		if (id) {
+			for (const pileKey of searchPiles) {
+				const index = draft[pileKey].findIndex((candidate) => candidate.id === id)
+				if (index === -1) continue
+				const [exhausted] = draft[pileKey].splice(index, 1)
+				draft.exhaustPile.push(exhausted)
+				return
+			}
+			return
+		}
+
+		const pileKey = explicitPile || 'hand'
+		for (let i = 0; i < amount && draft[pileKey].length; i++) {
+			const exhausted = draft[pileKey].shift()
+			draft.exhaustPile.push(exhausted)
+		}
 	})
 }
 
@@ -284,11 +372,21 @@ function playCard(state, {card, target}) {
 	let newState = discardCard(state, {card})
 	newState = produce(newState, (draft) => {
 		draft.player.currentEnergy = newState.player.currentEnergy - card.energy
-		if (card.block) draft.player.block = newState.player.block + card.block
 	})
+	if (card.block) {
+		newState = executeActionDescriptor(
+			newState,
+			{type: 'addBlock', parameter: {source: 'player', target: 'player', amount: card.block}},
+			{source: 'player', extra: {card}, origin: 'card'},
+		)
+	}
 	if (card.type === 'attack' || card.damage) {
 		const newTarget = card.target === CardTargets.allEnemies ? card.target : target
-		newState = dealDamage(newState, {source: 'player', target: newTarget, amount: card.damage})
+		newState = executeActionDescriptor(
+			newState,
+			{type: 'dealDamage', parameter: {source: 'player', target: newTarget, amount: card.damage}},
+			{source: 'player', extra: {card}, origin: 'card'},
+		)
 	}
 	if (card.powers) newState = applyCardPowers(newState, {target, card})
 	newState = useCardActions(newState, {target, card})
@@ -303,7 +401,15 @@ export function useCardActions(state, {target, card}) {
 	card.actions.forEach((action) => {
 		if (action.conditions && !conditionsAreValid(state, action.conditions)) return
 		const parameter = {...(action.parameter || {}), target}
-		nextState = executeActionDescriptor(nextState, {...action, parameter}, {extra: {card}})
+		nextState = executeActionDescriptor(
+			nextState,
+			{...action, parameter},
+			{
+				source: 'player',
+				extra: {card},
+				origin: 'card',
+			},
+		)
 	})
 	return nextState
 }
@@ -316,6 +422,11 @@ function addHealth(state, {target, amount}) {
 			t.currentHealth = clamp(t.currentHealth + amount, 0, t.maxHealth)
 		})
 	})
+}
+
+/** Declarative healing action. */
+function heal(state, {target = 'player', amount = 0} = {}) {
+	return addHealth(state, {target, amount})
 }
 
 /** @type {ActionFn<{card: CARD}>} */
@@ -346,9 +457,100 @@ function addEnergyToPlayer(state, props) {
 	})
 }
 
+/** Declarative energy action. */
+function gainEnergy(state, {amount = 1} = {}) {
+	return addEnergyToPlayer(state, {amount})
+}
+
+function enemyIndicesForTarget(state, target) {
+	const room = getCurrRoom(state)
+	if (target === CardTargets.allEnemies) return room.monsters.map((_monster, index) => index)
+	if (typeof target === 'string' && target.startsWith(CardTargets.enemy)) {
+		const index = Number(target.slice(CardTargets.enemy.length))
+		return Number.isInteger(index) && room.monsters[index] ? [index] : []
+	}
+	return []
+}
+
+function phaseIndexFor(monster, phase) {
+	if (!monster.phases?.length) return -1
+	if (typeof phase === 'number') return phase
+	return monster.phases.findIndex((candidate) => candidate.id === phase)
+}
+
+/**
+ * Switch a phased monster to a new phase, optionally replacing intents and
+ * executing phase entry actions through the same lifecycle runtime.
+ */
+function changeBossPhase(state, {target, phase}) {
+	const transitions = enemyIndicesForTarget(state, target)
+		.map((index) => {
+			const monster = getCurrRoom(state).monsters[index]
+			const nextPhaseIndex = phaseIndexFor(monster, phase)
+			const definition = monster.phases?.[nextPhaseIndex]
+			return definition ? {index, nextPhaseIndex, definition} : null
+		})
+		.filter(Boolean)
+	if (!transitions.length) return state
+
+	let nextState = produce(state, (draft) => {
+		for (const transition of transitions) {
+			const monster = getCurrRoom(draft).monsters[transition.index]
+			monster.phase = transition.nextPhaseIndex
+			monster.phaseId = transition.definition.id
+			if (Array.isArray(transition.definition.intents)) {
+				monster.intents = transition.definition.intents.map((intent) => normalizeMonsterIntent(intent))
+				monster.nextIntent = transition.definition.nextIntent ?? 0
+			}
+		}
+	})
+
+	for (const transition of transitions) {
+		for (const action of transition.definition.onEnter || []) {
+			if (action.conditions && !conditionsAreValid(nextState, action.conditions)) continue
+			nextState = executeActionDescriptor(nextState, action, {
+				self: `enemy${transition.index}`,
+				source: `enemy${transition.index}`,
+				origin: 'bossPhase',
+			})
+		}
+	}
+	return nextState
+}
+
+function phaseThresholdMet(monster, phase) {
+	if (monster.currentHealth <= 0) return false
+	if (typeof phase.atHealth === 'number') return monster.currentHealth <= phase.atHealth
+	if (typeof phase.atHealthRatio === 'number') {
+		return monster.currentHealth / monster.maxHealth <= phase.atHealthRatio
+	}
+	return false
+}
+
+function advanceBossPhases(state, target) {
+	let nextState = state
+	for (const index of enemyIndicesForTarget(state, target)) {
+		while (true) {
+			const monster = getCurrRoom(nextState).monsters[index]
+			const currentPhase = monster.phase ?? 0
+			const nextPhase = monster.phases?.[currentPhase + 1]
+			if (!nextPhase || !phaseThresholdMet(monster, nextPhase)) break
+			nextState = executeActionDescriptor(
+				nextState,
+				{
+					type: 'changeBossPhase',
+					parameter: {source: `enemy${index}`, target: `enemy${index}`, phase: currentPhase + 1},
+				},
+				{self: `enemy${index}`, source: `enemy${index}`, origin: 'bossPhase'},
+			)
+		}
+	}
+	return nextState
+}
+
 /** @type {ActionFn<{target: string, amount: number}>} */
 const removeHealth = (state, {target, amount = 0}) => {
-	return produce(state, (draft) => {
+	const damagedState = produce(state, (draft) => {
 		getRoomTargets(draft, target).forEach((t) => {
 			if (t.powers.vulnerable) amount = powers.vulnerable.use(amount)
 			const amountAfterBlock = t.block - amount
@@ -361,6 +563,7 @@ const removeHealth = (state, {target, amount = 0}) => {
 			if (target === 'player' && t.currentHealth < 1) draft.endedAt = Date.now()
 		})
 	})
+	return advanceBossPhases(damagedState, target)
 }
 
 /** @type {ActionFn<{target: CardTargets, amount: number}>} */
@@ -379,7 +582,11 @@ function applyCardPowers(state, {card, target}) {
 		let powerTarget = target
 		if (card.target === CardTargets.player) powerTarget = 'player'
 		if (card.target === CardTargets.allEnemies) powerTarget = 'allEnemies'
-		nextState = addPower(nextState, {target: powerTarget, power: name, amount: stacks})
+		nextState = executeActionDescriptor(
+			nextState,
+			{type: 'addPower', parameter: {source: 'player', target: powerTarget, power: name, amount: stacks}},
+			{source: 'player', extra: {card}, origin: 'card'},
+		)
 	}
 	return nextState
 }
@@ -411,16 +618,12 @@ function decreaseMonsterPowerStacks(state) {
 function endTurn(state) {
 	let newState = discardHand(state)
 	if (state.player.powers.regen) {
-		newState = produce(newState, (draft) => {
-			const amount = powers.regen.use(newState.player.powers.regen)
-			let newHealth
-			if (newState.player.currentHealth + amount > newState.player.maxHealth) {
-				newHealth = newState.player.maxHealth
-			} else {
-				newHealth = addHealth(newState, {target: 'player', amount}).player.currentHealth
-			}
-			draft.player.currentHealth = newHealth
-		})
+		const amount = powers.regen.use(newState.player.powers.regen)
+		newState = executeActionDescriptor(
+			newState,
+			{type: 'heal', parameter: {source: 'player', target: 'player', amount}},
+			{source: 'player', origin: 'regen'},
+		)
 	}
 	newState = playMonsterActions(newState)
 	newState = decreasePlayerPowerStacks(newState)
@@ -489,9 +692,50 @@ function takeMonsterTurn(state, monsterIndex) {
 
 	if (!wasAlive || !intent) return nextState
 	for (const action of intent.actions || []) {
-		nextState = executeActionDescriptor(nextState, action, {self: `enemy${monsterIndex}`})
+		nextState = executeActionDescriptor(nextState, action, {
+			self: `enemy${monsterIndex}`,
+			source: `enemy${monsterIndex}`,
+			origin: 'enemyIntent',
+		})
 	}
 	return nextState
+}
+
+/**
+ * Change a monster's next intent directly or relatively, wrapping around its intent list.
+ * @type {ActionFn<{target: string, index?: number, delta?: number}>}
+ */
+function changeIntent(state, {target, index, delta = 1}) {
+	return produce(state, (draft) => {
+		getRoomTargets(draft, target).forEach((monster) => {
+			const length = monster.intents?.length || 0
+			if (!length) return
+			const requested = index ?? (monster.nextIntent || 0) + delta
+			monster.nextIntent = ((requested % length) + length) % length
+		})
+	})
+}
+
+/**
+ * Summon one or more monsters using an isolated serializable RNG stream.
+ * A spec may use `hpRange: [min, max]` and ordinary Monster props.
+ * @type {ActionFn<{monster?: object, monsters?: object[]}>}
+ */
+function summon(state, {monster, monsters: monsterSpecs} = {}) {
+	const specs = monsterSpecs || (monster ? [monster] : [])
+	if (!specs.length) return state
+	const firstCounter = getRngCounter(state, 'summon')
+	const seed = getStateSeed(state)
+	const summoned = specs.map((spec, offset) => {
+		const rng = createRng(deriveSeed(seed, 'summon', firstCounter + offset))
+		const hp = Array.isArray(spec.hpRange) ? rng.int(spec.hpRange[0], spec.hpRange[1]) : spec.hp
+		return Monster({...spec, ...(hp === undefined ? {} : {hp})}, {rng})
+	})
+
+	return produce(state, (draft) => {
+		getCurrRoom(draft).monsters.push(...summoned)
+		setRngCounter(draft, 'summon', firstCounter + specs.length)
+	})
 }
 
 /** @type {ActionFn<{card: CARD}>} */
@@ -595,6 +839,7 @@ function setDidCheat(state) {
 
 const allActions = {
 	addBlock,
+	addCard,
 	addCardToDeck,
 	addCardToHand,
 	addEnergyToPlayer,
@@ -603,6 +848,9 @@ const allActions = {
 	addRegenEqualToAllDamage,
 	addStarterDeck,
 	applyCardPowers,
+	changeBossPhase,
+	changeIntent,
+	changePhase: changeBossPhase,
 	createNewState,
 	dealDamage,
 	dealDamageEqualToBlock,
@@ -610,9 +858,13 @@ const allActions = {
 	dealDamageEqualToWeak,
 	discardCard,
 	discardHand,
+	draw,
 	drawCards,
 	endEncounter,
 	endTurn,
+	exhaust,
+	gainEnergy,
+	heal,
 	iddqd,
 	makeCampfireChoice,
 	move,
@@ -625,6 +877,7 @@ const allActions = {
 	setDungeon,
 	setHealth,
 	setPower,
+	summon,
 	takeMonsterTurn,
 	upgradeCard,
 }
