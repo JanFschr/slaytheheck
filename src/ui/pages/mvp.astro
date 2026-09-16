@@ -1,0 +1,24 @@
+---
+import Layout from '../layouts/Layout.astro'
+import '../styles/index.css'
+---
+
+<script is:inline>
+  const params = new URLSearchParams(window.location.search)
+  window.__SLAY_CONTENT_PACK__ = {
+    id: 'mechanics-mvp',
+    autoStart: true,
+    seed: params.get('seed') || undefined,
+  }
+</script>
+<script src="../components/slay-the-web.js"></script>
+
+<Layout title="Mechanics MVP">
+  <slay-the-web></slay-the-web>
+</Layout>
+
+<style>
+  html {
+    background: var(--color-background);
+  }
+</style>
