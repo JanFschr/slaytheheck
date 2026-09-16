@@ -207,7 +207,9 @@ function discardCard(state, {card}) {
 /** @type {ActionFn<{}>} */
 function discardHand(state) {
 	return produce(state, (draft) => {
-		draft.hand.forEach((card) => draft.discardPile.push(card))
+		draft.hand.forEach((card) => {
+			draft.discardPile.push(card)
+		})
 		draft.hand = []
 	})
 }
@@ -481,7 +483,8 @@ function takeMonsterTurn(state, monsterIndex) {
 		const draftMonster = getCurrRoom(draft).monsters[monsterIndex]
 		draftMonster.block = 0
 		if (!wasAlive || !intent) return
-		draftMonster.nextIntent = draftMonster.nextIntent === draftMonster.intents.length - 1 ? 0 : draftMonster.nextIntent + 1
+		draftMonster.nextIntent =
+			draftMonster.nextIntent === draftMonster.intents.length - 1 ? 0 : draftMonster.nextIntent + 1
 	})
 
 	if (!wasAlive || !intent) return nextState
