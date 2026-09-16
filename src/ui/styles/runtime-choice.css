@@ -1,0 +1,164 @@
+.RuntimeChoice-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: grid;
+	place-items: center;
+	padding: max(1rem, var(--safe-top)) max(1rem, var(--safe-right)) max(1rem, var(--safe-bottom))
+		max(1rem, var(--safe-left));
+	background: rgb(0 0 0 / 78%);
+	backdrop-filter: blur(5px);
+}
+
+.RuntimeChoice {
+	width: min(72rem, 100%);
+	max-height: min(92dvh, 54rem);
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	gap: 1rem;
+	padding: clamp(1rem, 3vw, 2rem);
+	overflow: hidden;
+	border: 1px solid color-mix(in oklab, var(--color-accent), transparent 45%);
+	border-radius: 1rem;
+	background: var(--color-panel-strong);
+	box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 55%);
+}
+
+.RuntimeChoice-header {
+	text-align: center;
+}
+
+.RuntimeChoice-header h2,
+.RuntimeChoice-header p {
+	margin: 0;
+}
+
+.RuntimeChoice-header p {
+	margin-top: 0.35rem;
+	opacity: 0.78;
+}
+
+.RuntimeChoice-cards {
+	display: flex;
+	align-items: center;
+	gap: clamp(0.5rem, 2vw, 1.25rem);
+	padding: 0.5rem;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scroll-snap-type: x proximity;
+	overscroll-behavior-x: contain;
+}
+
+.RuntimeChoice-card {
+	flex: 0 0 auto;
+	width: clamp(6.4rem, 24vw, 10rem);
+	cursor: pointer;
+	scroll-snap-align: center;
+	border: 2px solid transparent;
+	border-radius: 0.8rem;
+	outline: none;
+	transition:
+		transform 140ms var(--easing),
+		border-color 140ms var(--easing),
+		box-shadow 140ms var(--easing);
+}
+
+.RuntimeChoice-card .Card {
+	width: 100%;
+	max-width: 100%;
+	opacity: 1;
+}
+
+.RuntimeChoice-card:hover,
+.RuntimeChoice-card:focus-visible,
+.RuntimeChoice-card.is-selected {
+	transform: translateY(-0.3rem);
+	border-color: var(--color-accent);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent), transparent 72%);
+}
+
+.RuntimeChoice-options {
+	display: grid;
+	gap: 0.75rem;
+	align-content: center;
+	overflow-y: auto;
+}
+
+.RuntimeChoice-option {
+	min-height: var(--tap-target);
+	display: grid;
+	gap: 0.25rem;
+	text-align: left;
+}
+
+.RuntimeChoice-option span {
+	opacity: 0.8;
+}
+
+.RuntimeChoice-option.is-selected {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
+}
+
+.RuntimeChoice-actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 1rem;
+}
+
+.RuntimeChoice-actions > span {
+	font-variant-numeric: tabular-nums;
+	opacity: 0.8;
+}
+
+@media (max-width: 640px) {
+	.RuntimeChoice-backdrop {
+		place-items: end center;
+		padding-inline: 0;
+		padding-bottom: 0;
+	}
+
+	.RuntimeChoice {
+		width: 100%;
+		max-height: min(88dvh, 46rem);
+		border-radius: 1.25rem 1.25rem 0 0;
+		border-inline: 0;
+		border-bottom: 0;
+		padding-bottom: max(1rem, var(--safe-bottom));
+	}
+
+	.RuntimeChoice-cards {
+		margin-inline: -1rem;
+		padding-inline: max(1rem, var(--safe-left));
+	}
+
+	.RuntimeChoice-card {
+		width: clamp(7rem, 38vw, 9.5rem);
+	}
+}
+
+@media (orientation: landscape) and (max-height: 540px) {
+	.RuntimeChoice {
+		max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+		grid-template-columns: minmax(10rem, 0.32fr) minmax(0, 1fr);
+		grid-template-rows: 1fr auto;
+		grid-template-areas:
+			"header content"
+			"actions actions";
+	}
+
+	.RuntimeChoice-header {
+		grid-area: header;
+		align-self: center;
+	}
+
+	.RuntimeChoice-cards,
+	.RuntimeChoice-options {
+		grid-area: content;
+	}
+
+	.RuntimeChoice-actions {
+		grid-area: actions;
+	}
+}

@@ -1,9 +1,11 @@
 import test from 'ava'
 import {createTestDungeon} from '../src/content/dungeons.js'
 import ActionManager from '../src/game/action-manager.js'
+import {executeActionLifecycle} from '../src/game/action-runtime.js'
 import actions from '../src/game/actions.js'
 import {createCard} from '../src/game/cards.js'
 import {Monster, MonsterIntent, monsterAction as A} from '../src/game/monster.js'
+import createNewGame from '../src/game/new-game.js'
 import {MonsterRoom} from '../src/game/rooms.js'
 
 function combatState(monster, seed = 'runtime-test') {
@@ -181,4 +183,110 @@ test('boss phases transition on health threshold and run onEnter actions', (t) =
 	t.is(transitionedBoss.powers.strength, 2)
 	t.is(room.monsters.length, 2)
 	t.is(state.player.currentHealth, 51)
+})
+
+test('runtime choices pause later actions, survive serialization and resume in order', (t) => {
+	const registry = {
+		record(state, {value}) {
+			return {...state, log: [...(state.log || []), value]}
+		},
+	}
+	let state = {
+		seed: 'choice-runtime',
+		createdAt: 1,
+		hand: [
+			{id: 'card-a', type: 'skill', tags: ['tech']},
+			{id: 'card-b', type: 'attack', tags: ['bio']},
+		],
+		log: [],
+	}
+
+	state = executeActionLifecycle(
+		state,
+		{
+			type: 'requestChoice',
+			parameter: {
+				kind: 'cards',
+				pile: 'hand',
+				prompt: 'Choose one',
+				min: 1,
+				max: 1,
+				onResolve: {type: 'record', parameter: {value: '$selected'}},
+			},
+		},
+		registry,
+		{origin: 'test'},
+	)
+	state = executeActionLifecycle(state, {type: 'record', parameter: {value: 'after-choice'}}, registry, {
+		origin: 'test',
+	})
+
+	t.truthy(state.pendingChoice)
+	t.is(state.pendingChoice.continuation.length, 1)
+	t.deepEqual(state.log, [])
+
+	state = JSON.parse(JSON.stringify(state))
+	state = executeActionLifecycle(
+		state,
+		{type: 'resolveChoice', choiceId: state.pendingChoice.id, selectedIds: ['card-b']},
+		registry,
+	)
+
+	t.falsy(state.pendingChoice)
+	t.deepEqual(state.log, ['card-b', 'after-choice'])
+})
+
+test('option choices can expand one onResolve action per selected value', (t) => {
+	const registry = {
+		record(state, {value}) {
+			return {...state, log: [...(state.log || []), value]}
+		},
+	}
+	let state = {seed: 'option-choice', createdAt: 1, log: []}
+	state = executeActionLifecycle(
+		state,
+		{
+			type: 'requestChoice',
+			parameter: {
+				kind: 'options',
+				min: 2,
+				max: 2,
+				options: [
+					{id: 'left', label: 'Left', value: 'L'},
+					{id: 'right', label: 'Right', value: 'R'},
+				],
+				onResolve: {
+					type: 'record',
+					forEachSelection: true,
+					parameter: {value: '$selectedValue'},
+				},
+			},
+		},
+		registry,
+	)
+	state = executeActionLifecycle(
+		state,
+		{type: 'resolveChoice', choiceId: state.pendingChoice.id, selectedIds: ['left', 'right']},
+		registry,
+	)
+	t.deepEqual(state.log, ['L', 'R'])
+})
+
+test('game queue blocks unrelated player actions while a choice is pending', (t) => {
+	const game = createNewGame(false, {seed: 'queue-choice'})
+	game.enqueue({
+		type: 'requestChoice',
+		kind: 'options',
+		options: [{id: 'charge', label: 'Charge'}],
+		onResolve: {type: 'gainEnergy', parameter: {amount: 2}},
+	})
+	game.dequeue()
+	const choiceId = game.state.pendingChoice.id
+	const energyBefore = game.state.player.currentEnergy
+
+	t.false(game.enqueue({type: 'gainEnergy', amount: 99}))
+	t.is(game.future.list.length, 0)
+	t.true(game.enqueue({type: 'resolveChoice', choiceId, selectedIds: ['charge']}))
+	game.dequeue()
+	t.is(game.state.player.currentEnergy, energyBefore + 2)
 })

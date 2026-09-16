@@ -12,6 +12,7 @@
 @import "./tooltipped.css";
 @import "./console.css";
 @import "./mobile.css";
+@import "./runtime-choice.css";
 
 /** Styles in this file should probably be moved into dedicated files */
 
