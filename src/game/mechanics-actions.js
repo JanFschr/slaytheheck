@@ -63,11 +63,7 @@ function dealDamageFromResource(
 	return nextState
 }
 
-function addBlockFromResource(
-	state,
-	{resource, target = 'player', base = 0, multiplier = 1} = {},
-	runtime,
-) {
+function addBlockFromResource(state, {resource, target = 'player', base = 0, multiplier = 1} = {}, runtime) {
 	const stacks = getResource(state, resourceName(resource))
 	const amount = Math.max(0, Number(base) + stacks * Number(multiplier))
 	if (!amount) return state
@@ -105,11 +101,7 @@ function fireDrones(state, {damagePerDrone = 2, target = 'allEnemies'} = {}, run
 	})
 }
 
-function resolveHeat(
-	state,
-	{threshold = 8, damage = 5, damagePerExcess = 1, vent = 4} = {},
-	runtime,
-) {
+function resolveHeat(state, {threshold = 8, damage = 5, damagePerExcess = 1, vent = 4} = {}, runtime) {
 	const heat = getResource(state, 'heat')
 	if (heat < threshold) return state
 	const overloadDamage = Math.max(0, damage + (heat - threshold) * damagePerExcess)
