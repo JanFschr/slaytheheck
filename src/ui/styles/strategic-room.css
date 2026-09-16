@@ -1,0 +1,164 @@
+.StrategicRoom-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 9000;
+	display: grid;
+	place-items: center;
+	padding: max(1rem, var(--safe-top)) max(1rem, var(--safe-right)) max(1rem, var(--safe-bottom))
+		max(1rem, var(--safe-left));
+	background: rgb(0 0 0 / 76%);
+	backdrop-filter: blur(7px);
+}
+
+.StrategicRoom {
+	width: min(64rem, 100%);
+	max-height: min(92dvh, 54rem);
+	display: grid;
+	gap: 1.2rem;
+	padding: clamp(1.1rem, 3vw, 2rem);
+	overflow-y: auto;
+	border: 1px solid color-mix(in oklab, var(--color-accent), transparent 55%);
+	border-radius: 1rem;
+	background: var(--color-panel-strong);
+	box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 55%);
+}
+
+.StrategicRoom header {
+	max-width: 48rem;
+}
+
+.StrategicRoom h1,
+.StrategicRoom h2,
+.StrategicRoom p {
+	margin-block: 0;
+}
+
+.StrategicRoom header p {
+	margin-top: 0.6rem;
+	line-height: 1.5;
+	opacity: 0.82;
+}
+
+.StrategicRoom-kicker,
+.MerchantOffer-kind {
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	opacity: 0.68;
+}
+
+.StrategicRoom-options,
+.MerchantGrid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.8rem;
+}
+
+.StrategicRoom-option,
+.MerchantOffer {
+	min-height: var(--tap-target);
+	display: grid;
+	gap: 0.4rem;
+	align-content: start;
+	padding: 1rem;
+	border: 1px solid color-mix(in oklab, var(--color-accent), transparent 68%);
+	border-radius: 0.8rem;
+	background: var(--color-panel);
+	color: var(--color-text);
+	text-align: left;
+	box-shadow: none;
+}
+
+.StrategicRoom-option:hover:not(:disabled),
+.StrategicRoom-option:focus-visible:not(:disabled),
+.MerchantOffer:hover:not(:disabled),
+.MerchantOffer:focus-visible:not(:disabled) {
+	border-color: var(--color-accent);
+	transform: translateY(-0.12rem);
+}
+
+.StrategicRoom-option:disabled,
+.MerchantOffer:disabled {
+	opacity: 0.45;
+}
+
+.MerchantGrid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.MerchantOffer b {
+	color: var(--color-accent);
+}
+
+.MerchantServices {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.7rem;
+}
+
+.MerchantServices h2 {
+	width: 100%;
+}
+
+.TreasureResult {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.7rem 1rem;
+	padding: 1rem;
+	border-radius: 0.8rem;
+	background: var(--color-panel);
+}
+
+.BuildHud-gold {
+	font-weight: 700;
+	color: var(--color-accent);
+}
+
+@media (max-width: 720px) {
+	.StrategicRoom-backdrop {
+		place-items: end center;
+		padding-inline: 0;
+		padding-bottom: 0;
+	}
+
+	.StrategicRoom {
+		width: 100%;
+		max-height: min(90dvh, 52rem);
+		padding-bottom: max(1rem, var(--safe-bottom));
+		border-inline: 0;
+		border-bottom: 0;
+		border-radius: 1.2rem 1.2rem 0 0;
+	}
+
+	.StrategicRoom-options,
+	.MerchantGrid {
+		grid-template-columns: 1fr;
+	}
+
+	.MerchantOffer {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	.MerchantOffer > span:not(.MerchantOffer-kind),
+	.MerchantOffer strong {
+		grid-column: 1;
+	}
+
+	.MerchantOffer b {
+		grid-column: 2;
+		grid-row: 1 / span 3;
+		align-self: center;
+	}
+}
+
+@media (orientation: landscape) and (max-height: 540px) {
+	.StrategicRoom {
+		max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+	}
+
+	.MerchantGrid {
+		grid-template-columns: repeat(5, minmax(9rem, 1fr));
+		overflow-x: auto;
+	}
+}
