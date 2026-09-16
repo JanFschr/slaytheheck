@@ -2,7 +2,7 @@
 
 ## Runtime foundation
 
-The runtime foundation is considered complete once PR #8 lands:
+PR #8 is the last planned runtime-foundation milestone. Once it lands, the runtime foundation is considered complete:
 
 - deterministic run RNG and isolated streams
 - stable content IDs, tags, rarity and keywords
