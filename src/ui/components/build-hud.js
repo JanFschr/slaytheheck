@@ -13,10 +13,10 @@ function ItemChip({item, kind}) {
 export default function BuildHud({gameState}) {
 	const relics = gameState.relics || []
 	const equipment = gameState.equipment || []
-	if (!relics.length && !equipment.length) return null
 
 	return html`
-		<aside class="BuildHud" aria-label="Current build">
+		<aside class="BuildHud" aria-label="Current build and gold">
+			<span class="BuildHud-gold" title="Gold">💰 ${gameState.gold || 0}</span>
 			${relics.length ? html`<span class="BuildHud-count">Relics ${relics.length}</span>` : null}
 			${relics.map((item) => html`<${ItemChip} item=${item} kind="relic" />`)}
 			${equipment.length ? html`<span class="BuildHud-count">Gear ${equipment.length}</span>` : null}
