@@ -123,7 +123,10 @@ export const equipment = [
 		tags: ['mvp', 'drone', 'block'],
 		description: 'Before ending your turn, gain 1 Block per deployed Drone.',
 		triggers: {
-			'before:endTurn': {type: 'addBlockFromResource', parameter: {resource: 'drones', target: 'player', multiplier: 1}},
+			'before:endTurn': {
+				type: 'addBlockFromResource',
+				parameter: {resource: 'drones', target: 'player', multiplier: 1},
+			},
 		},
 	},
 	{
