@@ -1,3 +1,4 @@
+import {getResource} from './mechanics-actions.js'
 import {getPlayerHealthPercentage} from './utils-state.js'
 
 /** @typedef {import('./actions.js').State} State */
@@ -9,6 +10,8 @@ import {getPlayerHealthPercentage} from './utils-state.js'
  * @prop {string} type
  * @prop {string=} cardType
  * @prop {number=} percentage
+ * @prop {string=} resource
+ * @prop {number=} amount
  */
 
 /**
@@ -42,6 +45,11 @@ export function healthPercentageBelow(state, condition) {
 	return getPlayerHealthPercentage(state) < condition.percentage
 }
 
+/** Returns true when a combat resource has at least the requested amount. */
+export function resourceAtLeast(state, condition) {
+	return getResource(state, condition.resource) >= (condition.amount ?? 1)
+}
+
 /**
  * Returns true if all conditions are valid on a certain game state.
  * @param {State} state
@@ -53,6 +61,7 @@ export function conditionsAreValid(state, conditions) {
 	if (conditions) {
 		return conditions.every((condition) => {
 			const cond = allConditions[condition.type]
+			if (!cond) throw new Error(`Unknown condition: ${condition.type}`)
 			return cond(state, condition)
 		})
 	}
@@ -77,6 +86,7 @@ const allConditions = {
 	onlyType,
 	healthPercentageAbove,
 	healthPercentageBelow,
+	resourceAtLeast,
 }
 
 export default allConditions

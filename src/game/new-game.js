@@ -1,4 +1,10 @@
 import {economy} from '../content/economy.js'
+import {
+	createMechanicsMvpDungeon,
+	mechanicsMvpId,
+	mechanicsMvpModifiers,
+	mechanicsMvpStarterDeck,
+} from '../content/mechanics-mvp.js'
 import ActionManager from './action-manager.js'
 import actions from './actions.js'
 import {createRunSeed} from './rng.js'
@@ -17,15 +23,22 @@ import {createRunSeed} from './rng.js'
  * @prop {{list: Array<{action: string, state: State}>}} past
  */
 
+function browserContentConfig() {
+	if (typeof globalThis === 'undefined') return {}
+	return globalThis.__SLAY_CONTENT_PACK__ || {}
+}
+
 /**
  * Creates a new game.
  * @param {boolean} debug - whether to log actions to the console
- * @param {{seed?: string|number}} [options]
+ * @param {{seed?: string|number, contentPack?: string}} [options]
  * @returns {Game}
  */
 export default function createNewGame(debug = false, options = {}) {
 	const actionManager = ActionManager({debug})
-	const seed = String(options.seed ?? createRunSeed())
+	const browserConfig = browserContentConfig()
+	const contentPack = options.contentPack ?? browserConfig.id
+	const seed = String(options.seed ?? browserConfig.seed ?? createRunSeed())
 
 	/**
 	 * @returns {State} with a dungeon, start deck and cards drawn
@@ -35,11 +48,21 @@ export default function createNewGame(debug = false, options = {}) {
 		// Store the seed as ordinary serializable state. Subsystems can derive their
 		// own deterministic RNG stream from it without sharing mutable global RNG.
 		state.seed = seed
-		state.gold = economy.startingGold
+		state.contentPack = contentPack
+		state.gold = contentPack === mechanicsMvpId ? 100 : economy.startingGold
 		state.relics = []
 		state.equipment = []
-		state = actions.setDungeon(state)
-		state = actions.addStarterDeck(state)
+		state.resources = {heat: 0, drones: 0, corruption: 0}
+		state.modifiers = []
+
+		if (contentPack === mechanicsMvpId) {
+			state.modifiers = structuredClone(mechanicsMvpModifiers)
+			state = actions.setDungeon(state, createMechanicsMvpDungeon({seed}))
+			state = actions.setDeck(state, {cardNames: mechanicsMvpStarterDeck})
+		} else {
+			state = actions.setDungeon(state)
+			state = actions.addStarterDeck(state)
+		}
 		state = actions.drawCards(state)
 		return state
 	}

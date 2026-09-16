@@ -7,6 +7,11 @@ function ownedIds(state) {
 	return new Set([...(state.relics || []).map((item) => item.id), ...(state.equipment || []).map((item) => item.id)])
 }
 
+function itemPoolForState(items, state) {
+	if (state.contentPack === 'mechanics-mvp') return items.filter((item) => item.tags?.includes('mvp'))
+	return items.filter((item) => !item.tags?.includes('mvp'))
+}
+
 /**
  * Build rewards are intentionally less frequent than card rewards. Elites always
  * offer one, while ordinary combats do so every third floor.
@@ -23,8 +28,8 @@ export function getBuildRewards(state, count = 3) {
 	const runSeed = state.seed ?? state.createdAt ?? 'legacy'
 	const rng = createRng(deriveSeed(runSeed, 'build-reward', state.dungeon.y, state.dungeon.x, node?.type || 'room'))
 	const owned = ownedIds(state)
-	const relicPool = rng.shuffle(relics.filter((item) => !owned.has(item.id)))
-	const equipmentPool = rng.shuffle(equipment.filter((item) => !owned.has(item.id)))
+	const relicPool = rng.shuffle(itemPoolForState(relics, state).filter((item) => !owned.has(item.id)))
+	const equipmentPool = rng.shuffle(itemPoolForState(equipment, state).filter((item) => !owned.has(item.id)))
 	const requestedRelics = Math.min(Math.max(1, count - 1), relicPool.length)
 	const rewards = relicPool.slice(0, requestedRelics).map((item) => ({...item, kind: 'relic'}))
 	if (equipmentPool.length && rewards.length < count) rewards.push({...equipmentPool[0], kind: 'equipment'})

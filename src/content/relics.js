@@ -138,6 +138,39 @@ export const relics = [
 			[triggerEvent.cardPlayedType('skill')]: {type: 'gainEnergy', parameter: {amount: 1}},
 		},
 	},
+	{
+		id: 'relic:thermal-recuperator',
+		name: 'Thermal Recuperator',
+		icon: '♨️',
+		rarity: 'common',
+		tags: ['mvp', 'heat', 'block'],
+		description: 'Whenever you play a Heat card, gain 2 Block.',
+		triggers: {
+			[triggerEvent.cardPlayedTag('heat')]: {type: 'addBlock', parameter: {target: 'player', amount: 2}},
+		},
+	},
+	{
+		id: 'relic:drone-uplink',
+		name: 'Drone Uplink',
+		icon: '📶',
+		rarity: 'uncommon',
+		tags: ['mvp', 'drone', 'tempo'],
+		description: 'Whenever you play a Drone card, gain 2 Block.',
+		triggers: {
+			[triggerEvent.cardPlayedTag('drone')]: {type: 'addBlock', parameter: {target: 'player', amount: 2}},
+		},
+	},
+	{
+		id: 'relic:void-prism',
+		name: 'Void Prism',
+		icon: '🔮',
+		rarity: 'rare',
+		tags: ['mvp', 'void', 'draw'],
+		description: 'Whenever you play a Void card, draw 1 card.',
+		triggers: {
+			[triggerEvent.cardPlayedTag('void')]: {type: 'draw', parameter: {amount: 1}},
+		},
+	},
 ]
 
 export const relicsById = Object.fromEntries(relics.map((relic) => [relic.id, relic]))

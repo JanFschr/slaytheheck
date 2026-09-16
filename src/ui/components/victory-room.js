@@ -26,7 +26,7 @@ export default function VictoryRoom(props) {
 	const roomKey = `${state.dungeon.y}:${state.dungeon.x}`
 	const rewardRng = createRng(`${runSeed}:reward:${roomKey}`)
 	const copyRng = createRng(`${runSeed}:victory-copy:${roomKey}`)
-	const rewards = getCardRewards(3, rewardRng.next).map((card, index) => {
+	const rewards = getCardRewards(3, rewardRng.next, {contentPack: state.contentPack}).map((card, index) => {
 		card.id = `reward-${hashSeed(`${runSeed}:${roomKey}:${index}:${card.definitionId}`).toString(36)}`
 		return card
 	})
