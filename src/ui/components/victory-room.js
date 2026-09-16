@@ -1,4 +1,5 @@
 import {getBuildRewards, isBuildRewardEligible} from '../../content/build-rewards.js'
+import {getCombatGoldReward} from '../../content/economy.js'
 import {getCardRewards} from '../../game/cards.js'
 import {createRng, hashSeed} from '../../game/rng.js'
 import {getCurrRoom} from '../../game/utils-state.js'
@@ -6,10 +7,16 @@ import {html} from '../lib.js'
 import BuildRewardChooser from './build-reward-chooser.js'
 import CardChooser from './card-chooser.js'
 
+function runRewardAction(type, parameter) {
+	const run = globalThis.window?.stw?.run
+	if (typeof run !== 'function') throw new Error('Victory reward host could not access the game action runner')
+	return run(type, parameter)
+}
+
 /**
  * @param {object} props
- * @prop {function} props.onSelectCard
  * @prop {object} props.gameState
+ * @prop {function} props.onContinue
  * @returns {import('preact').VNode}
  */
 export default function VictoryRoom(props) {
@@ -24,28 +31,54 @@ export default function VictoryRoom(props) {
 		return card
 	})
 	const buildRewards = isBuildRewardEligible(state) && !room.buildRewardClaimed ? getBuildRewards(state, 3) : []
+	const goldReward = room.goldRewardClaimed || getCombatGoldReward(state)
 	const introText = copyRng.pick(victoryRoomIntroTexts)
 
 	return html`
 		<div class="Container Container--center">
 			<h1 center>Victory!</h1>
 			<h2 center>${introText}</h2>
+
 			${
-				!state.didPickCard &&
+				!room.goldRewardClaimed
+					? html`
+						<p center>
+							<button class="Button Button--primary" onClick=${() => runRewardAction('claimCombatGold')}>
+								Collect ${goldReward} gold
+							</button>
+						</p>
+					`
+					: html`<p center><strong>+${room.goldRewardClaimed} gold collected.</strong></p>`
+			}
+
+			${
+				!room.cardRewardClaimed &&
 				html`
 				<${CardChooser}
 					animate
 					cards=${rewards}
-					didSelectCard=${(card) => props.onSelectCard(card)}
+					didSelectCard=${(card) => runRewardAction('claimCardReward', {card})}
 					buttonLabel="Add to deck"
 					showUpgrades=${false}
 				/>
 			`
 			}
-			${buildRewards.length ? html`<${BuildRewardChooser} rewards=${buildRewards} />` : null}
+			${room.cardRewardClaimed ? html`<p center>Card reward added to your deck.</p>` : null}
+
+			${
+				buildRewards.length
+					? html`<${BuildRewardChooser}
+						rewards=${buildRewards}
+						onSelect=${(reward) => runRewardAction('claimBuildReward', {kind: reward.kind, id: reward.id})}
+					/>`
+					: null
+			}
 			${room.buildRewardClaimed ? html`<p center>Build reward installed.</p>` : null}
+
 			<ul class="Options">
-				<button class="Button" onClick=${props.onContinue}>Continue to the next room</button>
+				<button class="Button" disabled=${!room.goldRewardClaimed} onClick=${props.onContinue}>
+					${room.goldRewardClaimed ? 'Continue to the next room' : 'Collect gold to continue'}
+				</button>
 			</ul>
 		</div>
 	`
