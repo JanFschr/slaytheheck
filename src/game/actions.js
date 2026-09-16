@@ -132,15 +132,15 @@ function createNewState() {
 
 /**
  * By default a new game doesn't come with a dungeon. You have to set one explicitly.
+ * Keep the historical mutable setup semantics: test fixtures and dungeon editors
+ * intentionally adjust coordinates/rooms immediately after injecting a dungeon.
  * @param {State} state
  * @param {Dungeon} [dungeon]
  * @returns {State}
  */
 function setDungeon(state, dungeon) {
-	const nextDungeon = dungeon || createDefaultDungeon({seed: getStateSeed(state)})
-	return produce(state, (draft) => {
-		draft.dungeon = nextDungeon
-	})
+	state.dungeon = dungeon || createDefaultDungeon({seed: getStateSeed(state)})
+	return state
 }
 
 /** Draws a starter deck and deterministically shuffles it. */
@@ -473,7 +473,8 @@ function takeMonsterTurn(state, monsterIndex) {
 	const room = getCurrRoom(state)
 	const monster = room.monsters[monsterIndex]
 	if (!monster) return state
-	const intent = normalizeMonsterIntent(monster.intents[monster.nextIntent || 0])
+	const rawIntent = monster.intents[monster.nextIntent || 0]
+	const intent = rawIntent ? normalizeMonsterIntent(rawIntent) : null
 	const wasAlive = monster.currentHealth > 0
 
 	let nextState = produce(state, (draft) => {
