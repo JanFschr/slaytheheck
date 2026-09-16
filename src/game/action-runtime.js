@@ -1,5 +1,5 @@
-import {getRoomTargets} from './utils-state.js'
 import {runTriggers, triggerEvent} from './triggers.js'
+import {getRoomTargets} from './utils-state.js'
 
 const MAX_ACTION_DEPTH = 32
 
@@ -99,12 +99,7 @@ export function executeActionLifecycle(state, action, registry, meta = {}) {
 	nextState = actionFn(nextState, runtimeAction.parameter)
 
 	for (const semantic of semanticEvents(beforeCoreAction, nextState, runtimeAction)) {
-		nextState = runTriggers(
-			nextState,
-			semantic.event,
-			{...context, semantic: semantic.data},
-			executeTriggerAction,
-		)
+		nextState = runTriggers(nextState, semantic.event, {...context, semantic: semantic.data}, executeTriggerAction)
 	}
 
 	nextState = runTriggers(nextState, triggerEvent.afterAction(runtimeAction.type), context, executeTriggerAction)
