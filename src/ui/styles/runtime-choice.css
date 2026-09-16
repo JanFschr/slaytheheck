@@ -4,10 +4,7 @@
 	z-index: 10000;
 	display: grid;
 	place-items: center;
-	padding:
-		max(1rem, var(--safe-top))
-		max(1rem, var(--safe-right))
-		max(1rem, var(--safe-bottom))
+	padding: max(1rem, var(--safe-top)) max(1rem, var(--safe-right)) max(1rem, var(--safe-bottom))
 		max(1rem, var(--safe-left));
 	background: rgb(0 0 0 / 78%);
 	backdrop-filter: blur(5px);
