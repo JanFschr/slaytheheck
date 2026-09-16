@@ -70,7 +70,8 @@ export const Monster = (props) => {
 	const specialIntents = (intent?.actions || []).flatMap((action) => {
 		const parameter = action.parameter || {}
 		if (action.type === 'addResource' && parameter.resource) {
-			const name = parameter.resource === 'corruption' ? 'Void' : parameter.resource[0].toUpperCase() + parameter.resource.slice(1)
+			const name =
+				parameter.resource === 'corruption' ? 'Void' : parameter.resource[0].toUpperCase() + parameter.resource.slice(1)
 			return [
 				{
 					label: `${name} +${parameter.amount || 0}`,
