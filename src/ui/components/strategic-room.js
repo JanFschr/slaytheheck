@@ -1,7 +1,7 @@
 import {createPortal} from 'preact/compat'
 import {economy} from '../../content/economy.js'
 import {getEventById} from '../../content/events.js'
-import {getShopInventory} from '../../content/shop.js'
+import {getShopInventory, isShopOfferOwned} from '../../content/shop.js'
 import {getCurrRoom} from '../../game/utils-state.js'
 import {html} from '../lib.js'
 
@@ -55,13 +55,11 @@ function MerchantRoomView({gameState, onRun, onContinue}) {
 	const offers = getShopInventory(gameState)
 	const purchased = new Set(room.purchasedOffers || [])
 	const usedServices = new Set(room.usedServices || [])
-	const owned = new Set([...(gameState.relics || []).map((item) => item.id), ...(gameState.equipment || []).map((item) => item.id)])
 	const gold = gameState.gold || 0
 	const canUpgrade = gameState.deck.some((card) => !card.upgraded)
 
 	function chooseCardService(service) {
 		const isRemove = service === 'remove'
-		const price = isRemove ? economy.cardRemovePrice : economy.cardUpgradePrice
 		onRun('requestChoice', {
 			kind: 'cards',
 			pile: 'deck',
@@ -70,12 +68,10 @@ function MerchantRoomView({gameState, onRun, onContinue}) {
 			min: 1,
 			max: 1,
 			onResolve: [
-				{type: 'spendGold', parameter: {amount: price}},
 				{
-					type: isRemove ? 'removeCardById' : 'upgradeCardById',
-					parameter: {cardId: '$selected'},
+					type: 'applyShopCardService',
+					parameter: {service, cardId: '$selected'},
 				},
-				{type: 'markShopService', parameter: {service}},
 			],
 		})
 	}
@@ -100,7 +96,7 @@ function MerchantRoomView({gameState, onRun, onContinue}) {
 			<div class="MerchantGrid">
 				${offers.map((offer) => {
 					const sold = purchased.has(offer.id)
-					const alreadyOwned = offer.kind !== 'card' && owned.has(offer.id)
+					const alreadyOwned = isShopOfferOwned(gameState, offer)
 					const disabled = sold || alreadyOwned || gold < offer.price
 					return html`
 						<button class="MerchantOffer" disabled=${disabled} onClick=${() => onRun('buyShopOffer', {offerId: offer.id})}>
@@ -170,8 +166,17 @@ export function StrategicRoomPortal({gameState}) {
 	if (!gameState?.dungeon || typeof document === 'undefined') return null
 	const room = getCurrRoom(gameState)
 	if (!['event', 'merchant', 'treasure'].includes(room.type)) return null
-	const run = (type, parameter) => globalThis.window?.stw?.run?.(type, parameter)
-	const continueToMap = () => document.querySelector('#Map > button')?.click()
+
+	const run = (type, parameter) => {
+		const runner = globalThis.window?.stw?.run
+		if (typeof runner !== 'function') throw new Error('Strategic room host could not access the game action runner')
+		return runner(type, parameter)
+	}
+	const continueToMap = () => {
+		const map = document.querySelector('#Map')
+		if (!map?.hasAttribute('open')) map?.querySelector(':scope > button')?.click()
+	}
+
 	return createPortal(
 		html`<div class="StrategicRoom-backdrop"><${StrategicRoom} gameState=${gameState} onRun=${run} onContinue=${continueToMap} /></div>`,
 		document.body,
