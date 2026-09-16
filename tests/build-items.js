@@ -16,8 +16,15 @@ function eligibleState(seed) {
 }
 
 test('build item registries expose stable unique ids', (t) => {
-	t.is(relics.length, 12)
-	t.is(equipment.length, 8)
+	const coreRelics = relics.filter((item) => !item.tags?.includes('mvp'))
+	const mvpRelics = relics.filter((item) => item.tags?.includes('mvp'))
+	const coreEquipment = equipment.filter((item) => !item.tags?.includes('mvp'))
+	const mvpEquipment = equipment.filter((item) => item.tags?.includes('mvp'))
+
+	t.is(coreRelics.length, 12)
+	t.is(coreEquipment.length, 8)
+	t.is(mvpRelics.length, 3)
+	t.is(mvpEquipment.length, 3)
 	const ids = [...relics, ...equipment].map((item) => item.id)
 	t.is(new Set(ids).size, ids.length)
 	t.true(relics.every((item) => item.id.startsWith('relic:')))
