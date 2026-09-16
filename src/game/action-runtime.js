@@ -53,9 +53,9 @@ function semanticEvents(beforeState, afterState, action) {
 	if (action.type === 'summon') events.push({event: triggerEvent.spawned, data: {source: parameter.source}})
 	if (action.type === 'changeBossPhase') {
 		events.push({
-			event: triggerEvent.bossPhaseChanged,
-			data: {source: parameter.source, target: parameter.target, phase: parameter.phase},
-		})
+				event: triggerEvent.bossPhaseChanged,
+				data: {source: parameter.source, target: parameter.target, phase: parameter.phase},
+			})
 	}
 
 	return events
@@ -167,14 +167,14 @@ function requestChoice(state, parameter = {}, meta = {}) {
 }
 
 function choiceTemplateContext(choice, selectedIds, selectedId) {
-	const selectedOptions = (choice.options || []).filter((option) => selectedIds.includes(option.id))
-	const selectedValues = selectedOptions.map((option) => option.value)
-	const selectedIndex = selectedId ? selectedIds.indexOf(selectedId) : -1
+	const optionsById = new Map((choice.options || []).map((option) => [option.id, option]))
+	const selectedValues = selectedIds.map((id) => optionsById.get(id)?.value)
+	const currentId = selectedId ?? selectedIds[0]
 	return {
 		choiceId: choice.id,
-		selectedId: selectedId ?? selectedIds[0],
+		selectedId: currentId,
 		selectedIds,
-		selectedValue: selectedIndex >= 0 ? selectedValues[selectedIndex] : selectedValues[0],
+		selectedValue: currentId === undefined ? undefined : optionsById.get(currentId)?.value,
 		selectedValues,
 	}
 }
