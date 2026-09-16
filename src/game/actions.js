@@ -1,9 +1,11 @@
 import {produce} from 'immer'
 import {createDefaultDungeon} from '../content/dungeons.js'
-import {clamp, shuffle} from '../utils.js'
+import {clamp} from '../utils.js'
 import {CardTargets, createCard} from './cards.js'
 import {conditionsAreValid} from './conditions.js'
+import {normalizeMonsterIntent} from './monster.js'
 import powers from './powers.js'
+import {createRng, deriveSeed, deterministicId} from './rng.js'
 import {getCurrRoom, getRoomTargets, isDungeonCompleted} from './utils-state.js'
 
 /** @typedef {import('./dungeon.js').Dungeon} Dungeon */
@@ -27,6 +29,8 @@ import {getCurrRoom, getRoomTargets, isDungeonCompleted} from './utils-state.js'
  * @prop {number} endedAt
  * @prop {boolean} won
  * @prop {number} turn
+ * @prop {string} [seed]
+ * @prop {Record<string, number>} [rng] serializable counters for independent RNG streams
  * @prop {Array} deck
  * @prop {Array} drawPile
  * @prop {Array} hand
@@ -46,6 +50,57 @@ import {getCurrRoom, getRoomTargets, isDungeonCompleted} from './utils-state.js'
  * @prop {number} block
  * @prop {object} powers
  */
+
+function getStateSeed(state) {
+	return String(state.seed ?? state.createdAt ?? 'legacy-run')
+}
+
+function getRngCounter(state, stream) {
+	return state.rng?.[stream] || 0
+}
+
+function getStreamRng(state, stream) {
+	const counter = getRngCounter(state, stream)
+	return {
+		counter,
+		rng: createRng(deriveSeed(getStateSeed(state), stream, counter)),
+	}
+}
+
+function setRngCounter(draft, stream, counter) {
+	if (!draft.rng) draft.rng = {}
+	draft.rng[stream] = counter
+}
+
+function shuffleForState(state, list, stream = 'deck') {
+	const {rng, counter} = getStreamRng(state, stream)
+	return {value: rng.shuffle(list), nextCounter: counter + 1}
+}
+
+function createRunCards(state, identifiers) {
+	const firstIndex = getRngCounter(state, 'cardInstances')
+	const seed = getStateSeed(state)
+	const cards = identifiers.map((identifier, offset) =>
+		createCard(identifier, false, {
+			instanceId: deterministicId('card', seed, 'instance', firstIndex + offset, identifier),
+		}),
+	)
+	return {cards, nextCounter: firstIndex + identifiers.length}
+}
+
+function resolveSelf(value, selfTarget) {
+	return value === 'self' ? selfTarget : value
+}
+
+/** Execute one declarative action descriptor from a card or monster intent. */
+function executeActionDescriptor(state, action, context = {}) {
+	const actionFn = allActions[action.type]
+	if (!actionFn) throw new Error(`Unknown action descriptor: ${action.type}`)
+	const parameter = {...(action.parameter || {})}
+	if (parameter.target) parameter.target = resolveSelf(parameter.target, context.self)
+	if (parameter.source) parameter.source = resolveSelf(parameter.source, context.self)
+	return actionFn(state, {...parameter, ...(context.extra || {})})
+}
 
 /**
  * Everything starts here.
@@ -76,41 +131,39 @@ function createNewState() {
 }
 
 /**
- * By default a new game doesn't come with a dungeon. You have to set one explicitly. Look in dungeons.js for inspiration.
+ * By default a new game doesn't come with a dungeon. You have to set one explicitly.
  * @param {State} state
  * @param {Dungeon} [dungeon]
- * @returns {State} .
+ * @returns {State}
  */
 function setDungeon(state, dungeon) {
-	if (!dungeon) dungeon = createDefaultDungeon()
-	state.dungeon = dungeon
-	return state
-	// return produce(state, (draft) => {
-	// 	draft.dungeon = dungeon
-	// })
+	const nextDungeon = dungeon || createDefaultDungeon({seed: getStateSeed(state)})
+	return produce(state, (draft) => {
+		draft.dungeon = nextDungeon
+	})
 }
 
-/**
- * Draws a "starter" deck to your discard pile. Normally you'd run this as you start the game.
- * @param {State} state
- * @returns {State} .
- */
+/** Draws a starter deck and deterministically shuffles it. */
 function addStarterDeck(state) {
-	const deck = [
-		createCard('Defend'),
-		createCard('Defend'),
-		createCard('Defend'),
-		createCard('Defend'),
-		createCard('Strike'),
-		createCard('Strike'),
-		createCard('Strike'),
-		createCard('Strike'),
-		createCard('Strike'),
-		createCard('Bash'),
+	const identifiers = [
+		'core:defend',
+		'core:defend',
+		'core:defend',
+		'core:defend',
+		'core:strike',
+		'core:strike',
+		'core:strike',
+		'core:strike',
+		'core:strike',
+		'core:bash',
 	]
+	const {cards: deck, nextCounter: cardCounter} = createRunCards(state, identifiers)
+	const shuffled = shuffleForState(state, deck)
 	return produce(state, (draft) => {
 		draft.deck = deck
-		draft.drawPile = shuffle(deck)
+		draft.drawPile = shuffled.value
+		setRngCounter(draft, 'cardInstances', cardCounter)
+		setRngCounter(draft, 'deck', shuffled.nextCounter)
 	})
 }
 
@@ -120,83 +173,56 @@ function addStarterDeck(state) {
  */
 function drawCards(state, options) {
 	const amount = options?.amount ? options.amount : 5
+	const shouldRecycle = state.drawPile.length < amount
+	const recycled = shouldRecycle ? shuffleForState(state, state.drawPile.concat(state.discardPile)) : null
+
 	return produce(state, (draft) => {
-		// When there aren't enough cards to draw, we recycle all cards from the discard pile to the draw pile. Should we shuffle?
-		if (state.drawPile.length < amount) {
-			draft.drawPile = state.drawPile.concat(state.discardPile)
-			draft.drawPile = shuffle(draft.drawPile)
+		if (recycled) {
+			draft.drawPile = recycled.value
 			draft.discardPile = []
+			setRngCounter(draft, 'deck', recycled.nextCounter)
 		}
 		const newCards = draft.drawPile.slice(0, amount)
-		// Take the first X cards from deck and add to hand and remove them from the deck.
 		draft.hand = draft.hand.concat(newCards)
-		for (let i = 0; i < amount; i++) {
-			draft.drawPile.shift()
-		}
+		for (let i = 0; i < amount; i++) draft.drawPile.shift()
 	})
 }
 
-/**
- * Adds a card (from nowhere) directly to your hand.
- * @type {ActionFn<{card: CARD}>}
- */
+/** @type {ActionFn<{card: CARD}>} */
 function addCardToHand(state, {card}) {
 	return produce(state, (draft) => {
 		draft.hand.push(card)
 	})
 }
 
-/**
- * Discard a single card from your hand.
- * @type {ActionFn<{card: CARD}>}
- */
+/** @type {ActionFn<{card: CARD}>} */
 function discardCard(state, {card}) {
 	return produce(state, (draft) => {
 		draft.hand = state.hand.filter((c) => c.id !== card.id)
-		if (card.exhaust) {
-			draft.exhaustPile.push(card)
-		} else {
-			draft.discardPile.push(card)
-		}
+		if (card.exhaust) draft.exhaustPile.push(card)
+		else draft.discardPile.push(card)
 	})
 }
 
-// function exhaustCard(state, {card}) {
-// 	return produce(state, (draft) => {
-// 		draft.hand = state.hand.filter((c) => c.id !== card.id)
-// 	})
-// }
-
-/**
- * Discard all cards in your hand.
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 function discardHand(state) {
 	return produce(state, (draft) => {
-		draft.hand.forEach((card) => {
-			draft.discardPile.push(card)
-		})
+		draft.hand.forEach((card) => draft.discardPile.push(card))
 		draft.hand = []
 	})
 }
 
-/**
- * Discard a single card from your hand.
- * @type {ActionFn<{card: object}>}
- */
+/** @type {ActionFn<{card: object}>} */
 function removeCard(state, {card}) {
 	return produce(state, (draft) => {
 		draft.deck = state.deck.filter((c) => c.id !== card.id)
 	})
 }
 
-/**
- * Upgrades a card (everywhere it exists)
- * @type {ActionFn<{card: object}>}
- */
+/** @type {ActionFn<{card: object}>} */
 function upgradeCard(state, {card}) {
 	return produce(state, (draft) => {
-		const upgradedCard = createCard(card.name, true)
+		const upgradedCard = createCard(card.definitionId || card.name, true, {instanceId: card.id})
 		const piles = [draft.deck, draft.hand, draft.drawPile, draft.discardPile, draft.exhaustPile]
 		piles.forEach((pile) => {
 			const index = pile.findIndex((c) => c.id === card.id)
@@ -206,9 +232,45 @@ function upgradeCard(state, {card}) {
 }
 
 /**
- * Play a card
- * The funky part of this action is the `target` argument. It needs to be a special type of string:
- * Either "player" to target yourself, or "enemyx", where "x" is the index of the monster starting from 0. See utils.js#getTargets
+ * Adds block to any ordinary room target.
+ * @type {ActionFn<{target: string, amount: number}>}
+ */
+function addBlock(state, {target, amount}) {
+	return produce(state, (draft) => {
+		getRoomTargets(draft, target).forEach((model) => {
+			model.block = (model.block || 0) + amount
+		})
+	})
+}
+
+/**
+ * Add stacks of a power. turnEndCompensation preserves the historical monster
+ * debuff behavior because powers are decremented later in the same end-turn pass.
+ * @type {ActionFn<{target: string, power: string, amount: number, turnEndCompensation?: boolean}>}
+ */
+function addPower(state, {target, power, amount, turnEndCompensation = false}) {
+	const appliedAmount = amount + (turnEndCompensation ? 1 : 0)
+	return produce(state, (draft) => {
+		getRoomTargets(draft, target).forEach((model) => {
+			model.powers[power] = (model.powers[power] || 0) + appliedAmount
+		})
+	})
+}
+
+/**
+ * Deal damage from a source through the common weak/strength pipeline.
+ * @type {ActionFn<{source?: string, target: string, amount: number}>}
+ */
+function dealDamage(state, {source = 'player', target, amount = 0}) {
+	let finalAmount = amount
+	const sourceModel = source ? getRoomTargets(state, source)[0] : null
+	if (sourceModel?.powers?.strength) finalAmount += powers.strength.use(sourceModel.powers.strength)
+	if (sourceModel?.powers?.weak) finalAmount = powers.weak.use(finalAmount)
+	return removeHealth(state, {target, amount: finalAmount})
+}
+
+/**
+ * Play a card.
  * @type {ActionFn<{card: object, target?: string}>}
  */
 function playCard(state, {card, target}) {
@@ -219,67 +281,32 @@ function playCard(state, {card, target}) {
 	if (state.player.currentEnergy < card.energy) throw new Error('Not enough energy to play card')
 	let newState = discardCard(state, {card})
 	newState = produce(newState, (draft) => {
-		// Use energy
 		draft.player.currentEnergy = newState.player.currentEnergy - card.energy
-		// Block is expected to always target the player.
-		if (card.block) {
-			draft.player.block = newState.player.block + card.block
-		}
+		if (card.block) draft.player.block = newState.player.block + card.block
 	})
 	if (card.type === 'attack' || card.damage) {
-		// This should be refactored, but when you play an attack card that targets all enemies,
-		// we prioritize this over the actual enemy where you dropped the card.
 		const newTarget = card.target === CardTargets.allEnemies ? card.target : target
-		let amount = card.damage
-		if (newState.player.powers.strength) {
-			amount = amount + powers.strength.use(newState.player.powers.strength)
-		}
-		if (newState.player.powers.weak) {
-			amount = powers.weak.use(amount)
-		}
-		newState = removeHealth(newState, {target: newTarget, amount})
+		newState = dealDamage(newState, {source: 'player', target: newTarget, amount: card.damage})
 	}
 	if (card.powers) newState = applyCardPowers(newState, {target, card})
-	// if (card.use) newState = card.use(newState, {target, card})
 	newState = useCardActions(newState, {target, card})
 	return newState
 }
 
-/**
- * Runs through a list of actions and return the updated state.
- * Called when the card is played.
- * You CAN overwrite it, just make sure to return a new state.
- * @type {ActionFn<{card: object, target?: string}>}
- */
+/** @type {ActionFn<{card: object, target?: string}>} */
 export function useCardActions(state, {target, card}) {
 	if (!card.actions) return state
-
 	let nextState = state
 
 	card.actions.forEach((action) => {
-		// Don't run action if it has an invalid condition.
-		if (action.conditions && !conditionsAreValid(state, action.conditions)) {
-			return
-		}
-
-		// Make sure the action is called with a target, preferably the target you dropped the card on.
-		if (!action.parameter) action.parameter = {}
-		action.parameter.target = target
-
-		// Run the action (and add the `card` to the parameters
-		nextState = allActions[action.type](nextState, {
-			...action.parameter,
-			card,
-		})
+		if (action.conditions && !conditionsAreValid(state, action.conditions)) return
+		const parameter = {...(action.parameter || {}), target}
+		nextState = executeActionDescriptor(nextState, {...action, parameter}, {extra: {card}})
 	})
-
 	return nextState
 }
 
-/**
- * Adds health to a "target". Will stay between 0 and target.maxHealth.
- * @type {ActionFn<{target: string, amount: number}>}
- */
+/** @type {ActionFn<{target: string, amount: number}>} */
 function addHealth(state, {target, amount}) {
 	return produce(state, (draft) => {
 		const targets = getRoomTargets(draft, target)
@@ -289,10 +316,7 @@ function addHealth(state, {target, amount}) {
 	})
 }
 
-/**
- * Adds regen to the player equal to the amount of damage dealt to all enemies.
- * @type {ActionFn<{card: CARD}>}
- */
+/** @type {ActionFn<{card: CARD}>} */
 function addRegenEqualToAllDamage(state, {card}) {
 	if (!card) throw new Error('missing card!')
 	return produce(state, (draft) => {
@@ -304,10 +328,7 @@ function addRegenEqualToAllDamage(state, {card}) {
 	})
 }
 
-/**
- * Removes any weak or vulnerable powers from the player.
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 const removePlayerDebuffs = (state) => {
 	return produce(state, (draft) => {
 		draft.player.powers.weak = 0
@@ -315,10 +336,7 @@ const removePlayerDebuffs = (state) => {
 	})
 }
 
-/**
- * Adds energy to the player
- * @type {ActionFn<{amount?: number}>}
- */
+/** @type {ActionFn<{amount?: number}>} */
 function addEnergyToPlayer(state, props) {
 	const amount = props?.amount ? props.amount : 1
 	return produce(state, (draft) => {
@@ -326,10 +344,7 @@ function addEnergyToPlayer(state, props) {
 	})
 }
 
-/**
- * Removes health from a target, respecting vulnerable and block.
- * @type {ActionFn<{target: string, amount: number}>}
- */
+/** @type {ActionFn<{target: string, amount: number}>} */
 const removeHealth = (state, {target, amount = 0}) => {
 	return produce(state, (draft) => {
 		getRoomTargets(draft, target).forEach((t) => {
@@ -341,17 +356,12 @@ const removeHealth = (state, {target, amount = 0}) => {
 			} else {
 				t.block = amountAfterBlock
 			}
-			if (target === 'player' && t.currentHealth < 1) {
-				draft.endedAt = Date.now()
-			}
+			if (target === 'player' && t.currentHealth < 1) draft.endedAt = Date.now()
 		})
 	})
 }
 
-/**
- * Sets the health of a target
- * @type {ActionFn<{target: CardTargets, amount: number}>}
- */
+/** @type {ActionFn<{target: CardTargets, amount: number}>} */
 const setHealth = (state, {target, amount}) => {
 	return produce(state, (draft) => {
 		getRoomTargets(draft, target).forEach((t) => {
@@ -360,61 +370,33 @@ const setHealth = (state, {target, amount}) => {
 	})
 }
 
-/**
- * Used by playCard. Applies each power on the card to?
- * @type {ActionFn<{card: CARD, target: CardTargets}>}
- */
+/** @type {ActionFn<{card: CARD, target: CardTargets}>} */
 function applyCardPowers(state, {card, target}) {
-	return produce(state, (draft) => {
-		Object.entries(card.powers).forEach(([name, stacks]) => {
-			// Add powers that target player.
-			if (card.target === CardTargets.player) {
-				draft.player.powers[name] = (draft.player.powers[name] || 0) + stacks
-			}
-
-			// Add powers that target all enemies.
-			else if (card.target === CardTargets.allEnemies) {
-				draft.dungeon.graph[draft.dungeon.y][draft.dungeon.x].room.monsters.forEach((monster) => {
-					if (monster.currentHealth < 1) return
-					monster.powers[name] = (monster.powers[name] || 0) + stacks
-				})
-			}
-
-			// Add powers to a specific enemy.
-			else if (target) {
-				const index = target.split('enemy')[1]
-				const monster = draft.dungeon.graph[draft.dungeon.y][draft.dungeon.x].room.monsters[index]
-				if (monster.currentHealth < 1) return
-				monster.powers[name] = (monster.powers[name] || 0) + stacks
-			}
-		})
-	})
+	let nextState = state
+	for (const [name, stacks] of Object.entries(card.powers)) {
+		let powerTarget = target
+		if (card.target === CardTargets.player) powerTarget = 'player'
+		if (card.target === CardTargets.allEnemies) powerTarget = 'allEnemies'
+		nextState = addPower(nextState, {target: powerTarget, power: name, amount: stacks})
+	}
+	return nextState
 }
 
-/**
- * Helper to decrease all power stacks by one.
- * @param {CardPowers} powers
- */
+/** @param {CardPowers} powers */
 function _decreasePowers(powers) {
 	Object.entries(powers).forEach(([name, stacks]) => {
 		if (stacks > 0) powers[name] = stacks - 1
 	})
 }
 
-/**
- * Decrease player's power stacks..
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 function decreasePlayerPowerStacks(state) {
 	return produce(state, (draft) => {
 		_decreasePowers(draft.player.powers)
 	})
 }
 
-/**
- * Decrease monster's power stacks.
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 function decreaseMonsterPowerStacks(state) {
 	return produce(state, (draft) => {
 		getCurrRoom(draft).monsters.forEach((monster) => {
@@ -423,17 +405,13 @@ function decreaseMonsterPowerStacks(state) {
 	})
 }
 
-/**
- * End the current turn. This does many things..
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 function endTurn(state) {
 	let newState = discardHand(state)
 	if (state.player.powers.regen) {
 		newState = produce(newState, (draft) => {
 			const amount = powers.regen.use(newState.player.powers.regen)
 			let newHealth
-			// Don't allow regen to go above max health.
 			if (newState.player.currentHealth + amount > newState.player.maxHealth) {
 				newHealth = newState.player.maxHealth
 			} else {
@@ -450,21 +428,15 @@ function endTurn(state) {
 	const gameOver = isDead || didWin
 	newState = produce(newState, (draft) => {
 		if (didWin) draft.won = true
-		if (gameOver) {
-			draft.endedAt = Date.now()
-		}
+		if (gameOver) draft.endedAt = Date.now()
 	})
 	if (!gameOver) newState = newTurn(newState)
 	return newState
 }
 
-/**
- * Draws new cards, reset energy, remove player block, check powers.
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 function newTurn(state) {
 	const newState = drawCards(state)
-
 	return produce(newState, (draft) => {
 		draft.turn++
 		draft.player.currentEnergy = 3
@@ -472,16 +444,15 @@ function newTurn(state) {
 	})
 }
 
-/**
- * Ends an encounter. Called after making a map move. Why?
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 function endEncounter(state) {
+	const shuffled = shuffleForState(state, state.deck)
 	const nextState = produce(state, (draft) => {
 		draft.hand = []
 		draft.discardPile = []
 		draft.exhaustPile = []
-		draft.drawPile = shuffle(draft.deck)
+		draft.drawPile = shuffled.value
+		setRngCounter(draft, 'deck', shuffled.nextCounter)
 	})
 	return drawCards(nextState)
 }
@@ -490,7 +461,6 @@ function endEncounter(state) {
 function playMonsterActions(state) {
 	const room = getCurrRoom(state)
 	if (!room.monsters) return state
-	// For each monster, take turn, get state, pass to next monster.
 	let nextState = state
 	room.monsters.forEach((_monster, index) => {
 		nextState = takeMonsterTurn(nextState, index)
@@ -498,83 +468,39 @@ function playMonsterActions(state) {
 	return nextState
 }
 
-/** @type {ActionFn<number>} Runs the "intent" for a single monster (index) in the current room. */
+/** @type {ActionFn<number>} Runs one monster intent through ordinary core actions. */
 function takeMonsterTurn(state, monsterIndex) {
-	return produce(state, (draft) => {
-		const room = getCurrRoom(draft)
-		const monster = room.monsters[monsterIndex]
-		// Reset block at start of turn.
-		monster.block = 0
-		// If dead don't do anything..
-		if (monster.currentHealth < 1) return
+	const room = getCurrRoom(state)
+	const monster = room.monsters[monsterIndex]
+	if (!monster) return state
+	const intent = normalizeMonsterIntent(monster.intents[monster.nextIntent || 0])
+	const wasAlive = monster.currentHealth > 0
 
-		/**
-				if (monster.powers.poison)
-		{
-			state = removeHealth(state, {monster, powers.poison.use(monster.powers.poison)})
-			--hurt monster?!
-		}
-		 */
-
-		// Get current intent.
-		const intent = monster.intents[monster.nextIntent || 0]
-		if (!intent) return
-
-		// Increment for next turn..
-		if (monster.nextIntent === monster.intents.length - 1) {
-			monster.nextIntent = 0
-		} else {
-			monster.nextIntent++
-		}
-
-		// Run the intent..
-		if (intent.block) {
-			monster.block = monster.block + intent.block
-		}
-
-		if (intent.damage) {
-			let amount = intent.damage
-			if (monster.powers.weak) amount = powers.weak.use(amount)
-			const updatedPlayer = removeHealth(draft, {
-				target: 'player',
-				amount,
-			}).player
-			draft.player.block = updatedPlayer.block
-			draft.player.currentHealth = updatedPlayer.currentHealth
-			if (updatedPlayer.currentHealth < 1) {
-				draft.endedAt = Date.now()
-			}
-		}
-
-		if (intent.vulnerable) {
-			draft.player.powers.vulnerable = (draft.player.powers.vulnerable || 0) + intent.vulnerable + 1
-		}
-
-		if (intent.weak) {
-			draft.player.powers.weak = (draft.player.powers.weak || 0) + intent.weak + 1
-		}
+	let nextState = produce(state, (draft) => {
+		const draftMonster = getCurrRoom(draft).monsters[monsterIndex]
+		draftMonster.block = 0
+		if (!wasAlive || !intent) return
+		draftMonster.nextIntent = draftMonster.nextIntent === draftMonster.intents.length - 1 ? 0 : draftMonster.nextIntent + 1
 	})
+
+	if (!wasAlive || !intent) return nextState
+	for (const action of intent.actions || []) {
+		nextState = executeActionDescriptor(nextState, action, {self: `enemy${monsterIndex}`})
+	}
+	return nextState
 }
 
-/**
- * Adds a card to the deck.
- * @type {ActionFn<{card: CARD}>}
- */
+/** @type {ActionFn<{card: CARD}>} */
 function addCardToDeck(state, {card}) {
 	return produce(state, (draft) => {
 		draft.deck.push(card)
 	})
 }
 
-/**
- * Records a move on the dungeon map.
- * @type {ActionFn<{move: {x: number, y: number}}>}
- */
+/** @type {ActionFn<{move: {x: number, y: number}}>} */
 function move(state, {move}) {
 	const nextState = endEncounter(state)
-
 	return produce(nextState, (draft) => {
-		// Clear temporary powers, energy and block on player.
 		draft.player.powers = {}
 		draft.player.currentEnergy = 3
 		draft.player.block = 0
@@ -582,71 +508,45 @@ function move(state, {move}) {
 		draft.dungeon.pathTaken.push([move.x, move.y])
 		draft.dungeon.x = move.x
 		draft.dungeon.y = move.y
-		// if (number === state.dungeon.rooms.length - 1) {
-		// 	throw new Error('You have reached the end of the dungeon. Congratulations.')
-		// }
 	})
 }
 
-/**
- * Deals damage to a target equal to the current player's block.
- * @type {ActionFn<{target: CardTargets}>}
- */
+/** @type {ActionFn<{target: CardTargets}>} */
 function dealDamageEqualToBlock(state, {target}) {
-	if (state.player.block) {
-		const block = state.player.block
-		return removeHealth(state, {target, amount: block})
-	}
+	if (state.player.block) return removeHealth(state, {target, amount: state.player.block})
+	return state
 }
 
-/**
- * Deals damage to "target" equal to the amount of vulnerable on the target.
- * @type {ActionFn<{target: CardTargets}>}
- */
+/** @type {ActionFn<{target: CardTargets}>} */
 function dealDamageEqualToVulnerable(state, {target}) {
 	return produce(state, (draft) => {
 		getRoomTargets(draft, target).forEach((t) => {
-			if (t.powers.vulnerable) {
-				const amount = t.currentHealth - t.powers.vulnerable
-				t.currentHealth = amount
-			}
+			if (t.powers.vulnerable) t.currentHealth -= t.powers.vulnerable
 		})
 		return draft
 	})
 }
 
-/**
- * Deals damage to "target" equal to the amount of vulnerable on the target.
- * @type {ActionFn<{target: CardTargets}>}
- */
+/** @type {ActionFn<{target: CardTargets}>} */
 function dealDamageEqualToWeak(state, {target}) {
 	return produce(state, (draft) => {
 		getRoomTargets(draft, target).forEach((t) => {
-			if (t.powers.weak) {
-				const amount = t.currentHealth - t.powers.weak
-				t.currentHealth = amount
-			}
+			if (t.powers.weak) t.currentHealth -= t.powers.weak
 		})
 		return draft
 	})
 }
 
-/**
- * Sets a single power on a specific target
- * @type {ActionFn<{target: CardTargets, power: string, amount: number}>}
- */
+/** @type {ActionFn<{target: CardTargets, power: string, amount: number}>} */
 function setPower(state, {target, power, amount}) {
 	return produce(state, (draft) => {
-		getRoomTargets(draft, target).forEach((target) => {
-			target.powers[power] = amount
+		getRoomTargets(draft, target).forEach((model) => {
+			model.powers[power] = amount
 		})
 	})
 }
 
-/**
- * Stores a campfire choice on the room (useful for stats and whatnot)
- * @type {ActionFn<{room: Room, choice: string, reward: CARD}>}
- */
+/** @type {ActionFn<{room: Room, choice: string, reward: CARD}>} */
 function makeCampfireChoice(state, {choice, reward}) {
 	return produce(state, (draft) => {
 		const room = getCurrRoom(draft)
@@ -655,10 +555,7 @@ function makeCampfireChoice(state, {choice, reward}) {
 	})
 }
 
-/**
- * A cheat code. Sets the health of all monsters in the dungeon to 1.
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 function iddqd(state) {
 	console.log('iddqd')
 	return produce(state, (draft) => {
@@ -673,22 +570,19 @@ function iddqd(state) {
 	})
 }
 
-/**
- * Sets a custom deck of cards based on an array of card names.
- * @type {ActionFn<{cardNames: string[]}>}
- */
+/** @type {ActionFn<{cardNames: string[]}>} */
 function setDeck(state, {cardNames}) {
-	const deck = cardNames.map((name) => createCard(name))
+	const {cards: deck, nextCounter: cardCounter} = createRunCards(state, cardNames)
+	const shuffled = shuffleForState(state, deck)
 	return produce(state, (draft) => {
 		draft.deck = deck
-		draft.drawPile = shuffle(deck)
+		draft.drawPile = shuffled.value
+		setRngCounter(draft, 'cardInstances', cardCounter)
+		setRngCounter(draft, 'deck', shuffled.nextCounter)
 	})
 }
 
-/**
- * Marks the game state as having used cheats.
- * @type {ActionFn<{}>}
- */
+/** @type {ActionFn<{}>} */
 function setDidCheat(state) {
 	return produce(state, (draft) => {
 		draft.didCheat = true
@@ -696,20 +590,24 @@ function setDidCheat(state) {
 }
 
 const allActions = {
+	addBlock,
 	addCardToDeck,
 	addCardToHand,
 	addEnergyToPlayer,
 	addHealth,
+	addPower,
 	addRegenEqualToAllDamage,
 	addStarterDeck,
 	applyCardPowers,
 	createNewState,
+	dealDamage,
 	dealDamageEqualToBlock,
 	dealDamageEqualToVulnerable,
 	dealDamageEqualToWeak,
 	discardCard,
 	discardHand,
 	drawCards,
+	endEncounter,
 	endTurn,
 	iddqd,
 	makeCampfireChoice,
@@ -725,7 +623,6 @@ const allActions = {
 	setPower,
 	takeMonsterTurn,
 	upgradeCard,
-	endEncounter,
 }
 
 export default allActions
