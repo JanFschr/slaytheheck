@@ -1,13 +1,11 @@
 import Dungeon from '../game/dungeon.js'
 import {Monster} from '../game/monster.js'
-import {EventRoom, MerchantRoom, MonsterRoom, TreasureRoom} from '../game/rooms.js'
 import {createRng, deriveSeed} from '../game/rng.js'
+import {EventRoom, MerchantRoom, MonsterRoom, TreasureRoom} from '../game/rooms.js'
 import {eventIds} from './events.js'
 
 function reachableColumns(dungeon, floor) {
-	const columns = dungeon.paths
-		.map((path) => path[floor - 1]?.[1]?.[1])
-		.filter((column) => Number.isInteger(column))
+	const columns = dungeon.paths.map((path) => path[floor - 1]?.[1]?.[1]).filter((column) => Number.isInteger(column))
 	return [...new Set(columns)]
 }
 
