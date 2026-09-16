@@ -1,0 +1,120 @@
+.BuildHud {
+	position: absolute;
+	top: max(0.5rem, var(--safe-top));
+	left: 50%;
+	z-index: 4;
+	max-width: min(62vw, 48rem);
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.35rem 0.5rem;
+	overflow-x: auto;
+	transform: translateX(-50%);
+	border: 1px solid color-mix(in oklab, var(--color-accent), transparent 70%);
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--color-panel-strong), transparent 10%);
+	backdrop-filter: blur(8px);
+	white-space: nowrap;
+}
+
+.BuildHud-count {
+	font-size: 0.7rem;
+	opacity: 0.7;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.BuildHud-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	min-height: 2rem;
+	padding: 0.2rem 0.45rem;
+	border-radius: 999px;
+	background: var(--color-panel);
+	font-size: 0.78rem;
+}
+
+.BuildHud-chip[data-kind='equipment'] {
+	outline: 1px solid color-mix(in oklab, var(--color-info), transparent 55%);
+}
+
+.BuildRewardChooser {
+	margin-block: 1.25rem;
+}
+
+.BuildRewardChooser > h3 {
+	text-align: center;
+}
+
+.BuildRewardChooser-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: clamp(0.65rem, 2vw, 1rem);
+}
+
+.BuildRewardCard {
+	min-height: 12rem;
+	display: grid;
+	grid-template-rows: auto auto auto 1fr auto;
+	gap: 0.45rem;
+	align-content: start;
+	padding: 1rem;
+	border: 1px solid color-mix(in oklab, var(--color-accent), transparent 55%);
+	border-radius: 0.9rem;
+	background: var(--color-panel);
+	color: var(--color-text);
+	text-align: left;
+	box-shadow: none;
+}
+
+.BuildRewardCard:hover,
+.BuildRewardCard:focus-visible {
+	transform: translateY(-0.18rem);
+	border-color: var(--color-accent);
+	box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent), transparent 78%);
+}
+
+.BuildRewardCard-icon {
+	font-size: 2rem;
+}
+
+.BuildRewardCard-kind,
+.BuildRewardCard small {
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	opacity: 0.72;
+}
+
+@media (max-width: 700px) {
+	.BuildHud {
+		top: auto;
+		bottom: calc(max(0.35rem, var(--safe-bottom)) + 4.5rem);
+		max-width: calc(100vw - 1rem - var(--safe-left) - var(--safe-right));
+	}
+
+	.BuildHud-chipName {
+		display: none;
+	}
+
+	.BuildRewardChooser-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.BuildRewardCard {
+		min-height: 0;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-rows: auto auto;
+		align-items: center;
+	}
+
+	.BuildRewardCard-icon {
+		grid-row: 1 / span 2;
+	}
+
+	.BuildRewardCard strong,
+	.BuildRewardCard > span:not(.BuildRewardCard-icon):not(.BuildRewardCard-kind) {
+		grid-column: 2;
+	}
+}
