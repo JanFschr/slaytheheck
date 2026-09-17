@@ -214,12 +214,6 @@ export function createMechanicsMvpDevDungeon(options = {}) {
 	assignRoom(dungeon, 6, 0, 'C', CampfireRoom())
 
 	const bossFloor = dungeon.graph.length - 1
-	assignRoom(
-		dungeon,
-		bossFloor,
-		0,
-		'boss',
-		CoreArchitect(createRng(deriveSeed(seed, 'mechanics-mvp-dev', 'boss'))),
-	)
+	assignRoom(dungeon, bossFloor, 0, 'boss', CoreArchitect(createRng(deriveSeed(seed, 'mechanics-mvp-dev', 'boss'))))
 	return dungeon
 }
