@@ -28,17 +28,25 @@ function browserContentConfig() {
 	return globalThis.__SLAY_CONTENT_PACK__ || {}
 }
 
+function consumeBrowserResumeState() {
+	if (typeof globalThis === 'undefined') return null
+	const state = globalThis.__SLAY_RESUME_STATE__ || null
+	if (state) delete globalThis.__SLAY_RESUME_STATE__
+	return state
+}
+
 /**
  * Creates a new game.
  * @param {boolean} debug - whether to log actions to the console
- * @param {{seed?: string|number, contentPack?: string}} [options]
+ * @param {{seed?: string|number, contentPack?: string, resumeState?: State}} [options]
  * @returns {Game}
  */
 export default function createNewGame(debug = false, options = {}) {
 	const actionManager = ActionManager({debug})
 	const browserConfig = browserContentConfig()
-	const contentPack = options.contentPack ?? browserConfig.id
-	const seed = String(options.seed ?? browserConfig.seed ?? createRunSeed())
+	const resumeState = options.resumeState ?? consumeBrowserResumeState()
+	const contentPack = resumeState?.contentPack ?? options.contentPack ?? browserConfig.id
+	const seed = String(resumeState?.seed ?? options.seed ?? browserConfig.seed ?? createRunSeed())
 
 	/**
 	 * @returns {State} with a dungeon, start deck and cards drawn
@@ -68,7 +76,7 @@ export default function createNewGame(debug = false, options = {}) {
 	}
 
 	return {
-		state: createNewState(),
+		state: resumeState || createNewState(),
 		seed,
 		actions,
 		enqueue(action) {
