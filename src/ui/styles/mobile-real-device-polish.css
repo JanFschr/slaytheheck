@@ -1,0 +1,159 @@
+/* Final portrait overrides from real-device QA.
+ * Keep this layer intentionally small: sizing, alignment and stacking only. */
+
+@media (max-width: 700px) and (orientation: portrait) {
+	:root {
+		/* Four cards should be readable across a typical phone width without
+		 * forcing the hand into oversized, almost full-card-width panels. */
+		--mobile-card-width: clamp(5.9rem, 26.5vw, 6.55rem);
+		--mobile-card-height: clamp(10.6rem, 45vw, 11.5rem);
+	}
+
+	/* Full-screen overlays must always sit above fixed combat HUD elements. */
+	.Overlay[open] {
+		z-index: 100 !important;
+	}
+
+	/* Player HP remains centered in the action row, but should not dominate it. */
+	.Targets > .Targets-group:first-child > .Target[data-type="player"] {
+		width: clamp(6.2rem, 31.5vw, 7.4rem) !important;
+		z-index: 46 !important;
+	}
+
+	/* Draw / resources / discard share one baseline. */
+	.MechanicsMvpHud[data-room-type="monster"] {
+		bottom: calc(
+			var(--safe-bottom) +
+			var(--mobile-combat-action-height) +
+			var(--mobile-card-height) +
+			1.3rem
+		) !important;
+		z-index: 52 !important;
+	}
+
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-resources {
+		align-items: center !important;
+		gap: 0.14rem !important;
+		flex-wrap: nowrap !important;
+		white-space: nowrap !important;
+	}
+
+	/* All resource chips are single-row controls. Heat keeps a tiny threshold
+	 * meter, but it no longer creates a second visual line. */
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-resource {
+		position: relative;
+		display: grid !important;
+		grid-template-columns: auto auto auto !important;
+		grid-template-areas: "icon value pips" !important;
+		align-items: center !important;
+		gap: 0.12rem !important;
+		height: 2.3rem !important;
+		min-height: 2.3rem !important;
+		padding: 0.16rem 0.3rem !important;
+		line-height: 1 !important;
+		white-space: nowrap !important;
+	}
+
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-resource[aria-expanded="true"] {
+		border-color: color-mix(in oklab, var(--resource-color), white 14%) !important;
+		box-shadow: 0 0 0 2px color-mix(in oklab, var(--resource-color), transparent 66%) !important;
+	}
+
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-icon,
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-value {
+		line-height: 1 !important;
+	}
+
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-pips {
+		min-width: 1.7rem !important;
+		gap: 1px !important;
+		flex-wrap: nowrap !important;
+	}
+
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-pip {
+		width: 0.11rem !important;
+		height: 0.17rem !important;
+		flex: 0 0 0.11rem;
+	}
+
+	.MechanicsMvpHud[data-room-type="monster"]
+		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"]) {
+		grid-template-columns: auto auto !important;
+		grid-template-areas: "icon value" !important;
+	}
+
+	/* Resource information opens above the context row, above cards and HP but
+	 * below true full-screen overlays. */
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-popover {
+		top: auto !important;
+		bottom: calc(100% + 0.42rem) !important;
+		z-index: 3 !important;
+		width: min(17.5rem, 86vw) !important;
+		padding: 0.52rem 0.6rem !important;
+	}
+
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-popover p {
+		font-size: 0.69rem;
+		line-height: 1.32;
+	}
+
+	.App > :is(#DrawPile, #DiscardPile) > button {
+		bottom: calc(
+			var(--safe-bottom) +
+			var(--mobile-combat-action-height) +
+			var(--mobile-card-height) +
+			1.3rem
+		) !important;
+		height: 2.3rem !important;
+		min-height: 2.3rem !important;
+		max-height: 2.3rem !important;
+		display: flex;
+		align-items: center;
+		white-space: nowrap !important;
+	}
+
+	/* Narrower cards plus modest overlap make roughly four cards available in
+	 * one glance on common iPhone widths while preserving horizontal scrolling. */
+	.Hand .Card {
+		margin-left: -0.55rem !important;
+	}
+
+	.Hand .Card:first-child {
+		margin-left: 0 !important;
+	}
+
+	.Hand .Cards {
+		padding-inline: 0.35rem !important;
+		scroll-padding-inline: 0.45rem !important;
+	}
+
+	.Hand .Card-media img {
+		height: clamp(56px, 16.5vw, 70px) !important;
+	}
+
+	.Hand .Card-name {
+		font-size: clamp(0.78rem, 3.25vw, 0.9rem) !important;
+		line-height: 1.03 !important;
+	}
+
+	.Hand .Card-type {
+		font-size: 0.57rem !important;
+	}
+
+	.Hand .Card-description {
+		font-size: clamp(0.56rem, 2.25vw, 0.65rem) !important;
+		line-height: 1.08 !important;
+	}
+
+	.Hand .Card-energy {
+		width: 1.68rem !important;
+		height: 1.68rem !important;
+		min-width: 1.68rem !important;
+		min-height: 1.68rem !important;
+		font-size: 0.75rem !important;
+	}
+
+	.Hand .Card.is-tapSelected {
+		transform: translateY(-1.08rem) scale(1.06) !important;
+	}
+}
