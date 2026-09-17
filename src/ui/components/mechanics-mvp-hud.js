@@ -16,14 +16,16 @@ const resourceDefinitions = [
 		icon: '◉',
 		label: 'Drones',
 		max: 5,
-		title: 'Drones are deployed combat units represented as a stack. Each Drone deals 2 damage to every enemy before your turn ends.',
+		title:
+			'Drones are deployed combat units represented as a stack. Each Drone deals 2 damage to every enemy before your turn ends.',
 	},
 	{
 		resource: 'corruption',
 		icon: '◈',
 		label: 'Void',
 		max: 6,
-		title: 'Void is your Corruption resource. It powers Void cards and is usually gained by paying HP or exhausting cards.',
+		title:
+			'Void is your Corruption resource. It powers Void cards and is usually gained by paying HP or exhausting cards.',
 	},
 ]
 
