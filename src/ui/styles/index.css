@@ -25,6 +25,11 @@
 @import "./explainers.css";
 @import "./themes.css";
 
+/* Cost diamonds intentionally sit outside the card frame. */
+html[data-theme="cyberpunk"] .Card {
+	overflow: visible;
+}
+
 /** Styles in this file should probably be moved into dedicated files */
 
 img-sprite {
