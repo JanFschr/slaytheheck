@@ -32,8 +32,8 @@
 		inset: 0;
 		width: auto;
 		height: auto;
-		padding: calc(var(--safe-top) + 0.65rem) calc(var(--safe-right) + 0.45rem)
-			calc(var(--safe-bottom) + 0.8rem) calc(var(--safe-left) + 0.45rem);
+		padding: calc(var(--safe-top) + 0.65rem) calc(var(--safe-right) + 0.45rem) calc(var(--safe-bottom) + 0.8rem)
+			calc(var(--safe-left) + 0.45rem);
 		overflow-x: hidden;
 		overflow-y: auto;
 	}
