@@ -1,0 +1,430 @@
+/* Portrait combat v2: keep the battlefield and the hand in predictable,
+ * separate screen regions. This layer intentionally overrides mobile.css
+ * without changing the desktop or landscape layouts. */
+@media (max-width: 700px) and (orientation: portrait) {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) {
+		--combat-action-height: 3.65rem;
+		--combat-topbar-height: 3rem;
+		--combat-player-height: 1.8rem;
+		--combat-context-height: 3rem;
+		--card-width: clamp(5.9rem, 25.5vw, 6.7rem);
+		--card-height: clamp(9.8rem, 42vw, 11rem);
+	}
+
+	/* Compact navigation row. Empty exhaust piles do not need a permanent
+	 * touch target; the keyboard shortcut still works if someone needs it. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > :is(#Menu, #ExhaustPile, #Deck, #Map) > button {
+		position: fixed;
+		top: calc(var(--safe-top) + 0.2rem);
+		z-index: 42;
+		min-height: var(--tap-target);
+		max-height: var(--tap-target);
+		padding: 0.25rem 0.48rem;
+		border: 1px solid color-mix(in oklab, var(--color-text), transparent 82%);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-panel-strong), transparent 5%);
+		font-size: clamp(0.62rem, 2.8vw, 0.72rem);
+		line-height: 1;
+		backdrop-filter: blur(10px);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > #Menu > button {
+		left: calc(var(--safe-left) + 0.3rem);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > #ExhaustPile > button {
+		left: calc(var(--safe-left) + 4.45rem);
+		max-width: 6.8rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > #ExhaustPile:not(:has(.Card)) > button {
+		display: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > #Map > button {
+		right: calc(var(--safe-right) + 0.3rem);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > #Deck > button {
+		right: calc(var(--safe-right) + 3.55rem);
+		max-width: 5.7rem;
+	}
+
+	/* The original Targets element remains the game interaction host, but its
+	 * two groups become the compact player HUD and the bounded enemy pane. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets {
+		display: block;
+		min-height: 100dvh;
+		padding: 0;
+		overflow: visible;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child {
+		position: fixed;
+		top: calc(var(--safe-top) + var(--combat-topbar-height) + 0.12rem);
+		left: calc(var(--safe-left) + 0.5rem);
+		right: calc(var(--safe-right) + 0.5rem);
+		z-index: 18;
+		display: flex;
+		justify-content: center;
+		pointer-events: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child .Target {
+		flex: 0 1 11rem;
+		width: auto;
+		max-width: 11rem;
+		margin: 0;
+		padding: 0.15rem 0.35rem;
+		border: 1px solid color-mix(in oklab, var(--color-text), transparent 84%);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-panel-strong), transparent 6%);
+		pointer-events: auto;
+		backdrop-filter: blur(10px);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child .Target-header {
+		display: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child .Healthbar {
+		height: 1.35rem;
+		margin: 0;
+		border-width: 2px;
+		border-radius: 999px;
+		overflow: hidden;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Healthbar-label {
+		margin: 0;
+		font-size: 0.7rem;
+		line-height: 1.12rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Healthbar-label
+		span {
+		transform: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child .Target-powers {
+		display: flex;
+		gap: 0.15rem;
+		min-height: 0;
+		margin: 0.15rem 0 0;
+		overflow-x: auto;
+		font-size: 0.58rem;
+		white-space: nowrap;
+	}
+
+	/* Soft split-screen: this bounded pane owns the upper/middle battlefield.
+	 * The hand and action bar have their own fixed region below it. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child {
+		position: fixed;
+		top: calc(
+			var(--safe-top) + var(--combat-topbar-height) + var(--combat-player-height) + 0.8rem
+		);
+		left: var(--safe-left);
+		right: var(--safe-right);
+		bottom: calc(
+			var(--safe-bottom) + var(--combat-action-height) + var(--card-height) + var(--combat-context-height) + 0.9rem
+		);
+		z-index: 10;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: clamp(0.3rem, 2vw, 0.55rem);
+		padding: 0.35rem 0.45rem 0.55rem;
+		overflow-x: auto;
+		overflow-y: hidden;
+		background: linear-gradient(
+			to bottom,
+			color-mix(in oklab, var(--color-panel), transparent 82%),
+			transparent 18%,
+			transparent 82%,
+			color-mix(in oklab, var(--color-panel), transparent 78%)
+		);
+		border-bottom: 1px solid color-mix(in oklab, var(--color-text), transparent 90%);
+		scroll-snap-type: x proximity;
+		scrollbar-width: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:last-child::-webkit-scrollbar {
+		display: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child .Target {
+		flex: 0 0 clamp(7rem, 31vw, 8.3rem);
+		max-width: clamp(7rem, 31vw, 8.3rem);
+		min-width: 0;
+		min-height: 0;
+		margin: 0;
+		padding: 0.4rem 0.35rem 0.35rem;
+		justify-content: flex-end;
+		border: 1px solid color-mix(in oklab, var(--color-text), transparent 88%);
+		border-radius: 0.8rem;
+		background: color-mix(in oklab, var(--color-panel), transparent 28%);
+		backdrop-filter: blur(4px);
+		scroll-snap-align: center;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:last-child
+		.Target:only-child {
+		flex-basis: min(44vw, 10.5rem);
+		max-width: min(44vw, 10.5rem);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:last-child:has(> .Target:nth-child(3))
+		.Target {
+		flex-basis: clamp(6.65rem, 28.5vw, 7.4rem);
+		max-width: clamp(6.65rem, 28.5vw, 7.4rem);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-header {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.15rem;
+		min-height: 0;
+		margin: 0;
+		padding: 0.15rem;
+		background: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-sprite {
+		flex-shrink: 0;
+		margin-block: -0.15rem 0;
+		transform: scale(0.92);
+		transform-origin: center bottom;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-intents {
+		display: flex;
+		width: 100%;
+		align-items: center;
+		justify-content: center;
+		gap: 0.2rem;
+		margin: 0.1rem 0 0;
+		flex-wrap: wrap;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-name {
+		display: block;
+		order: -1;
+		width: 100%;
+		overflow: hidden;
+		font-size: 0.58rem;
+		font-weight: 700;
+		line-height: 1;
+		text-align: center;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		opacity: 0.82;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-intent {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.12rem;
+		min-height: 1.45rem;
+		padding: 0.16rem 0.32rem;
+		border: 1px solid color-mix(in oklab, var(--color-info), transparent 55%);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-panel-strong), transparent 4%);
+		font-size: 0.7rem;
+		font-weight: 750;
+		line-height: 1;
+		white-space: nowrap;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		.Target[data-type="enemy"]
+		.Target-intent:has(img[alt="damage"]) {
+		border-color: color-mix(in oklab, var(--color-danger), white 30%);
+		background: color-mix(in oklab, var(--color-danger), var(--color-panel-strong) 55%);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		.Target[data-type="enemy"]
+		.Target-intent:has(img[alt="block"]) {
+		border-color: color-mix(in oklab, var(--color-info), white 18%);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-intent img {
+		height: 1rem;
+		vertical-align: middle;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-intent--text {
+		font-size: 0.6rem;
+		font-weight: 700;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Healthbar {
+		height: 1.5rem;
+		margin-top: 0.18rem;
+		overflow: hidden;
+		border-width: 2px;
+		border-radius: 999px;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Healthbar-label {
+		margin: 0;
+		font-size: 0.74rem;
+		line-height: 1.25rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Healthbar-label span {
+		transform: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Healthbar-bar {
+		border-radius: 999px;
+		font-size: 0.68rem;
+		line-height: 1.25rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-powers {
+		display: flex;
+		justify-content: center;
+		gap: 0.12rem;
+		min-height: 0;
+		max-height: 2.4rem;
+		margin: 0.2rem 0 0;
+		overflow-y: auto;
+		flex-wrap: wrap;
+		font-size: 0.56rem;
+		line-height: 1.1;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-powers span {
+		margin: 0;
+		padding: 0.08rem 0.22rem;
+		border-radius: 999px;
+	}
+
+	/* Hand and action bar become the lower split. Four cards fit comfortably on
+	 * a modern phone and larger hands retain horizontal scrolling. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets + .Split {
+		min-height: var(--combat-action-height);
+		padding: 0.25rem 0.45rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets + .Split .EnergyBadge {
+		width: 2.2rem;
+		height: 2.2rem;
+		margin-left: 0.25rem;
+		font-size: 0.95rem;
+		border-width: 2px;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets + .Split .EndTurn {
+		min-height: var(--tap-target);
+		padding: 0.45rem 0.85rem;
+		font-size: 0.85rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand {
+		bottom: calc(var(--safe-bottom) + var(--combat-action-height));
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Cards {
+		min-height: calc(var(--card-height) + 1.2rem);
+		padding: 0.9rem 0.45rem 0.25rem;
+		scroll-padding-inline: 0.45rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card {
+		margin-left: -1.15rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card:first-child {
+		margin-left: 0;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card-media img {
+		height: clamp(52px, 15vw, 68px);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card-name {
+		font-size: 0.84rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card-description {
+		font-size: clamp(0.58rem, 2.45vw, 0.68rem);
+	}
+
+	/* Draw/discard become context chips in the seam between battlefield and hand. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > :is(#DrawPile, #DiscardPile) > button {
+		position: fixed;
+		bottom: calc(
+			var(--safe-bottom) + var(--combat-action-height) + var(--card-height) + 1.5rem
+		);
+		z-index: 32;
+		min-height: var(--tap-target);
+		max-width: 6.9rem;
+		padding: 0.28rem 0.55rem;
+		overflow: hidden;
+		border: 1px solid color-mix(in oklab, var(--color-text), transparent 84%);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-panel-strong), transparent 5%);
+		font-size: 0.67rem;
+		line-height: 1;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		backdrop-filter: blur(9px);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > #DrawPile > button {
+		left: calc(var(--safe-left) + 0.4rem);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > #DiscardPile > button {
+		right: calc(var(--safe-right) + 0.4rem);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > :is(#DrawPile, #DiscardPile):not(:has(.Card)) > button {
+		opacity: 0.58;
+	}
+
+	/* Existing MVP resources need one extra row below the compact navigation.
+	 * Shift combat content down only on the dedicated mechanics test screen. */
+	body:has(.MechanicsMvpHud) .MechanicsMvpHud {
+		top: calc(var(--safe-top) + var(--combat-topbar-height) + 0.15rem);
+		z-index: 35;
+		padding-block: 0.28rem;
+	}
+
+	body:has(.MechanicsMvpHud)
+		.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child {
+		top: calc(var(--safe-top) + var(--combat-topbar-height) + 3rem);
+	}
+
+	body:has(.MechanicsMvpHud)
+		.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:last-child {
+		top: calc(
+			var(--safe-top) + var(--combat-topbar-height) + var(--combat-player-height) + 3.65rem
+		);
+	}
+}
