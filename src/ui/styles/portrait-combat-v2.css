@@ -176,7 +176,10 @@
 		max-width: min(44vw, 10.5rem);
 	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child:has(> .Target:nth-child(3)) .Target {
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:last-child:has(> .Target:nth-child(3))
+		.Target {
 		flex-basis: clamp(6.65rem, 28.5vw, 7.4rem);
 		max-width: clamp(6.65rem, 28.5vw, 7.4rem);
 	}
