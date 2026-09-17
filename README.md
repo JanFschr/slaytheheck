@@ -1,8 +1,8 @@
 # Slay the Heck
 
-Slay the Heck is a mobile-first browser deck-building roguelike based on the open-source [Slay the Web](https://github.com/oskarrough/slaytheweb) project.
+Slay the Heck is a mobile-first browser deck-building roguelike focused on deterministic runs, touch-first combat, buildcrafting and fast iteration on new mechanics.
 
-The current fork is being used to evolve the original engine into a more deterministic, data-driven roguelike with touch-first combat, seeded runs, build items, strategic map rooms and a small mechanics test pack before larger deck archetypes are built.
+The project is currently in active development. The engine foundation is largely in place; current work focuses on validating gameplay systems before expanding into full deck archetypes and a final visual identity.
 
 ## Play
 
@@ -10,9 +10,31 @@ The current fork is being used to evolve the original engine into a more determi
 - Mechanics MVP: https://janfschr.github.io/slaytheheck/mvp/
 - Fixed developer test run: https://janfschr.github.io/slaytheheck/mvp-dev/
 
-The Mechanics MVP is intentionally small. It contains Heat, Drone and Void mechanics plus matching relics/equipment so new systems can be tested before committing to a full content set.
+Repository: https://github.com/JanFschr/slaytheheck
 
-The fixed developer run always uses seed `mechanics-mvp-dev-v1` and forces this route:
+Issues and feedback: https://github.com/JanFschr/slaytheheck/issues
+
+## Mechanics MVP
+
+The Mechanics MVP is a deliberately small content pack used to test the new runtime and build systems before creating a much larger card pool.
+
+It currently contains:
+
+- 15 test cards across Heat, Drone and Void mini-archetypes
+- matching relics and equipment
+- deterministic card rewards and shop inventory
+- gold, merchant, event, treasure and campfire rooms
+- normal encounters, an elite and a three-phase boss
+- visible Heat, Drone and Void combat resources
+- seeded runs and local browser saves
+
+### Fixed dev run
+
+For reproducible manual testing, use:
+
+https://janfschr.github.io/slaytheheck/mvp-dev/
+
+This route always uses the seed `mechanics-mvp-dev-v1` and follows the same linear sequence:
 
 ```text
 Start
@@ -32,34 +54,46 @@ Campfire
 Boss: Core Architect
 ```
 
-This route disables local autosave on purpose. Reloading it starts the same clean run again, including the same map, encounters, shop inventory and deterministic rewards.
+The dev route intentionally disables local autosave. Reloading or restarting it produces the same clean run again, including the same encounters, shop inventory, rewards and RNG progression.
+
+The normal `/mvp/` route remains a regular seeded run and keeps local autosave enabled.
 
 ## Current feature set
 
-The fork currently includes:
-
 - portrait and landscape mobile combat layouts
+- compact portrait enemy HUD and bottom action bar
 - touch card selection and fast double-tap play when a card has one valid target
 - stable content IDs, card tags, rarity and keyword metadata
 - deterministic seeded RNG streams for map generation, encounters, card IDs, shuffles, rewards, shops and summons
-- a shared action runtime used by cards, enemies, relics and equipment
+- shared action runtime for cards, enemies, relics, equipment and runtime triggers
 - serializable pause/resume choice actions
-- multi-phase bosses, summons and action-authored enemy intents
-- relic and equipment registries with reward selection and HUD support
-- gold, merchant, event and treasure rooms
-- deterministic strategic map routes
+- action-authored enemy intents, summons and multi-phase bosses
+- relic and equipment registries with deterministic rewards
+- gold economy, merchant, events and treasure rooms
+- strategic seeded map routes
 - browser-local run autosaves and resume
-- URL saves for portable/shareable state
-- the Mechanics MVP content pack with 15 test cards, 3 relics, 3 equipment items, 3 normal enemy identities, an elite and a three-phase boss
-- GitHub Pages CI/build/deploy from `main`
+- URL-based portable/shareable saves
+- dedicated Mechanics MVP and fixed regression run
+- automated AVA, Biome, Astro build and GitHub Pages deployment
 
 ## Local run saves
 
-Active runs are automatically stored in browser `localStorage`. Core and Mechanics MVP runs use separate save slots.
+Active runs are automatically saved in browser `localStorage`.
 
-The saved state includes the deterministic seed/RNG state, map position, deck/hand/piles, HP, gold, relics, equipment, resources and pending runtime choices. The splash screen can resume a local run after a reload.
+The save contains the complete serializable run state, including:
 
-A completed, abandoned or lost run clears its local slot. The fixed `/mvp-dev/` regression route does not write local saves, so it always starts clean.
+- seed and deterministic RNG progress
+- dungeon and current map position
+- player HP and powers
+- deck, hand, draw, discard and exhaust piles
+- gold
+- relics and equipment
+- Mechanics MVP resources
+- pending runtime choices
+
+Normal runs and Mechanics MVP runs use separate save slots. The splash screen offers a continue action when a local run exists.
+
+A completed, abandoned or lost run clears its corresponding local save. The fixed `/mvp-dev/` route does not write local saves.
 
 ## Development
 
@@ -78,7 +112,7 @@ bun run test
 bun run build
 ```
 
-Useful routes while developing:
+Useful local routes:
 
 ```text
 /             normal game
@@ -88,38 +122,43 @@ Useful routes while developing:
 /map-demo/    map demo
 ```
 
-Useful query parameters in the normal game include `?debug`, `?tutorial`, `?iddqd` and `?hand=Strike,Iron Wave`.
+Useful query parameters include `?debug`, `?tutorial`, `?iddqd` and `?hand=Strike,Iron Wave`.
 
 ## Repository structure
 
 ```text
-src/content   card/enemy/dungeon/event/build-item content
-src/game      deterministic game state and action runtime
+src/content   cards, encounters, dungeons, events, shops and build items
+src/game      deterministic game state, RNG and action runtime
 src/ui        Preact/HTM/Astro browser UI
 public        static assets
 tests         AVA regression tests
-notes         design and test-pack notes
+notes         design and Mechanics MVP notes
 ```
 
-See [DOCUMENTATION.md](DOCUMENTATION.md) for the architecture and [notes/mechanics-mvp.md](notes/mechanics-mvp.md) for the current mechanics test pack.
+See [DOCUMENTATION.md](DOCUMENTATION.md) for architecture details and [notes/mechanics-mvp.md](notes/mechanics-mvp.md) for the current MVP test plan.
 
 ## Development direction
 
-The runtime foundation is intentionally close to complete. The next major work is gameplay/content rather than adding more abstract engine layers:
+The runtime foundation is intentionally close to complete. The current priority is validating and expanding gameplay rather than adding more abstract engine layers.
 
-1. use the fixed MVP run to validate Heat, Drone, Void, rewards, economy and boss mechanics
-2. tune or remove weak mechanics based on actual runs
-3. expand the successful mechanics into full deck archetypes and enemy rosters
-4. balance the complete run economy
-5. replace the remaining upstream visual identity with the final theme/content direction
-6. add broader browser/touch regression testing and later progression/daily-run features
+1. test Heat, Drone and Void in the fixed MVP run
+2. tune or remove weak mechanics based on real runs
+3. expand successful mechanics into full deck archetypes
+4. grow the enemy and boss roster around those archetypes
+5. balance rewards, gold, shops and run difficulty
+6. replace the remaining inherited visual identity with the final Slay the Heck theme
+7. add broader browser/touch regression coverage and later progression/daily-run features
 
 ## CI and deployment
 
-Pull requests run AVA tests, Biome and the GitHub Pages build. `main` deploys automatically to GitHub Pages at https://janfschr.github.io/slaytheheck/.
+Pull requests run the automated test and formatting checks plus the production Astro build. The `main` branch deploys automatically to:
 
-## Upstream and license
+https://janfschr.github.io/slaytheheck/
 
-This repository is a fork of [oskarrough/slaytheweb](https://github.com/oskarrough/slaytheweb). The original project implemented a browser-based deck-building roguelike inspired by Slay the Spire and provides the foundation this fork builds on.
+## Project history and license
 
-The repository remains licensed under AGPL-3.0-or-later. See [LICENSE](LICENSE). Existing artwork/typeface attribution inherited from upstream should be reviewed before a final reskin or redistribution of replaced assets.
+Slay the Heck started as a fork of the open-source Slay the Web project and has since diverged substantially in runtime architecture, deterministic systems, mobile UI, economy and gameplay tooling.
+
+Current development, issues, documentation and playable builds belong to this repository. Historical attribution remains available through the Git history and license information.
+
+The project is licensed under AGPL-3.0-or-later. See [LICENSE](LICENSE).
