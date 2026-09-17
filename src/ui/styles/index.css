@@ -23,6 +23,7 @@
 @import "./mobile-layout-fix.css";
 @import "./mobile-real-device-polish.css";
 @import "./explainers.css";
+@import "./themes.css";
 
 /** Styles in this file should probably be moved into dedicated files */
 
