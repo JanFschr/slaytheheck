@@ -30,9 +30,7 @@ function normalizeAppearance(value = {}, fallback = {}) {
 	const requestedTheme = value.theme || fallback.theme || 'classic'
 	const theme = themeDefinition(requestedTheme)
 	const requestedSkin = value.skin || fallback.skin || theme.defaultSkin
-	const skin = theme.skins.some((candidate) => candidate.id === requestedSkin)
-		? requestedSkin
-		: theme.defaultSkin
+	const skin = theme.skins.some((candidate) => candidate.id === requestedSkin) ? requestedSkin : theme.defaultSkin
 	return {theme: theme.id, skin}
 }
 
