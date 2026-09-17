@@ -1,5 +1,6 @@
 import {html, useEffect, useState} from '../lib.js'
 import {clearLocalRun, saveLocalRun, saveToUrl} from '../save-load.js'
+import {APPEARANCE_OPTIONS, getAppearance, setAppearance, skinsForTheme} from '../theme.js'
 import {toggleMute} from '../sounds.js'
 import BuildHud from './build-hud.js'
 import MechanicsMvpHud from './mechanics-mvp-hud.js'
@@ -18,6 +19,7 @@ import {StrategicRoomPortal} from './strategic-room.js'
 export default function Menu({gameState}) {
 	const [muted, setMuted] = useState(false)
 	const [saveStatus, setSaveStatus] = useState('')
+	const [appearance, setAppearanceState] = useState(getAppearance())
 	const localSaveEnabled = gameState?.localSaveEnabled !== false
 
 	useEffect(() => {
@@ -43,6 +45,18 @@ export default function Menu({gameState}) {
 		if (localSaveEnabled) clearLocalRun(gameState.contentPack)
 		window.location.href = import.meta.env.BASE_URL || '/'
 	}
+
+	function changeTheme(event) {
+		const theme = APPEARANCE_OPTIONS.find((entry) => entry.id === event.currentTarget.value)
+		if (!theme) return
+		setAppearanceState(setAppearance({theme: theme.id, skin: theme.defaultSkin}))
+	}
+
+	function changeSkin(event) {
+		setAppearanceState(setAppearance({...appearance, skin: event.currentTarget.value}))
+	}
+
+	const availableSkins = skinsForTheme(appearance.theme)
 
 	return html`
 		<${RuntimeChoicePortal} gameState=${gameState} />
@@ -74,11 +88,34 @@ export default function Menu({gameState}) {
 							Create shareable save URL
 						</button>
 					</li>
-					<li>
-						<button class="Button" danger onClick=${abandonGame}>Abandon game</button>
+					<li class="AppearanceControls">
+						<label>
+							<span>Theme</span>
+							<select aria-label="Visual theme" value=${appearance.theme} onChange=${changeTheme}>
+								${APPEARANCE_OPTIONS.map(
+									(option) => html`<option value=${option.id}>${option.label}</option>`,
+								)}
+							</select>
+						</label>
+						${
+							availableSkins.length > 1 &&
+							html`
+								<label>
+									<span>Skin</span>
+									<select aria-label="Theme skin" value=${appearance.skin} onChange=${changeSkin}>
+										${availableSkins.map(
+											(option) => html`<option value=${option.id}>${option.label}</option>`,
+										)}
+									</select>
+								</label>
+							`
+						}
 					</li>
 					<li>
 						<label>Sound <input type="checkbox" checked=${!muted} onClick=${() => toggleSound()} /></label>
+					</li>
+					<li>
+						<button class="Button" danger onClick=${abandonGame}>Abandon game</button>
 					</li>
 				</ul>
 			</div>
