@@ -156,10 +156,8 @@
 		display: none !important;
 	}
 
-	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-resource:is(
-		[data-resource="drones"],
-		[data-resource="corruption"]
-	) {
+	.MechanicsMvpHud[data-room-type="monster"]
+		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"]) {
 		grid-template-areas: "icon value" !important;
 		min-height: 1.9rem !important;
 	}
