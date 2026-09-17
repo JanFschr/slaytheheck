@@ -7,6 +7,7 @@ import * as sounds from './sounds.js'
 const overClass = 'is-dragOver'
 const selectedClass = 'is-tapSelected'
 const tapTargetClass = 'is-tapTarget'
+const quickTapThresholdMs = 325
 
 /** Makes the card fly back into the hand */
 function animateCardToHand(draggable) {
@@ -57,6 +58,14 @@ function selectCardForTap(container, card, targets) {
 }
 
 /**
+ * @param {HTMLElement} card
+ * @param {NodeListOf<HTMLElement>} targets
+ */
+function getValidTapTargets(card, targets) {
+	return Array.from(targets).filter((target) => canDropOnTarget(card, target))
+}
+
+/**
  * Adds tap/keyboard card play. This is the primary interaction on touch devices
  * and an accessible alternative to dragging on desktop.
  * @param {Element} container
@@ -95,12 +104,31 @@ function enableTapToPlay(container, targets, cards, afterRelease) {
 
 		const selectOrConfirm = () => {
 			if (card.hasAttribute('disabled') || card.dataset.wasDragged === 'true') return
+
+			const now = typeof performance === 'undefined' ? Date.now() : performance.now()
+			const lastTapAt = Number(card.dataset.lastTapAt || 0)
+			const isQuickSecondTap = lastTapAt > 0 && now - lastTapAt <= quickTapThresholdMs
+			card.dataset.lastTapAt = String(now)
+
 			const alreadySelected = card.classList.contains(selectedClass)
 			const cardTarget = card.getAttribute('data-card-target')
+			const validTargets = getValidTapTargets(card, targets)
 
-			// Self-targeting cards use a second tap as an explicit confirmation.
+			// A quick double tap is a shortcut when the target is unambiguous. This
+			// makes a single-enemy fight fast: double tap an Attack to hit it. The
+			// same shortcut naturally activates self-targeting and other one-target
+			// cards without inventing separate gesture rules for each card type.
+			if (isQuickSecondTap && validTargets.length === 1) {
+				if (!alreadySelected) selectCardForTap(container, card, targets)
+				delete card.dataset.lastTapAt
+				playOnTarget(validTargets[0])
+				return
+			}
+
+			// Self-targeting cards keep the existing second-tap confirmation even
+			// when the second tap is deliberately slower than the quick shortcut.
 			if (alreadySelected && cardTarget === 'player') {
-				const playerTarget = Array.from(targets).find((target) => canDropOnTarget(card, target))
+				const playerTarget = validTargets[0]
 				if (playerTarget) playOnTarget(playerTarget)
 				return
 			}
