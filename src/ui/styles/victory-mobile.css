@@ -1,0 +1,140 @@
+/* Mobile victory/reward screen: rewards own the full viewport instead of
+ * competing with the combat HUD that remains mounted behind the overlay. */
+@media (max-width: 700px) and (orientation: portrait) {
+	.App:has(.VictoryRoom) {
+		--card-width: clamp(5.45rem, 27vw, 6.25rem);
+		--card-height: clamp(9.2rem, 42vw, 10.4rem);
+	}
+
+	.App:has(.VictoryRoom) > .Targets,
+	.App:has(.VictoryRoom) > .Targets + .Split,
+	.App:has(.VictoryRoom) > .Hand,
+	body:has(.VictoryRoom) .BuildHud,
+	body:has(.VictoryRoom) .MechanicsMvpHud {
+		display: none;
+	}
+
+	.App:has(.VictoryRoom) > :is(#Menu, #Map, #Deck, #DrawPile, #ExhaustPile, #DiscardPile) > button {
+		display: none;
+	}
+
+	.App:has(.VictoryRoom) > .Overlay:has(.VictoryRoom) {
+		position: fixed;
+		inset: 0;
+		z-index: 80;
+		width: auto;
+		height: auto;
+		padding: 0;
+	}
+
+	.App:has(.VictoryRoom) > .Overlay:has(.VictoryRoom) .Overlay-content {
+		position: fixed;
+		inset: 0;
+		width: auto;
+		height: auto;
+		padding: calc(var(--safe-top) + 0.65rem) calc(var(--safe-right) + 0.45rem)
+			calc(var(--safe-bottom) + 0.8rem) calc(var(--safe-left) + 0.45rem);
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+
+	.App:has(.VictoryRoom) > .Overlay:has(.VictoryRoom) .Overlay-bg {
+		display: block;
+		background: color-mix(in oklab, var(--color-background), transparent 22%);
+	}
+
+	.VictoryRoom {
+		width: min(100%, 32rem);
+		min-height: 100%;
+		margin: 0 auto;
+		padding: 0.35rem 0.25rem 0.75rem;
+		justify-content: flex-start;
+		gap: 0.45rem;
+	}
+
+	.VictoryRoom > h1 {
+		margin: 0;
+		font-size: clamp(1.45rem, 7vw, 1.85rem);
+		line-height: 1;
+	}
+
+	.VictoryRoom > h2 {
+		max-width: 28rem;
+		margin: 0 auto 0.15rem;
+		font-size: clamp(0.88rem, 4vw, 1.08rem);
+		line-height: 1.15;
+	}
+
+	.VictoryRoom > p[center] {
+		margin: 0.2rem 0;
+	}
+
+	.VictoryRoom .RewardsBox {
+		width: 100%;
+		margin: 0;
+		overflow: visible;
+	}
+
+	.VictoryRoom .RewardsBox .Cards {
+		display: grid;
+		grid-template-columns: repeat(3, var(--card-width));
+		gap: clamp(0.2rem, 1.6vw, 0.45rem);
+		justify-content: center;
+		align-items: start;
+		min-height: var(--card-height);
+		margin-top: 0;
+		padding: 0.75rem 0.1rem 0.25rem;
+		overflow: visible;
+		flex-wrap: nowrap;
+		scroll-snap-type: none;
+	}
+
+	.VictoryRoom .RewardsBox .CardBox {
+		width: var(--card-width);
+		min-width: 0;
+		flex: none;
+		scroll-snap-align: none;
+	}
+
+	.VictoryRoom .RewardsBox .Card {
+		width: var(--card-width);
+		height: var(--card-height);
+		min-height: var(--card-height);
+	}
+
+	.VictoryRoom .RewardsBox .Card-media img {
+		height: clamp(50px, 15vw, 64px);
+	}
+
+	.VictoryRoom .RewardsBox .Card-name {
+		padding-top: 0.28rem;
+		font-size: clamp(0.76rem, 3.5vw, 0.9rem);
+		line-height: 1.02;
+	}
+
+	.VictoryRoom .RewardsBox .Card-type {
+		font-size: 0.56rem;
+	}
+
+	.VictoryRoom .RewardsBox .Card-description {
+		font-size: clamp(0.56rem, 2.75vw, 0.68rem);
+		line-height: 1.08;
+	}
+
+	.VictoryRoom .RewardsBox > p[center] {
+		margin: 0.35rem 0 0;
+	}
+
+	.VictoryRoom .RewardsBox > p[center] .Button,
+	.VictoryRoom > p[center] .Button,
+	.VictoryRoom > .Options .Button {
+		min-height: var(--tap-target);
+		padding: 0.55rem 0.85rem;
+		font-size: 0.85rem;
+	}
+
+	.VictoryRoom > .Options {
+		width: min(100%, 20rem);
+		margin-top: 0.25rem;
+	}
+}
