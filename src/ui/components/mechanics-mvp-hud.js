@@ -1,11 +1,42 @@
 import {createPortal} from 'preact/compat'
 import {html, useState} from '../lib.js'
 
-function Resource({label, value, max, title}) {
+function ResourcePips({value, max, dangerFrom}) {
 	return html`
-		<span class="MechanicsMvpHud-resource" title=${title}>
+		<span class="MechanicsMvpHud-pips" aria-hidden="true">
+			${Array.from({length: max}, (_, index) => {
+				const level = index + 1
+				const classes = [
+					'MechanicsMvpHud-pip',
+					level <= value ? 'is-filled' : '',
+					dangerFrom && level >= dangerFrom ? 'is-dangerZone' : '',
+				]
+					.filter(Boolean)
+					.join(' ')
+				return html`<i class=${classes}></i>`
+			})}
+		</span>
+	`
+}
+
+function Resource({resource, icon, label, value, max, title, dangerFrom}) {
+	const safeValue = Math.max(0, Math.min(max, Number(value) || 0))
+	const isDanger = Boolean(dangerFrom && safeValue >= dangerFrom)
+	const accessibleDetail = `${label} ${safeValue} of ${max}. ${title}`
+
+	return html`
+		<span
+			class="MechanicsMvpHud-resource"
+			data-resource=${resource}
+			data-danger=${isDanger ? 'true' : null}
+			title=${title}
+			tabIndex="0"
+			aria-label=${accessibleDetail}
+		>
+			<span class="MechanicsMvpHud-icon" aria-hidden="true">${icon}</span>
 			<strong>${label}</strong>
-			<span>${value}/${max}</span>
+			<span class="MechanicsMvpHud-value">${safeValue}/${max}</span>
+			<${ResourcePips} value=${safeValue} max=${max} dangerFrom=${dangerFrom} />
 		</span>
 	`
 }
@@ -29,22 +60,29 @@ function MechanicsMvpHudContent({gameState}) {
 	}
 
 	return html`
-		<aside class="MechanicsMvpHud" aria-label="Mechanics MVP resources">
+		<aside class="MechanicsMvpHud" aria-label="Combat resources">
 			<span class="MechanicsMvpHud-label">${isDevRun ? 'Mechanics MVP · DEV' : 'Mechanics MVP'}</span>
 			<div class="MechanicsMvpHud-resources">
 				<${Resource}
+					resource="heat"
+					icon="▲"
 					label="Heat"
 					value=${resources.heat || 0}
 					max=${10}
+					dangerFrom=${8}
 					title="At 8+ Heat, ending the turn causes overload damage and vents 4 Heat."
 				/>
 				<${Resource}
+					resource="drones"
+					icon="◉"
 					label="Drones"
 					value=${resources.drones || 0}
 					max=${5}
 					title="Each Drone deals 2 damage to every enemy before your turn ends."
 				/>
 				<${Resource}
+					resource="corruption"
+					icon="◈"
 					label="Void"
 					value=${resources.corruption || 0}
 					max=${6}
