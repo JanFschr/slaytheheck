@@ -16,15 +16,16 @@
 	.Targets > .Targets-group:first-child > .Target[data-type="player"] {
 		position: fixed !important;
 		top: auto !important;
-		left: calc(var(--safe-left) + 4.1rem) !important;
-		right: calc(var(--safe-right) + 8.2rem) !important;
-		bottom: calc(var(--safe-bottom) + 0.42rem) !important;
+		left: 50% !important;
+		right: auto !important;
+		bottom: calc(var(--safe-bottom) + 0.48rem) !important;
 		z-index: 46 !important;
-		width: auto !important;
+		width: clamp(6.8rem, 35vw, 8.2rem) !important;
 		max-width: none !important;
 		min-height: 0 !important;
 		margin: 0 !important;
 		padding: 0 !important;
+		transform: translateX(-50%) !important;
 		border: 0 !important;
 		background: transparent !important;
 		box-shadow: none !important;
@@ -37,18 +38,30 @@
 
 	.Targets > .Targets-group:first-child > .Target[data-type="player"] .Healthbar {
 		width: 100% !important;
-		height: 1.5rem !important;
+		height: 1.38rem !important;
 		margin: 0 !important;
 		border-width: 2px !important;
 		border-radius: 999px !important;
 		overflow: hidden !important;
-		box-shadow: 0 0.18rem 0.55rem rgb(0 0 0 / 32%) !important;
+		box-shadow: 0 0.16rem 0.48rem rgb(0 0 0 / 30%) !important;
 	}
 
 	.Targets > .Targets-group:first-child > .Target[data-type="player"] .Healthbar-label {
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		gap: 0.2rem !important;
 		margin: 0 !important;
-		font-size: 0.74rem !important;
-		line-height: 1.22rem !important;
+		font-size: 0.7rem !important;
+		line-height: 1.08rem !important;
+	}
+
+	.Targets > .Targets-group:first-child > .Target[data-type="player"] .Healthbar-label::before {
+		content: "♥";
+		color: color-mix(in oklab, var(--color-danger), white 18%);
+		font-size: 0.66rem;
+		line-height: 1;
+		text-shadow: 0 1px 1px rgb(0 0 0 / 55%);
 	}
 
 	.Targets > .Targets-group:first-child > .Target[data-type="player"] .Healthbar-label span {
@@ -87,15 +100,15 @@
 		top: calc(var(--safe-top) + var(--combat-topbar-height) + 0.5rem) !important;
 	}
 
-	/* Heat / Drones / Void are context, not a second full-width status bar. The
-	 * component exposes data-room-type so this does not depend on :has(). */
+	/* Heat / Drones / Void form one compact context cluster on the same visual
+	 * seam as draw and discard. */
 	.MechanicsMvpHud[data-room-type="monster"] {
 		top: auto !important;
 		bottom: calc(
 			var(--safe-bottom) +
 			var(--mobile-combat-action-height) +
 			var(--mobile-card-height) +
-			1.55rem
+			1.42rem
 		) !important;
 		width: auto !important;
 		max-width: none !important;
@@ -112,7 +125,7 @@
 	}
 
 	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-resources {
-		gap: 0.22rem !important;
+		gap: 0.16rem !important;
 		justify-content: center !important;
 		overflow: visible !important;
 	}
@@ -122,13 +135,13 @@
 		grid-template-areas:
 			"icon value"
 			"pips pips" !important;
-		gap: 0.08rem 0.2rem !important;
-		min-height: 2rem !important;
-		padding: 0.18rem 0.32rem !important;
+		gap: 0.06rem 0.16rem !important;
+		min-height: 2.2rem !important;
+		padding: 0.15rem 0.28rem !important;
 		border-radius: 999px !important;
-		background: color-mix(in oklab, var(--color-panel-strong), transparent 10%) !important;
-		box-shadow: 0 0.15rem 0.45rem rgb(0 0 0 / 22%) !important;
-		font-size: 0.64rem !important;
+		background: color-mix(in oklab, var(--color-panel-strong), transparent 16%) !important;
+		box-shadow: 0 0.12rem 0.34rem rgb(0 0 0 / 20%) !important;
+		font-size: 0.61rem !important;
 		backdrop-filter: blur(7px);
 	}
 
@@ -137,13 +150,13 @@
 	}
 
 	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-pips {
-		min-width: 2.5rem !important;
+		min-width: 2.35rem !important;
 		gap: 1px !important;
 	}
 
 	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-pip {
-		width: 0.2rem !important;
-		height: 0.16rem !important;
+		width: 0.18rem !important;
+		height: 0.14rem !important;
 	}
 
 	/* Drone and Void already communicate capacity via N/max. Keep the tiny meter
@@ -159,6 +172,115 @@
 	.MechanicsMvpHud[data-room-type="monster"]
 		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"]) {
 		grid-template-areas: "icon value" !important;
-		min-height: 1.9rem !important;
+		min-height: 2.2rem !important;
+	}
+
+	/* Draw, combat resources and discard read as one hand-context line. */
+	.App > :is(#DrawPile, #DiscardPile) > button {
+		bottom: calc(
+			var(--safe-bottom) +
+			var(--mobile-combat-action-height) +
+			var(--mobile-card-height) +
+			1.38rem
+		) !important;
+		min-height: 2.45rem !important;
+		max-width: 6.15rem !important;
+		padding: 0.22rem 0.48rem !important;
+		font-size: 0.63rem !important;
+	}
+
+	/* Bottom controls should feel like a single action row, not a giant HP bar
+	 * with two detached buttons. */
+	.Targets + .Split .EnergyBadge {
+		width: 2.05rem !important;
+		height: 2.05rem !important;
+		margin-left: 0.18rem !important;
+		font-size: 0.88rem !important;
+	}
+
+	.Targets + .Split .EndTurn {
+		min-width: 5rem;
+		padding-inline: 0.72rem !important;
+		font-size: 0.8rem !important;
+	}
+
+	/* Cards remain the dominant object, but less overlap keeps text readable.
+	 * Selection becomes the strongest temporary emphasis. */
+	.Hand .Card {
+		margin-left: -0.78rem !important;
+		scroll-margin-inline: 1rem;
+	}
+
+	.Hand .Card:first-child {
+		margin-left: 0 !important;
+	}
+
+	.Hand .Card.is-tapSelected {
+		z-index: 30 !important;
+		margin-right: 0.22rem;
+		transform: translateY(-1.2rem) scale(1.075) !important;
+		box-shadow:
+			0 0 0 2px var(--color-focus),
+			0 0 1rem color-mix(in oklab, var(--color-accent), transparent 20%) !important;
+	}
+
+	.Hand .Card-energy {
+		width: 1.82rem !important;
+		height: 1.82rem !important;
+		min-width: 1.82rem !important;
+		min-height: 1.82rem !important;
+		font-size: 0.8rem !important;
+		border-width: 2px !important;
+	}
+
+	/* Enemy containers become scaffolding rather than competing card surfaces. */
+	.Targets > .Targets-group:last-child .Target[data-type="enemy"] {
+		padding: 0.3rem 0.28rem 0.34rem !important;
+		border-color: color-mix(in oklab, var(--color-text), transparent 94%) !important;
+		background: color-mix(in oklab, var(--color-panel), transparent 56%) !important;
+		box-shadow: none !important;
+		backdrop-filter: blur(2px) !important;
+	}
+
+	.Targets > .Targets-group:last-child .Target[data-type="enemy"] .Target-sprite {
+		transform: scale(0.86) !important;
+	}
+
+	.Targets > .Targets-group:last-child .Target[data-type="enemy"] .Healthbar {
+		width: 92%;
+		margin-inline: auto;
+	}
+
+	/* Navigation keeps full touch targets while reducing visual weight. */
+	.App > #Menu > button {
+		width: var(--tap-target) !important;
+		min-width: var(--tap-target) !important;
+		max-width: var(--tap-target) !important;
+		padding: 0 !important;
+		font-size: 0 !important;
+	}
+
+	.App > #Menu > button::before {
+		content: "☰";
+		font-size: 1rem;
+		line-height: 1;
+	}
+
+	.App > #Deck > button {
+		max-width: 4.65rem !important;
+		padding-inline: 0.38rem !important;
+		font-size: 0.64rem !important;
+	}
+
+	.App > #Map > button {
+		max-width: 3.5rem !important;
+		padding-inline: 0.38rem !important;
+		font-size: 0.64rem !important;
+	}
+
+	.App > #ExhaustPile > button {
+		max-width: 5.3rem !important;
+		padding-inline: 0.38rem !important;
+		font-size: 0.61rem !important;
 	}
 }
