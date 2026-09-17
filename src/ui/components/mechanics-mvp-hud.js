@@ -11,21 +11,26 @@ function Resource({label, value, max, title}) {
 }
 
 function MechanicsMvpHudContent({gameState}) {
+	const isDevRun = gameState.runProfile === 'dev'
 	const [seed, setSeed] = useState(gameState.seed || '')
 	const resources = gameState.resources || {}
 
 	function restartWithSeed(event) {
 		event.preventDefault()
-		const nextSeed = seed.trim() || gameState.seed
 		const url = new URL(window.location.href)
-		url.searchParams.set('seed', nextSeed)
 		url.hash = ''
+		if (isDevRun) {
+			url.search = ''
+		} else {
+			const nextSeed = seed.trim() || gameState.seed
+			url.searchParams.set('seed', nextSeed)
+		}
 		window.location.href = url.toString()
 	}
 
 	return html`
 		<aside class="MechanicsMvpHud" aria-label="Mechanics MVP resources">
-			<span class="MechanicsMvpHud-label">Mechanics MVP</span>
+			<span class="MechanicsMvpHud-label">${isDevRun ? 'Mechanics MVP · DEV' : 'Mechanics MVP'}</span>
 			<div class="MechanicsMvpHud-resources">
 				<${Resource}
 					label="Heat"
@@ -49,9 +54,14 @@ function MechanicsMvpHudContent({gameState}) {
 			<form class="MechanicsMvpHud-seed" onSubmit=${restartWithSeed}>
 				<label>
 					<span>Seed</span>
-					<input value=${seed} onInput=${(event) => setSeed(event.currentTarget.value)} aria-label="Run seed" />
+					<input
+						value=${seed}
+						readOnly=${isDevRun}
+						onInput=${(event) => !isDevRun && setSeed(event.currentTarget.value)}
+						aria-label="Run seed"
+					/>
 				</label>
-				<button class="Button" type="submit">Restart</button>
+				<button class="Button" type="submit">${isDevRun ? 'Restart dev run' : 'Restart'}</button>
 			</form>
 		</aside>
 	`

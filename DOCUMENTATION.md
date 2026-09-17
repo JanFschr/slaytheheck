@@ -1,147 +1,245 @@
-# Documentation for Slay the Web
+# Slay the Heck documentation
 
-Throughout the project I've attempted to document and leave comments. Go ahead and explore all folders and files.
+This document describes the current architecture of the fork. It supersedes the older Slay the Web notes where the implementation has diverged.
 
-In the root of this project you'll find configuration files as well as three folders:
+## Project layout
 
-- [src](src/) The web root. 
-  - [content](src/content) contains cards, dungeons, encounters and monsters etc.
-  - [game](src/game) contains the core game logic
-  - [ui](src/ui) is the example web interface to actually play the game
-- [public](public/) Copied to the web root as-is, used for static images 
-- [tests](tests/) Contains tests for the game. There are no tests for the UI.
+```text
+src/content   cards, encounters, dungeons, events, economy, build items, MVP content
+src/game      game state, actions, RNG, monsters, rooms and action manager
+src/ui        browser UI, Astro pages, touch interaction and save/load helpers
+public        static assets
+tests         AVA regression tests
+notes         design/test-pack notes
+```
 
-### Game
+The game remains intentionally UI-agnostic at its core: the complete playable run lives in one serializable state object and game rules are applied through actions.
 
-#### Game State
+## Game state
 
-The full game state is always stored in a single, large "game state" object. It is everything needed to reproduce a certain state of the game. It does not know about your UI. The state is modified using synchronous "actions".
+The state contains everything required to continue a run, including:
 
-#### Actions
+- player HP, block and powers
+- deck, draw pile, hand, discard and exhaust piles
+- dungeon graph, current node and visited path
+- deterministic run seed and RNG stream counters
+- gold
+- relics and equipment
+- Mechanics MVP resources such as Heat, Drones and Corruption
+- pending player choices and their continuation actions
+- content-pack/run-profile metadata
 
-An action is a function that takes a `state` object, modifies it, and returns a new one. There are actions for drawing a card, dealing damage, applying a debuff... everything you want to do, there's an action.
+Because this state is serializable, the same representation is used for deterministic testing, URL saves and browser-local saves.
 
-See all (mostly well documented) actions in [actions.js](src/game/actions.js).
+## Actions and the shared runtime
 
-#### Action Manager
+An action is a data object such as:
 
-As said, actions return a new state. To keep track of actions made, we use an "action manager" to queue and dequeue them.
+```js
+{type: 'dealDamage', parameter: {target: 'enemy0', amount: 8}}
+```
 
-Run `enqueue(action)` to add an action to the list.  
-Run `dequeue()` to update the state with the changes from the oldest action in the queue.
+The action runtime resolves these descriptions into deterministic state transformations. Cards, enemy intents, relics, equipment and runtime continuations all use the same action language.
 
-> Note, you don't pass an action directly to the action manager. Rather you pass a description, like so: `{type: 'nameOfAction', damage: 5, ... more properties}`.
+Important capabilities include:
 
-#### Cards
+- damage, block, powers, draw, exhaust and energy
+- healing and HP costs
+- adding cards
+- summons
+- intent changes
+- boss phase changes
+- semantic lifecycle triggers
+- nested relic/equipment reactions with loop protection
 
-You have a deck of cards. Cards have energy cost, have target(s), can deal damage and block, trigger game actions, apply powers (de/buffs) when played and have conditions that decide when they can be played.
+The central queue is managed by `src/game/action-manager.js`. `createNewGame()` exposes `enqueue()` and `dequeue()` around that manager.
 
-Cards move from the "draw pile" into your hand, and once played to the discard pile.
+## Choice actions
 
-If the draw pile has fewer cards than you attempt to draw, the discard pile is shuffled into the draw pile.
+The runtime can pause for player input without storing promises or callbacks in game state.
 
-Cards also have a `target` property to suggest which targets the card should affect.
+A `requestChoice` action creates `state.pendingChoice`. Actions that would normally follow it are stored as a serializable continuation. The UI resolves the choice with `resolveChoice`; placeholders are replaced and the resulting actions resume through the same runtime.
 
-#### Powers
+This is used by systems such as card removal/upgrades and allows a save to be made while a choice is open.
 
-Cards can apply "powers". A power is a status effect or aura that usually lasts one or more turns. It can target the player, a monster or all enemies. A power could do literally anything, but an example is the "Vulnerable" power, which makes the target take 50% more damage for two turns.
+## Deterministic RNG
 
-As an example, setting `state.player.powers.weak = 5`, indicates that the player should be considered weak for five turns. Powers decrease by one stack per turn.
+A run has one root `state.seed`. Subsystems derive independent RNG streams from that seed so a new roll in one system does not silently reshuffle unrelated systems.
 
-Note: When monsters apply powers at end-of-turn, they add +1 to compensate for the immediate decrement that happens in the same turn.
+Deterministic systems currently include:
 
-#### Player
+- dungeon topology
+- encounters and monster HP/intents
+- card instance IDs and deck order
+- shuffles
+- card rewards
+- build-item rewards
+- merchant inventory
+- treasure/economy rolls
+- summons
 
-On `state.player` we have you, the player. This object describes the health, powers and the cards you have.
+This is what makes fixed developer runs and future daily/shared seeds reproducible.
 
-#### Dungeon
+## Cards
 
-Every game evolves around and in a dungeon. A dungeon consists of a graph (think a 2d array with rows and columns, or positions and nodes, or floors and rooms).
-There are different types of rooms. Like Monster and Campfire. One day there'll be more like Merchant and Treasure or a "random" room.
+Card definitions use stable `definitionId` values rather than display names as identity. Card instances still receive their own deterministic IDs.
 
-To be able to navigate a dungeon, we have the concept of a `Map`. It takes a `Dungeon` and renders the UI. Check https://slaytheweb.cards/map-demo.html. I'm biased but it's kind of cool.
+Cards can define:
 
-#### Monsters
+- energy cost
+- card type
+- target
+- rarity
+- tags/keywords
+- one or more runtime actions
+- conditions
+- upgrade behavior
 
-Monsters exist inside the rooms in a dungeon. A monster has health and a list of "intents" that it will take each turn. These intents are basically the AI. Monsters can do damage, block and apply powers. It's not super flexible, as we're not using actions and cards like the player does. But it is enough for now.
+The legacy core card files live under `src/content/cards/`; newer metadata and Mechanics MVP content are registered through the current content registries.
 
-### Content
+## Monsters and intents
 
-#### cards.js
+Monsters now execute ordinary runtime actions instead of relying only on hard-coded combat fields. Legacy intent definitions are normalized for compatibility.
 
-Collects all cards from the `src/content/cards/*` folder.
+Enemy actions can therefore damage, block, apply powers, alter player resources, summon enemies or transition boss phases.
 
-Every card must define two exports:
-- default: the card
-- upgrade: upgrade(card) => card
+Bosses may define health/health-ratio thresholds with `onEnter` actions and replacement intent sets. The Mechanics MVP `Core Architect` is the current reference implementation.
 
-To create a new card it, must have two exports
+## Relics and equipment
 
-- it must exist in `src/content/cards/
-- it must have a default export with the card object
-- it must have export an `upgrade` function
+Relics and equipment are data-driven build items. Their definitions can subscribe to semantic runtime events such as card plays, damage, kills or other lifecycle points and emit further actions.
 
-See for example `src/content/cards/strike.js`. Then:
+Equipment uses slots and replaces the currently equipped item in that slot. Relics are collected independently.
 
-- Register the card in `src/content/cards.js` by adding the filename (without `.js`) to `cardIndex`
-- If the card uses custom actions, add them to `src/game/actions.js` and register in `allActions`
+Build rewards and merchant offers are deterministic for a given run state/seed.
 
-#### dungeons.js
+## Economy and strategic rooms
 
-Contains different monsters, room and dungeons. All created with methods from the game.
+Runs can contain:
 
-## Tests
+- Monster rooms
+- Elite rooms
+- Campfires
+- Events
+- Merchants
+- Treasure
+- Bosses
 
-Scripts are checked with [eslint](https://eslint.org/), formatted with [prettier](https://prettier.io/) and tested with [ava](https://github.com/avajs/ava).
+Gold is ordinary run state. Merchant inventory is deterministic and sold/owned state is validated so purchases cannot be repeated incorrectly. Card removal and upgrade services use the runtime choice system.
 
-Additionally the ./tests folder contains the tests. Usually a test goes 1) create a game 2) modify the game state with one or more actions 3) assert that the final state is how it you expect.
+Events are data-driven and may exchange HP, gold or card changes. Treasure can grant gold and build items.
 
-- `npm test` tests everything once
-- `npm run test:watch` tests continously (good while developing)
-- `npm run test:coverage` check test code coverage
+## Local and URL saves
 
-Additionally you can run `npm run lint` to automatically format all scripts according to the prettier standards.
+`src/ui/save-load.js` contains the state serializer.
 
-You can also just run ava directly and do as you please. Example: `npm test tests/actions.js --watch`
+### Browser-local saves
+
+Active runs autosave to `localStorage`. Each content pack gets its own versioned slot. The splash screen can resume that state after a reload.
+
+The save contains the full deterministic state, including pending choices. Dungeon edges are removed before serialization and reconstructed from stored paths while loading.
+
+A win, loss or explicit abandon clears the active local slot.
+
+### URL saves
+
+The same state can still be encoded into the URL hash. URL saves are useful as portable/shareable saves and take precedence over local resume behavior.
+
+## Mechanics MVP
+
+`/mvp/` starts the experimental Mechanics MVP content pack. It currently contains:
+
+- 15 cards across Heat, Drone and Void mini-archetypes
+- 3 MVP relics
+- 3 MVP equipment items
+- Scrap Hound, Heat Leech and Null Wraith
+- Reactor Sentinel elite
+- three-phase Core Architect boss
+- event, merchant, treasure and campfire routes
+
+`/mvp/?seed=my-seed` starts a reproducible MVP run using a chosen seed.
+
+### Fixed developer regression run
+
+`/mvp-dev/` is a special manual regression route. It always uses:
+
+```text
+seed: mechanics-mvp-dev-v1
+profile: dev
+localSave: false
+```
+
+Its single forced route is:
+
+```text
+Combat (Scrap Hound + Heat Leech)
+→ Calibration Shrine event
+→ Merchant
+→ Reactor Sentinel elite
+→ Treasure
+→ Campfire
+→ Core Architect boss
+```
+
+The fixed profile is designed to exercise the new combat resources, card rewards, build rewards, event choices, shop economy, equipment/relic systems, elite rewards, treasure and boss phases in one short run. Local autosave is disabled so reloading always starts the same clean regression run.
 
 ## UI
 
-The UI is made with web components, htm and preact. I've tried not to create too many components and abstractions, and copy/paste more, although this might come back to haunt us.
+The browser UI uses Astro pages with Preact/HTM components and GSAP animations.
 
-In order to have easy HTML layouts (and more :tm:), we have Astro set up here. This means you can define new routes in src/ui/pages.
+Mobile combat is touch-first. Portrait mode uses a compact enemy zone, overlapping hand and fixed bottom action bar. Cards can be selected by tap; when only one valid target exists, a fast double-tap can play the card directly.
 
-### Animations
+Reward screens hide the combat hand/HUD, and the player health bar is integrated into the portrait bottom action area.
 
-See [animations.js](src/ui/animations.js). Most are made with gsap.
+The UI is still an example frontend over the state/action engine, so gameplay rules should stay in `src/game` or data definitions rather than being implemented in components.
 
-### Sounds
+## Development and debugging
 
-See [sounds.js](src/ui/sounds.js) using the Web Audio API.
+Install and run with Bun:
 
-### Debugging
+```bash
+bun install
+bun run dev
+```
 
-- Console commands available via window.stw
-- URL parameters for debugging:
-  - `?debug`: Skips splash screen, enables free map navigation
-  - `?tutorial`: Enables tutorial
-  - `?iddqd`: God mode (kills all monsters)
-  - `?hand=Card Name,Card Name`: Adds specific cards to your starting hand
-  - Game state can be saved to URL hash
+Repository checks:
 
-Example: `/?debug&hand=Strike, Iron Wave, Icon Wave` starts a game with those cards in hand.
+```bash
+bun run check
+bun run test
+bun run build
+```
 
-## Backend
+The repository uses Biome for formatting/linting and AVA for tests.
 
-With the integration of https://github.com/oskarrough/slaytheweb-backend in `game/backend.js`, you can choose to save your current run state in the Slay the Web database. Nothing but game state & date is stored. All runs are visible on `stats.html`.
+Useful routes:
 
-## Footnotes
+```text
+/             core game
+/mvp/         seeded Mechanics MVP
+/mvp-dev/     fixed manual regression run
+/debug/       debug page
+/map-demo/    map demo
+```
 
-In the beginning I made this diagram of how the game works. It's probably outdated now but keeping it here for reference: https://kinopio.club/slay-the-web-Dh3xUjjHbol7RbCuqZQDn.
+Useful query parameters include:
 
-- JavaScript (ES modules)
-- Web components and Preact HTM for rendering
-- Immer for immutable state updates
-- Error handling: Use try/catch sparingly; prefer validation and early returns
-- JSDoc for documentation
-- No semicolons, single quotes, tabs
+- `?debug` — skips the normal splash and enables free map navigation
+- `?tutorial` — starts tutorial behavior
+- `?iddqd` — debug kill/cheat behavior
+- `?hand=Strike,Iron Wave` — adds named cards to the starting hand
+- `/mvp/?seed=<seed>` — reproducible MVP run
 
+The browser console exposes `window.stw` with the current game, actions, card list and helper commands.
+
+## Tests and CI
+
+The regression suite covers the core action system, deterministic engine behavior, dungeon generation, choice runtime, build items, economy, MVP mechanics and save/load behavior.
+
+Pull requests and `main` are validated by GitHub Actions. The Pages workflow runs tests, Biome and the Astro build before deploying `main` to GitHub Pages.
+
+## Current architectural boundary
+
+The runtime foundation is now intentionally stable enough to prioritize content and playtesting. New abstractions should generally be added only when a concrete card, enemy, event or build mechanic requires them.
+
+Known future product-level work includes larger deck archetypes/enemy rosters, run balance, full reskin/theme replacement, broader touch/browser E2E coverage, daily/shared run UX and meta progression.

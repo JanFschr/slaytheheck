@@ -1,0 +1,25 @@
+---
+import Layout from '../layouts/Layout.astro'
+import '../styles/index.css'
+---
+
+<script is:inline>
+  window.__SLAY_CONTENT_PACK__ = {
+    id: 'mechanics-mvp',
+    autoStart: true,
+    seed: 'mechanics-mvp-dev-v1',
+    profile: 'dev',
+    localSave: false,
+  }
+</script>
+<script src="../components/slay-the-web.js"></script>
+
+<Layout title="Mechanics MVP Dev Run">
+  <slay-the-web></slay-the-web>
+</Layout>
+
+<style>
+  html {
+    background: var(--color-background);
+  }
+</style>
