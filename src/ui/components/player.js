@@ -28,9 +28,13 @@ export const Player = (props) => {
 
 const visibleIntentTypes = ['damage', 'block', 'weak', 'vulnerable', 'poison']
 
-function SpecialIntent({label, tooltip}) {
+function SpecialIntent({label, tooltip, type = 'special'}) {
 	return html`
-		<div class="Target-intent Target-intent--text ${tooltip && 'tooltipped tooltipped-n'}" aria-label=${tooltip}>
+		<div
+			class="Target-intent Target-intent--text ${tooltip && 'tooltipped tooltipped-n'}"
+			data-intent-type=${type}
+			aria-label=${tooltip}
+		>
 			${label}
 		</div>
 	`
@@ -58,7 +62,11 @@ export const Monster = (props) => {
 		if (type === 'vulnerable' || type === 'weak') amount = undefined
 
 		return html`
-			<div class="Target-intent ${tooltip && 'tooltipped tooltipped-n'}" aria-label=${tooltip}>
+			<div
+				class="Target-intent ${tooltip && 'tooltipped tooltipped-n'}"
+				data-intent-type=${type}
+				aria-label=${tooltip}
+			>
 				<img alt=${type} src=${`/images/${type}.png`} /> ${amount}
 			</div>
 		`
@@ -74,12 +82,15 @@ export const Monster = (props) => {
 				parameter.resource === 'corruption' ? 'Void' : parameter.resource[0].toUpperCase() + parameter.resource.slice(1)
 			return [
 				{
+					type: 'resource',
 					label: `${name} +${parameter.amount || 0}`,
 					tooltip: `Will add ${parameter.amount || 0} ${name} to your combat resources`,
 				},
 			]
 		}
-		if (action.type === 'summon') return [{label: 'Summon', tooltip: 'Will summon another enemy'}]
+		if (action.type === 'summon') {
+			return [{type: 'summon', label: 'Summon', tooltip: 'Will summon another enemy'}]
+		}
 		return []
 	})
 
@@ -147,11 +158,28 @@ const Powers = (props) => {
 	`
 }
 
+const powerShortLabels = {
+	regen: 'REG',
+	poison: 'PSN',
+	vulnerable: 'VULN',
+	weak: 'WEAK',
+	strength: 'STR',
+}
+
 const Power = ({power, amount}) => {
 	if (!amount) return null
-	return html`<span class="tooltipped tooltipped-s" aria-label=${power.description}>
-		${power.name} ${amount}
-	</span>`
+	const label = `${power.name} ${amount}. ${power.description}`
+	return html`
+		<span
+			class="Target-power tooltipped tooltipped-s"
+			data-power=${power.id}
+			data-power-type=${power.type}
+			aria-label=${label}
+		>
+			<span class="Target-powerLabel" aria-hidden="true">${powerShortLabels[power.id] || power.name}</span>
+			<strong>${amount}</strong>
+		</span>
+	`
 }
 
 function FCT(props) {

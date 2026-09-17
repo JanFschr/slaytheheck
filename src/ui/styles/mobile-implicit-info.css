@@ -1,0 +1,766 @@
+/* Mobile information architecture and implicit gameplay semantics.
+ * Imported last so this file owns the final portrait combat hierarchy without
+ * changing the desktop or landscape presentation. */
+
+:root {
+	/* Role-based gameplay colors. Never rely on color alone: icons, labels,
+	 * shapes and numbers remain the primary explicit communication channel. */
+	--color-damage: var(--color-danger);
+	--color-block: hsl(194, 58%, 62%);
+	--color-heal: hsl(143, 46%, 52%);
+	--color-energy: var(--color-primary);
+	--color-gold: var(--color-accent);
+	--color-buff: hsl(186, 52%, 66%);
+	--color-debuff: hsl(286, 46%, 66%);
+	--color-heat: hsl(31, 92%, 58%);
+	--color-heat-danger: hsl(4, 78%, 58%);
+	--color-drone: hsl(184, 54%, 62%);
+	--color-corruption: hsl(278, 48%, 66%);
+	--color-disabled: hsla(0, 0%, 62%, 0.7);
+
+	/* Shared portrait sizing. Portal HUDs live outside .App, therefore these
+	 * variables must be rooted globally. */
+	--mobile-combat-action-height: 3.65rem;
+	--mobile-combat-context-height: 3.9rem;
+	--mobile-combat-context-height-mvp: 6rem;
+	--mobile-card-width: clamp(7rem, 31vw, 8rem);
+	--mobile-card-height: clamp(11.2rem, 49vw, 12.8rem);
+	--mobile-status-height: 1.6rem;
+	--mobile-unit-size: clamp(3.75rem, 17vw, 4.6rem);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Card visual grammar                                                        */
+/* -------------------------------------------------------------------------- */
+
+.Card {
+	--card-type-accent: var(--color-info);
+}
+
+.Card[data-card-type="attack"] {
+	--card-type-accent: var(--color-damage);
+}
+
+.Card[data-card-type="skill"] {
+	--card-type-accent: var(--color-info);
+}
+
+.Card[data-card-type="power"] {
+	--card-type-accent: var(--color-accent);
+}
+
+.Card[data-card-type="power"] .Card-type {
+	background: color-mix(in oklab, var(--color-accent), var(--color-panel-strong) 82%);
+}
+
+.Card::after {
+	content: "";
+	position: absolute;
+	inset: 0.16rem;
+	z-index: 2;
+	border: 1px solid color-mix(in oklab, var(--card-type-accent), transparent 58%);
+	border-radius: 0.22rem;
+	pointer-events: none;
+}
+
+.Card[data-card-type="attack"]::after {
+	inset: 0.12rem 0.2rem;
+	border-width: 2px 1px;
+	border-radius: 0.08rem;
+}
+
+.Card[data-card-type="power"]::after {
+	border-style: double;
+	border-width: 3px;
+}
+
+.Card::before {
+	position: absolute;
+	top: 0.08rem;
+	right: 0.12rem;
+	z-index: 4;
+	min-width: 1rem;
+	color: color-mix(in oklab, var(--color-text), var(--card-type-accent) 35%);
+	font-size: 0.7rem;
+	font-weight: 900;
+	line-height: 1;
+	text-align: center;
+	text-shadow: 0 1px 2px black;
+	pointer-events: none;
+}
+
+.Card[data-rarity="common"]::before {
+	content: "•";
+	opacity: 0.55;
+}
+
+.Card[data-rarity="uncommon"]::before {
+	content: "◆";
+}
+
+.Card[data-rarity="rare"]::before {
+	content: "✦";
+	color: var(--color-gold);
+}
+
+.Card[upgraded] .Card-name::after {
+	content: "+";
+	margin-left: 0.08em;
+	color: var(--color-block);
+	font-weight: 900;
+}
+
+.Hand .Card[disabled] {
+	--card-type-accent: var(--color-disabled);
+	filter: brightness(0.74) saturate(0.58);
+}
+
+.Hand .Card[disabled] :is(.Card-media, .Card-type, .Card-name, .Card-description) {
+	opacity: 0.72;
+}
+
+.Hand .Card[disabled]::after {
+	border-color: color-mix(in oklab, var(--color-disabled), transparent 45%);
+}
+
+.Hand .Card[disabled] .EnergyBadge {
+	border-color: color-mix(in oklab, var(--color-damage), white 15%);
+}
+
+.Card,
+.Card::after,
+.Card :is(.Card-media, .Card-type, .Card-name, .Card-description) {
+	transition:
+		opacity 140ms ease,
+		filter 140ms ease,
+		border-color 140ms ease;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Enemy intents and status chips                                             */
+/* -------------------------------------------------------------------------- */
+
+.Target-intent {
+	--intent-color: var(--color-info);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.18em;
+	border: 1px solid color-mix(in oklab, var(--intent-color), transparent 48%);
+	border-radius: 0.4em;
+	background: color-mix(in oklab, var(--intent-color), var(--color-panel-strong) 78%);
+}
+
+.Target-intent[data-intent-type="damage"] {
+	--intent-color: var(--color-damage);
+}
+
+.Target-intent[data-intent-type="block"] {
+	--intent-color: var(--color-block);
+}
+
+.Target-intent[data-intent-type="weak"],
+.Target-intent[data-intent-type="vulnerable"],
+.Target-intent[data-intent-type="poison"] {
+	--intent-color: var(--color-debuff);
+}
+
+.Target-intent[data-intent-type="summon"] {
+	--intent-color: var(--color-drone);
+}
+
+.Target-intent[data-intent-type="resource"] {
+	--intent-color: var(--color-corruption);
+}
+
+.Target-intent--text {
+	padding: 0.18em 0.38em;
+}
+
+.Target-powers {
+	display: flex;
+	align-items: center;
+	gap: 0.2rem;
+	min-height: 1.2em;
+	flex-wrap: wrap;
+}
+
+.Target-power {
+	--power-color: var(--color-debuff);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.18rem;
+	min-height: var(--mobile-status-height);
+	margin: 0;
+	padding: 0.08rem 0.28rem;
+	border: 1px solid color-mix(in oklab, var(--power-color), transparent 48%);
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--power-color), var(--color-panel-strong) 76%);
+	color: var(--color-text);
+	font-size: 0.66rem;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.Target-power[data-power-type="buff"] {
+	--power-color: var(--color-buff);
+}
+
+.Target-power[data-power="regen"] {
+	--power-color: var(--color-heal);
+}
+
+.Target-power[data-power="poison"] {
+	--power-color: var(--color-debuff);
+}
+
+.Target-powerLabel {
+	font-size: 0.55rem;
+	font-weight: 800;
+	letter-spacing: 0.03em;
+}
+
+.Target-power strong {
+	font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mechanics MVP resources                                                    */
+/* -------------------------------------------------------------------------- */
+
+.MechanicsMvpHud-resource {
+	--resource-color: var(--color-info);
+	display: grid;
+	grid-template-columns: auto auto auto;
+	grid-template-areas:
+		"icon label value"
+		"pips pips pips";
+	align-items: center;
+	gap: 0.12rem 0.32rem;
+	min-width: 0;
+	padding: 0.25rem 0.45rem;
+	border: 1px solid color-mix(in oklab, var(--resource-color), transparent 72%);
+	border-radius: 0.65rem;
+	background: color-mix(in oklab, var(--color-panel), transparent 5%);
+	font-size: 0.76rem;
+	white-space: nowrap;
+	outline: none;
+}
+
+.MechanicsMvpHud-resource:focus-visible {
+	box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+.MechanicsMvpHud-resource[data-resource="heat"] {
+	--resource-color: var(--color-heat);
+}
+
+.MechanicsMvpHud-resource[data-resource="drones"] {
+	--resource-color: var(--color-drone);
+}
+
+.MechanicsMvpHud-resource[data-resource="corruption"] {
+	--resource-color: var(--color-corruption);
+}
+
+.MechanicsMvpHud-resource[data-danger="true"] {
+	--resource-color: var(--color-heat-danger);
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-heat-danger), transparent 35%);
+}
+
+.MechanicsMvpHud-icon {
+	grid-area: icon;
+	color: var(--resource-color);
+	font-size: 0.8rem;
+	font-weight: 900;
+}
+
+.MechanicsMvpHud-resource strong {
+	grid-area: label;
+	color: var(--resource-color);
+}
+
+.MechanicsMvpHud-value {
+	grid-area: value;
+	font-variant-numeric: tabular-nums;
+}
+
+.MechanicsMvpHud-pips {
+	grid-area: pips;
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	min-width: 3.25rem;
+}
+
+.MechanicsMvpHud-pip {
+	width: 0.34rem;
+	height: 0.22rem;
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--resource-color), transparent 82%);
+}
+
+.MechanicsMvpHud-pip.is-filled {
+	background: var(--resource-color);
+}
+
+.MechanicsMvpHud-resource[data-resource="heat"] .MechanicsMvpHud-pip.is-dangerZone {
+	outline: 1px solid color-mix(in oklab, var(--color-heat-danger), transparent 30%);
+	outline-offset: 1px;
+}
+
+@media (max-width: 700px) {
+	.MechanicsMvpHud {
+		width: calc(100vw - 0.8rem - var(--safe-left) - var(--safe-right));
+		grid-template-columns: 1fr;
+		gap: 0.3rem;
+		padding: 0.32rem 0.4rem;
+	}
+
+	.MechanicsMvpHud-label,
+	.MechanicsMvpHud-seed {
+		display: none;
+	}
+
+	.MechanicsMvpHud-resources {
+		justify-content: center;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.MechanicsMvpHud-resources::-webkit-scrollbar {
+		display: none;
+	}
+
+	.MechanicsMvpHud-resource {
+		flex: 0 0 auto;
+		padding: 0.22rem 0.38rem;
+		font-size: 0.66rem;
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+/* Portrait combat hierarchy                                                  */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 700px) and (orientation: portrait) {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) {
+		--combat-action-height: var(--mobile-combat-action-height);
+		--combat-player-height: 0rem;
+		--combat-context-height: var(--mobile-combat-context-height);
+		--card-width: var(--mobile-card-width);
+		--card-height: var(--mobile-card-height);
+	}
+
+	body:has(.MechanicsMvpHud) .App:has(> .Targets):not(:has(.VictoryRoom)) {
+		--combat-context-height: var(--mobile-combat-context-height-mvp);
+	}
+
+	/* Combat resources occupy the seam between battlefield and hand rather than
+	 * competing with navigation or enemy intent. */
+	body:has(.App > .Targets) .MechanicsMvpHud {
+		top: auto;
+		bottom: calc(var(--safe-bottom) + var(--mobile-combat-action-height) + var(--mobile-card-height) + 4.45rem);
+		z-index: 34;
+		width: min(96vw, 27rem);
+		padding: 0.28rem 0.35rem;
+		border-color: color-mix(in oklab, var(--color-text), transparent 88%);
+		border-radius: 0.75rem;
+		box-shadow: 0 0.45rem 1rem rgb(0 0 0 / 22%);
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-resources {
+		gap: clamp(0.18rem, 1.3vw, 0.35rem);
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-resource {
+		grid-template-columns: auto auto;
+		grid-template-areas:
+			"icon value"
+			"pips pips";
+		gap: 0.1rem 0.24rem;
+		min-height: 2.35rem;
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-resource strong {
+		display: none;
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-pips {
+		min-width: 2.7rem;
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-pip {
+		width: 0.27rem;
+	}
+
+	/* Build information belongs with navigation, not between the player's hand
+	 * and action bar. */
+	body:has(.App > .Targets) .BuildHud {
+		top: calc(var(--safe-top) + 0.2rem);
+		bottom: auto;
+		z-index: 43;
+		max-width: min(42vw, 10rem);
+		min-height: var(--tap-target);
+		gap: 0.2rem;
+		padding: 0.22rem 0.35rem;
+		border-color: color-mix(in oklab, var(--color-gold), transparent 78%);
+	}
+
+	body:has(.App > .Targets) .BuildHud-count {
+		display: none;
+	}
+
+	body:has(.App > .Targets) .BuildHud-chip {
+		min-width: 1.7rem;
+		min-height: 1.7rem;
+		justify-content: center;
+		padding: 0.1rem 0.25rem;
+		font-size: 0.72rem;
+	}
+
+	body:has(.App > .Targets) .BuildHud-gold {
+		font-size: 0.72rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* Player target stays real for self-targeting, but its visible health belongs
+	 * solely in the bottom action bar. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets {
+		animation: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child {
+		top: auto;
+		left: calc(var(--safe-left) + 3.35rem);
+		right: calc(var(--safe-right) + 7.15rem);
+		bottom: calc(var(--safe-bottom) + 0.28rem);
+		z-index: 41;
+		height: calc(var(--combat-action-height) - 0.55rem);
+		align-items: center;
+		justify-content: center;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child .Target[data-type="player"] {
+		flex: 1 1 auto;
+		width: 100%;
+		max-width: 9rem;
+		min-height: 0;
+		margin: 0;
+		padding: 0;
+		justify-content: center;
+		border: 0;
+		background: transparent;
+		backdrop-filter: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Target-header {
+		display: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Healthbar {
+		width: 100%;
+		height: 1.5rem;
+		margin: 0;
+		border-width: 2px;
+		border-radius: 999px;
+		overflow: hidden;
+		box-shadow: 0 0.2rem 0.7rem color-mix(in oklab, black, transparent 45%);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Healthbar--hasBlock {
+		box-shadow:
+			0 0 0 2px color-mix(in oklab, var(--color-block), transparent 28%),
+			0 0.2rem 0.7rem color-mix(in oklab, black, transparent 45%);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Healthbar-label {
+		margin: 0;
+		font-size: 0.74rem;
+		line-height: 1.22rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Healthbar-label
+		span {
+		transform: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Target-powers {
+		position: absolute;
+		left: 50%;
+		bottom: calc(100% + 0.22rem);
+		width: max-content;
+		max-width: min(64vw, 16rem);
+		margin: 0;
+		padding: 0.1rem 0.2rem;
+		transform: translateX(-50%);
+		overflow-x: auto;
+		flex-wrap: nowrap;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-panel-strong), transparent 12%);
+		scrollbar-width: none;
+		white-space: nowrap;
+		backdrop-filter: blur(8px);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Target-powers::-webkit-scrollbar {
+		display: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Target-power {
+		min-height: 1.25rem;
+		padding: 0.06rem 0.24rem;
+		font-size: 0.58rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Target-powerLabel {
+		font-size: 0.5rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		.Target[data-type="player"]
+		.Target-powers:empty {
+		display: none;
+	}
+
+	/* The battlefield owns the upper/middle region and never shrinks just because
+	 * a boss summons more entities. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child {
+		top: calc(var(--safe-top) + var(--combat-topbar-height) + 0.55rem);
+		bottom: calc(
+			var(--safe-bottom) +
+			var(--combat-action-height) +
+			var(--card-height) +
+			var(--combat-context-height) +
+			0.9rem
+		);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child:has(> .Target:nth-child(4)) {
+		justify-content: flex-start;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:last-child:has(> .Target:nth-child(4))
+		.Target {
+		flex-basis: clamp(6.75rem, 29vw, 7.5rem);
+		max-width: clamp(6.75rem, 29vw, 7.5rem);
+	}
+
+	/* Cards stay readable; the hand communicates overflow through visible overlap
+	 * and horizontal scrolling rather than shrinking every card. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Cards {
+		min-height: calc(var(--card-height) + 1.35rem);
+		padding: 1rem 0.6rem 0.25rem;
+		scroll-padding-inline: 0.6rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card {
+		flex: 0 0 var(--card-width);
+		margin-left: -1.35rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card:first-child {
+		margin-left: 0;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card-media img {
+		height: clamp(66px, 19vw, 84px);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card-name {
+		font-size: clamp(0.88rem, 3.7vw, 1rem);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand .Card-description {
+		font-size: clamp(0.62rem, 2.7vw, 0.74rem);
+		line-height: 1.12;
+	}
+
+	/* Semantic intent tinting remains secondary to icons/text. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-intent {
+		border-color: color-mix(in oklab, var(--intent-color), white 12%);
+		background: color-mix(in oklab, var(--intent-color), var(--color-panel-strong) 68%);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		.Target[data-type="enemy"]
+		.Target-intent[data-intent-type="damage"]:has(img) {
+		border-color: color-mix(in oklab, var(--color-damage), white 18%);
+		background: color-mix(in oklab, var(--color-damage), var(--color-panel-strong) 62%);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		.Target[data-type="enemy"]
+		.Target-intent[data-intent-type="block"]:has(img) {
+		border-color: color-mix(in oklab, var(--color-block), white 16%);
+		background: color-mix(in oklab, var(--color-block), var(--color-panel-strong) 72%);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-power {
+		min-height: 1.2rem;
+		margin: 0;
+		padding: 0.05rem 0.2rem;
+		font-size: 0.54rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-powerLabel {
+		margin: 0;
+		padding: 0;
+		background: transparent;
+		font-size: 0.48rem;
+	}
+}
+
+@media (max-width: 700px) and (orientation: portrait) and (max-height: 650px) {
+	:root {
+		--mobile-combat-context-height: 3.4rem;
+		--mobile-combat-context-height-mvp: 5.35rem;
+		--mobile-card-width: clamp(6.3rem, 30vw, 7rem);
+		--mobile-card-height: clamp(10.2rem, 46vw, 11.2rem);
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile reward carousel                                                     */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 700px) and (orientation: portrait) {
+	.App:has(.VictoryRoom) {
+		--card-width: clamp(10.5rem, 56vw, 13rem);
+		--card-height: clamp(16.7rem, 86vw, 20.5rem);
+	}
+
+	.App:has(.VictoryRoom) > .Overlay:has(.VictoryRoom) .Overlay-content {
+		padding: calc(var(--safe-top) + 0.65rem) 0 calc(var(--safe-bottom) + 0.8rem);
+	}
+
+	.App:has(.VictoryRoom) > .Overlay:has(.VictoryRoom) .Overlay-bg {
+		background: color-mix(in oklab, var(--color-background), transparent 16%);
+	}
+
+	.VictoryRoom {
+		padding-inline: 0;
+	}
+
+	.VictoryRoom > h2,
+	.VictoryRoom > p[center],
+	.VictoryRoom .RewardsBox > p[center] {
+		padding-inline: 0.75rem;
+	}
+
+	.VictoryRoom .RewardsBox {
+		width: 100%;
+		overflow: hidden;
+	}
+
+	.VictoryRoom .RewardsBox .Cards {
+		display: flex;
+		gap: 0.75rem;
+		justify-content: flex-start;
+		align-items: start;
+		min-height: calc(var(--card-height) + 0.8rem);
+		margin-top: 0;
+		padding-block: 0.65rem 0.15rem;
+		padding-inline: max(1rem, calc((100vw - var(--card-width)) / 2));
+		overflow-x: auto;
+		overflow-y: visible;
+		scroll-padding-inline: max(1rem, calc((100vw - var(--card-width)) / 2));
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
+		overscroll-behavior-x: contain;
+	}
+
+	.VictoryRoom .RewardsBox .Cards::-webkit-scrollbar {
+		display: none;
+	}
+
+	.VictoryRoom .RewardsBox .CardBox {
+		width: var(--card-width);
+		min-width: var(--card-width);
+		flex: 0 0 var(--card-width);
+		scroll-snap-align: center;
+		scroll-snap-stop: always;
+		transition: transform 140ms var(--easing);
+	}
+
+	.VictoryRoom .RewardsBox .CardBox[selected] {
+		transform: translateY(-0.28rem);
+	}
+
+	.VictoryRoom .RewardsBox .Card {
+		width: var(--card-width);
+		height: var(--card-height);
+		min-height: var(--card-height);
+	}
+
+	.VictoryRoom .RewardsBox .Card-media img {
+		height: clamp(92px, 28vw, 118px);
+	}
+
+	.VictoryRoom .RewardsBox .Card-name {
+		padding-top: 0.36rem;
+		font-size: clamp(1rem, 4.8vw, 1.2rem);
+		line-height: 1.04;
+	}
+
+	.VictoryRoom .RewardsBox .Card-type {
+		font-size: 0.68rem;
+	}
+
+	.VictoryRoom .RewardsBox .Card-description {
+		font-size: clamp(0.72rem, 3.45vw, 0.9rem);
+		line-height: 1.12;
+	}
+
+	.VictoryRoom > .Options {
+		width: min(calc(100% - 1.5rem), 22rem);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.Card,
+	.Card::after,
+	.VictoryRoom .RewardsBox .CardBox {
+		transition-duration: 0.01ms !important;
+	}
+}

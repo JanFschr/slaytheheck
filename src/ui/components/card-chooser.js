@@ -20,9 +20,25 @@ export default class CardChooser extends Component {
 	}
 
 	handleCardClick(index) {
-		this.setState({
-			selectedIndex: this.state.selectedIndex === index ? null : index,
-		})
+		const selectedIndex = this.state.selectedIndex === index ? null : index
+		this.setState({selectedIndex})
+
+		if (selectedIndex !== null) {
+			requestAnimationFrame(() => {
+				const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+				this.base.querySelectorAll('.CardBox')[selectedIndex]?.scrollIntoView({
+					behavior: reduceMotion ? 'auto' : 'smooth',
+					block: 'nearest',
+					inline: 'center',
+				})
+			})
+		}
+	}
+
+	handleCardKeyDown(event, index) {
+		if (event.key !== 'Enter' && event.key !== ' ') return
+		event.preventDefault()
+		this.handleCardClick(index)
 	}
 
 	handleButtonClick() {
@@ -44,13 +60,6 @@ export default class CardChooser extends Component {
 		const hasUpgrades = props.showUpgrades !== false && props.cards.some((card) => !card.upgraded)
 		const showButton = props.buttonLabel !== undefined
 
-		console.log('CardChooser:', {
-			cardsLength: props.cards.length,
-			cards: props.cards.map((c) => ({name: c.name, upgraded: c.upgraded})),
-			hasUpgrades,
-			showButton,
-		})
-
 		return html`
 			<article class="RewardsBox">
 				<div class="Cards ${hasUpgrades ? 'Cards--withUpgrades' : ''}">
@@ -58,9 +67,14 @@ export default class CardChooser extends Component {
 						(card, index) =>
 							html`<div
 								class="CardBox"
+								role="button"
+								tabIndex="0"
+								aria-label=${`Choose ${card.name}`}
+								aria-pressed=${selectedIndex === index ? 'true' : 'false'}
 								selected=${selectedIndex === index ? '' : null}
 								flipped=${hasUpgrades && selectedIndex === index ? '' : null}
 								onClick=${() => this.handleCardClick(index)}
+								onKeyDown=${(event) => this.handleCardKeyDown(event, index)}
 							>
 								${Card({card, gameState: props.gameState})}
 								${hasUpgrades && Card({card: createCard(card.name, true), gameState: props.gameState})}
