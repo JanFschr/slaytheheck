@@ -1,0 +1,162 @@
+:root {
+	--explainer-bg: color-mix(in oklab, var(--color-panel-strong), transparent 2%);
+	--explainer-border: color-mix(in oklab, var(--color-info), transparent 52%);
+	--explainer-text: var(--color-text);
+	--explainer-shadow: 0 0.8rem 1.8rem rgb(0 0 0 / 38%);
+	--explainer-radius: 0.75rem;
+	--explainer-z: 200;
+	--modal-overlay-z: 300;
+}
+
+/* One visual language for all explanatory surfaces: resource details,
+ * legacy aria-label tooltips and Driver.js tutorial popovers. */
+.MechanicsMvpHud-popover,
+.ExplainerPopover,
+.driver-popover {
+	border: 1px solid var(--explainer-border) !important;
+	border-radius: var(--explainer-radius) !important;
+	background: var(--explainer-bg) !important;
+	color: var(--explainer-text) !important;
+	box-shadow: var(--explainer-shadow) !important;
+	backdrop-filter: blur(12px);
+}
+
+.tooltipped {
+	--color-tooltip-text: var(--explainer-text);
+	--color-tooltip-bg: var(--explainer-bg);
+}
+
+.tooltipped::after {
+	border: 1px solid var(--explainer-border);
+	border-radius: var(--explainer-radius);
+	box-shadow: var(--explainer-shadow);
+	font-family: inherit;
+	line-height: 1.3;
+}
+
+.driver-popover {
+	z-index: calc(var(--explainer-z) + 20) !important;
+	max-width: min(22rem, calc(100vw - 1.5rem)) !important;
+	padding: 0.65rem 0.75rem !important;
+}
+
+.driver-popover-title,
+.driver-popover-description {
+	color: var(--explainer-text) !important;
+}
+
+.driver-popover-title {
+	font-family: inherit !important;
+	font-size: 0.9rem !important;
+	font-weight: 800 !important;
+}
+
+.driver-popover-description {
+	font-family: inherit !important;
+	font-size: 0.72rem !important;
+	line-height: 1.35 !important;
+}
+
+.driver-popover-footer button {
+	border: 1px solid color-mix(in oklab, var(--color-text), transparent 72%) !important;
+	border-radius: 999px !important;
+	background: color-mix(in oklab, var(--color-panel), transparent 5%) !important;
+	color: var(--color-text) !important;
+	font-family: inherit !important;
+	text-shadow: none !important;
+}
+
+.driver-popover-arrow-side-left.driver-popover-arrow,
+.driver-popover-arrow-side-right.driver-popover-arrow,
+.driver-popover-arrow-side-top.driver-popover-arrow,
+.driver-popover-arrow-side-bottom.driver-popover-arrow {
+	border-color: var(--explainer-bg) !important;
+}
+
+.ExplainerPopover {
+	position: fixed;
+	left: 50%;
+	z-index: var(--explainer-z);
+	width: min(22rem, calc(100vw - 1.5rem));
+	padding: 0.55rem 0.65rem;
+	transform: translateX(-50%);
+}
+
+.ExplainerPopover[hidden] {
+	display: none;
+}
+
+.ExplainerPopover-header {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.ExplainerPopover-title {
+	font-size: 0.82rem;
+	font-weight: 800;
+}
+
+.ExplainerPopover-close {
+	width: 1.85rem;
+	height: 1.85rem;
+	margin-left: auto;
+	padding: 0;
+	appearance: none;
+	border: 0;
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--color-panel), transparent 8%);
+	color: var(--color-text);
+	font: inherit;
+	font-size: 1rem;
+	line-height: 1;
+}
+
+.ExplainerPopover-description {
+	margin: 0.4rem 0 0;
+	font-size: 0.72rem;
+	line-height: 1.35;
+}
+
+@media (max-width: 700px) {
+	/* On touch phones, the pseudo tooltip cannot escape the fixed action bar's
+	 * stacking context. Replace it with the body-level shared popover instead. */
+	.tooltipped::before,
+	.tooltipped::after {
+		display: none !important;
+	}
+
+	.tooltipped[aria-label] {
+		touch-action: manipulation;
+	}
+
+	.ExplainerPopover {
+		top: auto;
+		bottom: calc(
+			var(--safe-bottom) +
+			var(--mobile-combat-action-height, var(--combat-action-height, 3.65rem)) +
+			var(--mobile-card-height, var(--card-height, 11rem)) +
+			3.15rem
+		);
+		width: min(17.5rem, 86vw);
+		padding: 0.52rem 0.6rem;
+	}
+
+	.ExplainerPopover-description {
+		font-size: 0.69rem;
+		line-height: 1.32;
+	}
+
+	/* Resource details use the same surface tokens and remain in their natural
+	 * anchored position above the context row. */
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-popover {
+		border-color: var(--explainer-border) !important;
+		background: var(--explainer-bg) !important;
+		box-shadow: var(--explainer-shadow) !important;
+	}
+
+	/* True overlays always own the top layer; explainers own the layer below. */
+	.Overlay[open] {
+		z-index: var(--modal-overlay-z) !important;
+	}
+}

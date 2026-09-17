@@ -65,5 +65,8 @@ const asset = (path: string) => `${base}${path.replace(/^\/+/, '')}`
 	</head>
 	<body>
 		<slot />
+		<script>
+			import '../explainers.js'
+		</script>
 	</body>
 </html>
