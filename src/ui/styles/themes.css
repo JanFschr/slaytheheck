@@ -1,0 +1,505 @@
+/*
+ * Theme / reskin layer.
+ *
+ * Layout rules stay in the existing component styles. This file is imported
+ * last and only changes visual language through semantic tokens plus scoped
+ * component overrides. That keeps future reskins cheap and avoids forking the
+ * gameplay UI per character.
+ */
+
+html[data-theme="cyberpunk"] {
+	--color-accent: #39e7ff;
+	--color-primary: #17c7b8;
+	--color-info: #8befff;
+	--color-secondary: #b879ff;
+	--color-danger: #ff456f;
+	--color-background: #030711;
+	--color-text: #e9f8ff;
+	--color-text-inverse: #02060b;
+	--color-panel: rgb(7 16 27 / 82%);
+	--color-panel-strong: rgb(3 9 18 / 94%);
+	--color-focus: #b9f6ff;
+
+	--theme-accent: #39e7ff;
+	--theme-accent-rgb: 57 231 255;
+	--theme-accent-2: #ff3ec8;
+	--theme-accent-2-rgb: 255 62 200;
+	--theme-warning: #ffb84a;
+	--theme-surface: rgb(5 13 24 / 88%);
+	--theme-surface-soft: rgb(9 23 38 / 72%);
+	--theme-line: rgb(113 228 255 / 32%);
+	--theme-line-strong: rgb(113 228 255 / 66%);
+	--theme-glow: 0 0 1.25rem rgb(var(--theme-accent-rgb) / 18%);
+	--theme-shadow: 0 0.9rem 2.5rem rgb(0 0 0 / 48%);
+	--theme-grid: rgb(var(--theme-accent-rgb) / 5%);
+
+	--yellow: var(--color-accent);
+	--teal: var(--color-primary);
+	--lightblue: var(--color-info);
+	--purple: var(--color-secondary);
+	--red: var(--color-danger);
+	--bg: var(--color-background);
+	--text: var(--color-text);
+	--text-inverse: var(--color-text-inverse);
+	--text-stroke: #02050a;
+
+	background: var(--color-background);
+	color-scheme: dark;
+}
+
+html[data-theme="cyberpunk"][data-skin="chrome"] {
+	--theme-accent: #ffb02e;
+	--theme-accent-rgb: 255 176 46;
+	--theme-accent-2: #ff4d3d;
+	--theme-accent-2-rgb: 255 77 61;
+	--color-accent: var(--theme-accent);
+	--color-info: #ffd37d;
+	--theme-line: rgb(255 176 46 / 31%);
+	--theme-line-strong: rgb(255 176 46 / 68%);
+}
+
+html[data-theme="cyberpunk"][data-skin="netrunner"] {
+	--theme-accent: #35f6ff;
+	--theme-accent-rgb: 53 246 255;
+	--theme-accent-2: #91ff45;
+	--theme-accent-2-rgb: 145 255 69;
+	--color-accent: var(--theme-accent);
+	--color-secondary: #91ff45;
+}
+
+html[data-theme="cyberpunk"][data-skin="swarmwright"] {
+	--theme-accent: #51e4c2;
+	--theme-accent-rgb: 81 228 194;
+	--theme-accent-2: #ffc857;
+	--theme-accent-2-rgb: 255 200 87;
+	--color-accent: var(--theme-accent);
+}
+
+html[data-theme="cyberpunk"][data-skin="ghost"] {
+	--theme-accent: #bcecff;
+	--theme-accent-rgb: 188 236 255;
+	--theme-accent-2: #6f76ff;
+	--theme-accent-2-rgb: 111 118 255;
+	--color-accent: var(--theme-accent);
+	--color-text: #f3fbff;
+}
+
+html[data-theme="cyberpunk"][data-skin="synth"] {
+	--theme-accent: #c475ff;
+	--theme-accent-rgb: 196 117 255;
+	--theme-accent-2: #3fffd0;
+	--theme-accent-2-rgb: 63 255 208;
+	--color-accent: var(--theme-accent);
+	--color-secondary: #3fffd0;
+}
+
+html[data-theme="cyberpunk"],
+html[data-theme="cyberpunk"] button,
+html[data-theme="cyberpunk"] input,
+html[data-theme="cyberpunk"] select,
+html[data-theme="cyberpunk"] textarea,
+html[data-theme="cyberpunk"] #driver-popover-content,
+html[data-theme="cyberpunk"] .driver-popover .driver-popover-title,
+html[data-theme="cyberpunk"] .driver-popover .driver-popover-description,
+html[data-theme="cyberpunk"] .driver-popover .driver-popover-footer button {
+	font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	font-feature-settings: "kern" 1, "liga" on, "tnum" 1;
+}
+
+html[data-theme="cyberpunk"] :is(h1, h2, h3, h4, .Card-name, .MechanicsMvpHud-label) {
+	font-family: "heliotrope_4_caps", "Arial Narrow", ui-sans-serif, sans-serif;
+	letter-spacing: 0.035em;
+}
+
+/* Scene: deliberately removes the old fantasy illustrations for the cyberpunk theme. */
+html[data-theme="cyberpunk"] .App-background,
+html[data-theme="cyberpunk"] .App-background[data-room-index] {
+	background-color: #02050d;
+	background-image:
+		radial-gradient(circle at 78% 18%, rgb(var(--theme-accent-rgb) / 18%), transparent 21rem),
+		radial-gradient(circle at 18% 54%, rgb(var(--theme-accent-2-rgb) / 13%), transparent 25rem),
+		linear-gradient(180deg, rgb(3 8 20 / 10%), rgb(1 4 10 / 68%)),
+		repeating-linear-gradient(90deg, transparent 0 9.9vw, var(--theme-grid) 10vw 10.05vw),
+		repeating-linear-gradient(0deg, transparent 0 7.9vh, var(--theme-grid) 8vh 8.05vh),
+		linear-gradient(135deg, #071426 0%, #030711 44%, #08121d 100%);
+	background-blend-mode: screen, screen, normal, normal, normal, normal;
+}
+
+html[data-theme="cyberpunk"] .App-background::before {
+	height: 48vh;
+	background:
+		linear-gradient(180deg, rgb(0 4 13 / 86%), transparent 72%),
+		repeating-linear-gradient(180deg, rgb(255 255 255 / 1.8%) 0 1px, transparent 1px 4px);
+}
+
+html[data-theme="cyberpunk"] .App-background::after {
+	height: 55vh;
+	background:
+		radial-gradient(ellipse at center bottom, transparent 0 30%, rgb(0 0 0 / 52%) 80%),
+		linear-gradient(to top, rgb(0 3 10 / 90%), transparent 84%);
+}
+
+/* Cards */
+html[data-theme="cyberpunk"] .Card {
+	border: 1px solid var(--theme-line-strong);
+	border-image: none;
+	border-radius: 0.45rem;
+	background: #06101c;
+	box-shadow:
+		0 0.65rem 1.5rem rgb(0 0 0 / 42%),
+		0 0 0 1px rgb(var(--theme-accent-rgb) / 8%),
+		inset 0 0 1.2rem rgb(var(--theme-accent-rgb) / 4%);
+	image-rendering: auto;
+	overflow: hidden;
+}
+
+html[data-theme="cyberpunk"] .Card::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 4;
+	pointer-events: none;
+	border: 1px solid rgb(255 255 255 / 5%);
+	background:
+		linear-gradient(90deg, transparent 0 96%, rgb(var(--theme-accent-rgb) / 22%) 96% 97%, transparent 97%),
+		linear-gradient(180deg, rgb(255 255 255 / 3%), transparent 18% 84%, rgb(var(--theme-accent-rgb) / 7%));
+}
+
+html[data-theme="cyberpunk"] .Card-inner {
+	background:
+		linear-gradient(165deg, rgb(18 33 48 / 96%), rgb(5 13 24 / 98%) 58%, rgb(4 9 17 / 100%));
+	color: var(--color-text);
+}
+
+html[data-theme="cyberpunk"] .Card-media {
+	position: relative;
+	border-bottom: 1px solid var(--theme-line);
+	background: #020710;
+}
+
+html[data-theme="cyberpunk"] .Card-media::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background:
+		linear-gradient(180deg, transparent 58%, rgb(2 7 16 / 75%)),
+		repeating-linear-gradient(180deg, transparent 0 3px, rgb(var(--theme-accent-rgb) / 3%) 3px 4px);
+}
+
+html[data-theme="cyberpunk"] .Card-media img {
+	filter: saturate(0.72) contrast(1.12) brightness(0.86);
+}
+
+html[data-theme="cyberpunk"] .Card-name {
+	padding-top: 0.55rem;
+	font-weight: 800;
+	text-shadow: 0 0 0.8rem rgb(var(--theme-accent-rgb) / 22%);
+}
+
+html[data-theme="cyberpunk"] .Card-type {
+	margin-top: -0.72rem;
+	padding: 0.16rem 0.45rem 0.2rem;
+	border: 1px solid var(--theme-line);
+	border-bottom-width: 1px;
+	border-radius: 0.18rem;
+	background: rgb(7 27 38 / 94%);
+	color: #bff7ff;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.62rem;
+	font-weight: 800;
+	letter-spacing: 0.11em;
+	text-transform: uppercase;
+	box-shadow: 0 0 0.7rem rgb(var(--theme-accent-rgb) / 10%);
+}
+
+html[data-theme="cyberpunk"] .Card[data-card-type="attack"] .Card-type {
+	border-color: rgb(255 87 111 / 50%);
+	background: rgb(66 13 28 / 94%);
+	color: #ffd4dc;
+}
+
+html[data-theme="cyberpunk"] .Card[data-card-type="power"] .Card-type {
+	border-color: rgb(var(--theme-accent-2-rgb) / 55%);
+	background: rgb(44 16 60 / 94%);
+	color: #f3d8ff;
+}
+
+html[data-theme="cyberpunk"] .Card-description {
+	color: #d5e7ef;
+	text-shadow: 0 1px 0 rgb(0 0 0 / 80%);
+}
+
+html[data-theme="cyberpunk"] .Hand .Card:hover,
+html[data-theme="cyberpunk"] .RewardsBox .CardBox:hover .Card {
+	box-shadow:
+		0 0 0 1px var(--theme-accent),
+		0 0 1.35rem rgb(var(--theme-accent-rgb) / 40%),
+		0 1rem 2rem rgb(0 0 0 / 45%);
+}
+
+/* Energy chip: keep the existing readable diamond geometry, replace fantasy styling. */
+html[data-theme="cyberpunk"] .EnergyBadge {
+	border: 1px solid var(--theme-line-strong);
+	background:
+		linear-gradient(135deg, rgb(var(--theme-accent-rgb) / 48%), rgb(4 24 31 / 98%));
+	color: #f2fdff;
+	text-shadow: 0 1px 2px #000;
+	box-shadow:
+		0 0 0 1px rgb(0 0 0 / 80%),
+		0 0 0.8rem rgb(var(--theme-accent-rgb) / 28%);
+}
+
+html[data-theme="cyberpunk"] .no-energy .EnergyBadge,
+html[data-theme="cyberpunk"] .Hand .Card[disabled] .EnergyBadge {
+	background: #171b25;
+	color: #ff708c;
+}
+
+/* Shared surfaces, controls and overlays */
+html[data-theme="cyberpunk"] :is(.Box, .Box--text) {
+	border: 1px solid var(--theme-line);
+	border-radius: 0.45rem;
+	background:
+		linear-gradient(145deg, rgb(13 29 45 / 92%), rgb(3 10 20 / 96%));
+	color: var(--color-text);
+	box-shadow: var(--theme-shadow), var(--theme-glow);
+	backdrop-filter: blur(14px);
+}
+
+html[data-theme="cyberpunk"] .Button,
+html[data-theme="cyberpunk"] .driver-popover .driver-popover-footer button {
+	border: 1px solid var(--theme-line-strong);
+	border-radius: 0.3rem;
+	background:
+		linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 15%), rgb(4 15 27 / 96%));
+	color: var(--color-text);
+	box-shadow:
+		0 0.22rem 0 rgb(0 0 0 / 62%),
+		0 0 0.8rem rgb(var(--theme-accent-rgb) / 9%);
+	font-weight: 700;
+	letter-spacing: 0.015em;
+}
+
+html[data-theme="cyberpunk"] .Button:hover,
+html[data-theme="cyberpunk"] .Button:focus,
+html[data-theme="cyberpunk"] .driver-popover .driver-popover-footer button:hover,
+html[data-theme="cyberpunk"] .driver-popover .driver-popover-footer button:focus {
+	background:
+		linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 29%), rgb(6 23 37 / 98%));
+	box-shadow:
+		0 0 0 1px rgb(var(--theme-accent-rgb) / 36%),
+		0 0 1rem rgb(var(--theme-accent-rgb) / 22%);
+}
+
+html[data-theme="cyberpunk"] button[danger] {
+	border-color: rgb(255 69 111 / 62%);
+	background: linear-gradient(180deg, rgb(120 19 44 / 88%), rgb(43 7 20 / 96%));
+}
+
+html[data-theme="cyberpunk"] :is(select, input[type="text"], input[type="number"], textarea) {
+	border: 1px solid var(--theme-line);
+	border-radius: 0.25rem;
+	background: rgb(2 9 18 / 88%);
+	color: var(--color-text);
+	box-shadow: inset 0 0 0.7rem rgb(var(--theme-accent-rgb) / 5%);
+}
+
+html[data-theme="cyberpunk"] .Overlay > button {
+	min-width: var(--tap-target);
+	min-height: var(--tap-target);
+	margin: 0.35rem;
+	border: 1px solid var(--theme-line);
+	border-radius: 0.35rem;
+	background: rgb(3 10 19 / 78%);
+	color: var(--color-text);
+	box-shadow: 0 0.45rem 1.2rem rgb(0 0 0 / 30%);
+	backdrop-filter: blur(10px);
+}
+
+html[data-theme="cyberpunk"] .Overlay[open] > button {
+	border-color: var(--theme-line-strong);
+	background: linear-gradient(90deg, rgb(var(--theme-accent-rgb) / 24%), rgb(3 12 22 / 92%));
+}
+
+html[data-theme="cyberpunk"] .Overlay[open] .Overlay-bg {
+	background:
+		repeating-linear-gradient(180deg, rgb(255 255 255 / 1.5%) 0 1px, transparent 1px 4px),
+		rgb(0 4 11 / 82%);
+	backdrop-filter: blur(5px);
+}
+
+/* Enemy / player HUD */
+html[data-theme="cyberpunk"] .Target[data-type="enemy"] {
+	margin-inline: 0.18rem;
+	border: 1px solid rgb(var(--theme-accent-rgb) / 18%);
+	border-radius: 0.55rem;
+	background:
+		linear-gradient(180deg, rgb(4 11 21 / 22%), rgb(2 8 16 / 70%));
+	box-shadow: inset 0 0 1.4rem rgb(0 0 0 / 16%);
+}
+
+html[data-theme="cyberpunk"] .Target-header {
+	border-radius: 0.28rem 0.28rem 0 0;
+	background: linear-gradient(90deg, rgb(2 8 15 / 84%), rgb(var(--theme-accent-rgb) / 6%));
+}
+
+html[data-theme="cyberpunk"] .Target-intent--text {
+	border: 1px solid var(--theme-line);
+	border-radius: 0.25rem;
+	background: rgb(7 16 29 / 92%);
+	color: #eafaff;
+	box-shadow: 0 0 0.55rem rgb(var(--theme-accent-rgb) / 7%);
+}
+
+html[data-theme="cyberpunk"] .Healthbar {
+	border: 1px solid rgb(185 225 236 / 48%);
+	border-radius: 0.28rem;
+	background: rgb(2 8 14 / 94%);
+	box-shadow:
+		inset 0 0 0.65rem rgb(0 0 0 / 85%),
+		0 0 0.55rem rgb(var(--theme-accent-rgb) / 8%);
+	overflow: hidden;
+}
+
+html[data-theme="cyberpunk"] .Healthbar-bar {
+	border-radius: 0;
+	background: linear-gradient(90deg, #ff355f, #ff8a45);
+	box-shadow: 0 0 0.65rem rgb(255 65 103 / 28%);
+}
+
+html[data-theme="cyberpunk"] .Target[data-type="player"] .Healthbar-bar {
+	background: linear-gradient(90deg, #23d7ce, var(--theme-accent));
+	box-shadow: 0 0 0.65rem rgb(var(--theme-accent-rgb) / 26%);
+}
+
+html[data-theme="cyberpunk"] .Healthbar--hasBlock .Healthbar-blockBar {
+	background: linear-gradient(90deg, #8a7cff, #bfa6ff);
+}
+
+html[data-theme="cyberpunk"] .Healthbar-label {
+	color: #f4fbff;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	text-shadow: 0 1px 2px #000;
+}
+
+/* MVP resources / rule popover */
+html[data-theme="cyberpunk"] .MechanicsMvpHud {
+	border-color: var(--theme-line);
+	border-radius: 0.45rem;
+	background:
+		linear-gradient(100deg, rgb(3 11 21 / 92%), rgb(10 25 40 / 76%));
+	box-shadow: var(--theme-shadow), var(--theme-glow);
+	backdrop-filter: blur(15px) saturate(120%);
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud::before {
+	content: "SYS // COMBAT";
+	position: absolute;
+	top: -0.68rem;
+	left: 0.65rem;
+	padding: 0 0.35rem;
+	background: #050d17;
+	color: rgb(var(--theme-accent-rgb) / 82%);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.48rem;
+	font-weight: 800;
+	letter-spacing: 0.12em;
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud-resource {
+	border-color: rgb(var(--theme-accent-rgb) / 18%);
+	border-radius: 0.28rem;
+	background: rgb(4 13 24 / 78%);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud-resource:hover,
+html[data-theme="cyberpunk"] .MechanicsMvpHud-resource[aria-expanded="true"] {
+	border-color: var(--theme-line-strong);
+	background: rgb(var(--theme-accent-rgb) / 10%);
+	box-shadow: 0 0 0.75rem rgb(var(--theme-accent-rgb) / 14%);
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud-resource[data-resource="heat"] {
+	--resource-color: #ffb347;
+	border-color: rgb(255 179 71 / 42%);
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud-resource[data-resource="drones"] {
+	--resource-color: #48e4ff;
+	border-color: rgb(72 228 255 / 42%);
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud-resource[data-resource="corruption"] {
+	--resource-color: #c678ff;
+	border-color: rgb(198 120 255 / 42%);
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud-resource strong,
+html[data-theme="cyberpunk"] .MechanicsMvpHud-resource .MechanicsMvpHud-icon {
+	color: var(--resource-color, var(--theme-accent));
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud-popover {
+	border-color: var(--theme-line-strong);
+	border-radius: 0.4rem;
+	background:
+		repeating-linear-gradient(180deg, transparent 0 3px, rgb(255 255 255 / 1%) 3px 4px),
+		rgb(2 9 18 / 97%);
+	box-shadow: var(--theme-shadow), 0 0 1.2rem rgb(var(--theme-accent-rgb) / 12%);
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud-popoverClose {
+	border: 1px solid var(--theme-line);
+	border-radius: 0.25rem;
+	background: rgb(7 17 28 / 92%);
+}
+
+/* Menu appearance controls. */
+.AppearanceControls {
+	display: grid;
+	gap: 0.45rem;
+	padding: 0.65rem 0;
+}
+
+.AppearanceControls label {
+	display: grid;
+	grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr);
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.AppearanceControls select {
+	min-height: 2.35rem;
+	width: 100%;
+	padding: 0.3rem 0.45rem;
+}
+
+html[data-theme="cyberpunk"] .AppearanceControls {
+	border-block: 1px solid rgb(var(--theme-accent-rgb) / 14%);
+}
+
+/* Small screen: keep the skin purely visual; never steal combat space. */
+@media (max-width: 700px) {
+	html[data-theme="cyberpunk"] .Target[data-type="enemy"] {
+		border-color: rgb(var(--theme-accent-rgb) / 15%);
+		background: linear-gradient(180deg, rgb(4 11 21 / 15%), rgb(2 8 16 / 58%));
+	}
+
+	html[data-theme="cyberpunk"] .MechanicsMvpHud::before {
+		display: none;
+	}
+
+	html[data-theme="cyberpunk"] .Card {
+		border-width: 1px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html[data-theme="cyberpunk"] *,
+	html[data-theme="cyberpunk"] *::before,
+	html[data-theme="cyberpunk"] *::after {
+		text-shadow: none;
+	}
+}
