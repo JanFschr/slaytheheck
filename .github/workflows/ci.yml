@@ -41,10 +41,5 @@ jobs:
     - name: Setup Biome
       uses: biomejs/setup-biome@v2
 
-    - name: Format mobile UI stylesheet for inspection
-      run: |
-        biome format --write src/ui/styles/mobile-implicit-info.css
-        echo '---BEGIN-FORMATTED-MOBILE-CSS---'
-        cat src/ui/styles/mobile-implicit-info.css
-        echo '---END-FORMATTED-MOBILE-CSS---'
-        exit 1
+    - name: Run Biome
+      run: biome ci .
