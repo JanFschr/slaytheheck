@@ -1,4 +1,5 @@
 import {createPortal} from 'preact/compat'
+import {getCurrRoom} from '../../game/utils-state.js'
 import {html, useState} from '../lib.js'
 
 function ResourcePips({value, max, dangerFrom}) {
@@ -45,6 +46,7 @@ function MechanicsMvpHudContent({gameState}) {
 	const isDevRun = gameState.runProfile === 'dev'
 	const [seed, setSeed] = useState(gameState.seed || '')
 	const resources = gameState.resources || {}
+	const roomType = getCurrRoom(gameState).type
 
 	function restartWithSeed(event) {
 		event.preventDefault()
@@ -60,7 +62,7 @@ function MechanicsMvpHudContent({gameState}) {
 	}
 
 	return html`
-		<aside class="MechanicsMvpHud" aria-label="Combat resources">
+		<aside class="MechanicsMvpHud" data-room-type=${roomType} aria-label="Combat resources">
 			<span class="MechanicsMvpHud-label">${isDevRun ? 'Mechanics MVP · DEV' : 'Mechanics MVP'}</span>
 			<div class="MechanicsMvpHud-resources">
 				<${Resource}
