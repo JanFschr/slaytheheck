@@ -69,10 +69,7 @@ export default function createNewGame(debug = false, options = {}) {
 
 		if (contentPack === mechanicsMvpId) {
 			state.modifiers = structuredClone(mechanicsMvpModifiers)
-			const dungeon =
-				runProfile === 'dev'
-					? createMechanicsMvpDevDungeon({seed})
-					: createMechanicsMvpDungeon({seed})
+			const dungeon = runProfile === 'dev' ? createMechanicsMvpDevDungeon({seed}) : createMechanicsMvpDungeon({seed})
 			state = actions.setDungeon(state, dungeon)
 			state = actions.setDeck(state, {cardNames: mechanicsMvpStarterDeck})
 		} else {
