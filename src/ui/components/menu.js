@@ -1,7 +1,7 @@
 import {html, useEffect, useState} from '../lib.js'
 import {clearLocalRun, saveLocalRun, saveToUrl} from '../save-load.js'
-import {APPEARANCE_OPTIONS, getAppearance, setAppearance, skinsForTheme} from '../theme.js'
 import {toggleMute} from '../sounds.js'
+import {APPEARANCE_OPTIONS, getAppearance, setAppearance, skinsForTheme} from '../theme.js'
 import BuildHud from './build-hud.js'
 import MechanicsMvpHud from './mechanics-mvp-hud.js'
 import RuntimeChoicePortal from './runtime-choice.js'
@@ -92,9 +92,7 @@ export default function Menu({gameState}) {
 						<label>
 							<span>Theme</span>
 							<select aria-label="Visual theme" value=${appearance.theme} onChange=${changeTheme}>
-								${APPEARANCE_OPTIONS.map(
-									(option) => html`<option value=${option.id}>${option.label}</option>`,
-								)}
+								${APPEARANCE_OPTIONS.map((option) => html`<option value=${option.id}>${option.label}</option>`)}
 							</select>
 						</label>
 						${
@@ -103,9 +101,7 @@ export default function Menu({gameState}) {
 								<label>
 									<span>Skin</span>
 									<select aria-label="Theme skin" value=${appearance.skin} onChange=${changeSkin}>
-										${availableSkins.map(
-											(option) => html`<option value=${option.id}>${option.label}</option>`,
-										)}
+										${availableSkins.map((option) => html`<option value=${option.id}>${option.label}</option>`)}
 									</select>
 								</label>
 							`
