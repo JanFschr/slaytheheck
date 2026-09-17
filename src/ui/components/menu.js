@@ -1,15 +1,10 @@
-import {html, useState} from '../lib.js'
-import {saveToUrl} from '../save-load.js'
+import {html, useEffect, useState} from '../lib.js'
+import {clearLocalRun, saveLocalRun, saveToUrl} from '../save-load.js'
 import {toggleMute} from '../sounds.js'
 import BuildHud from './build-hud.js'
 import MechanicsMvpHud from './mechanics-mvp-hud.js'
 import RuntimeChoicePortal from './runtime-choice.js'
 import {StrategicRoomPortal} from './strategic-room.js'
-
-// @ts-expect-error
-const abandonGame = () => {
-	window.location.href = window.location.origin
-}
 
 /** @typedef {import('../../game/new-game.js').Game} Game */
 /** @typedef {import('../../game/actions.js').State} State */
@@ -22,10 +17,30 @@ const abandonGame = () => {
  */
 export default function Menu({gameState}) {
 	const [muted, setMuted] = useState(false)
+	const [saveStatus, setSaveStatus] = useState('')
+
+	useEffect(() => {
+		if (!gameState?.player) return
+		if (gameState.player.currentHealth < 1 || gameState.won) {
+			clearLocalRun(gameState.contentPack)
+			return
+		}
+		saveLocalRun(gameState)
+	}, [gameState])
 
 	function toggleSound() {
 		toggleMute(!muted)
 		setMuted(!muted)
+	}
+
+	function saveNow() {
+		const saved = saveLocalRun(gameState)
+		setSaveStatus(saved ? 'Saved on this device.' : 'Local save unavailable.')
+	}
+
+	function abandonGame() {
+		clearLocalRun(gameState.contentPack)
+		window.location.href = import.meta.env.BASE_URL || '/'
 	}
 
 	return html`
@@ -38,17 +53,22 @@ export default function Menu({gameState}) {
 			<br />
 			<div class="Box">
 				<ul class="Options">
+					<li><strong>Local autosave is on.</strong> This run is stored only in this browser.</li>
+					<li>
+						<button class="Button" onClick=${saveNow}>Save locally now</button>
+						${saveStatus && html`<small> ${saveStatus}</small>`}
+					</li>
 					<li>
 						<button
 							class="Button"
 							onClick=${() => saveToUrl(gameState)}
-							title="Your save game will be stored in the URL. Copy it"
+							title="Store the save in the URL so it can be copied to another browser."
 						>
-							Save game
+							Create shareable save URL
 						</button>
 					</li>
 					<li>
-						<button class="Button" danger onClick=${() => abandonGame()}>Abandon game</button>
+						<button class="Button" danger onClick=${abandonGame}>Abandon game</button>
 					</li>
 					<li>
 						<label>Sound <input type="checkbox" checked=${!muted} onClick=${() => toggleSound()} /></label>
