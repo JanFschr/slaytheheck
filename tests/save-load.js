@@ -1,6 +1,30 @@
 import test from 'ava'
 import actions from '../src/game/actions.js'
-import {encode, decode} from '../src/ui/save-load.js'
+import createNewGame from '../src/game/new-game.js'
+import {
+	clearLocalRun,
+	decode,
+	encode,
+	getLocalRunMetadata,
+	loadLocalRun,
+	localSaveKey,
+	saveLocalRun,
+} from '../src/ui/save-load.js'
+
+function memoryStorage() {
+	const values = new Map()
+	return {
+		getItem(key) {
+			return values.has(key) ? values.get(key) : null
+		},
+		setItem(key, value) {
+			values.set(key, value)
+		},
+		removeItem(key) {
+			values.delete(key)
+		},
+	}
+}
 
 test('can save and load a game state', (t) => {
 	let state = actions.createNewState()
@@ -52,8 +76,8 @@ test('edges are reconstructed during decode', (t) => {
 
 	// Capture original edges structure
 	const originalEdges = new Map()
-	state.dungeon.graph.forEach((floor, floorIndex) => {
-		floor.forEach((node, nodeIndex) => {
+	state.dungeon.graph.forEach((floor) => {
+		floor.forEach((node) => {
 			if (node.edges && node.edges.length > 0) {
 				originalEdges.set(node.id, [...node.edges].sort())
 			}
@@ -123,6 +147,88 @@ test('dungeon navigation works after save/load cycle', (t) => {
 	const nextFloor = loaded.dungeon.graph[2]
 	const nextTarget = nextFloor.find((node) => currentNode.edges.includes(node.id))
 	t.truthy(nextTarget, 'should be able to find next move after load')
+})
+
+test('local run save round-trips deterministic state and pending choices', (t) => {
+	const storage = memoryStorage()
+	const game = createNewGame(false, {seed: 'local-save-roundtrip'})
+	const state = structuredClone(game.state)
+	state.gold = 137
+	state.pendingChoice = {
+		id: 'choice-1',
+		kind: 'card',
+		options: state.hand.slice(0, 2).map((card) => card.id),
+	}
+
+	const saved = saveLocalRun(state, {
+		storage,
+		now: () => new Date('2026-09-17T12:00:00.000Z'),
+	})
+	const restored = loadLocalRun(undefined, {storage})
+
+	t.is(saved.savedAt, '2026-09-17T12:00:00.000Z')
+	t.is(restored.state.seed, 'local-save-roundtrip')
+	t.is(restored.state.gold, 137)
+	t.deepEqual(restored.state.pendingChoice, state.pendingChoice)
+	t.deepEqual(restored.state.rng, state.rng)
+	t.true(restored.state.dungeon.graph.some((floor) => floor.some((node) => Array.isArray(node.edges))))
+})
+
+test('local save slots are isolated by content pack', (t) => {
+	const storage = memoryStorage()
+	const core = createNewGame(false, {seed: 'core-save'})
+	const mvp = createNewGame(false, {seed: 'mvp-save', contentPack: 'mechanics-mvp'})
+
+	saveLocalRun(core.state, {storage})
+	saveLocalRun(mvp.state, {storage})
+
+	t.not(localSaveKey(), localSaveKey('mechanics-mvp'))
+	t.is(loadLocalRun(undefined, {storage}).state.seed, 'core-save')
+	t.is(loadLocalRun('mechanics-mvp', {storage}).state.seed, 'mvp-save')
+})
+
+test('metadata exposes a compact continue-run summary', (t) => {
+	const storage = memoryStorage()
+	const state = structuredClone(createNewGame(false, {seed: 'summary-save'}).state)
+	state.gold = 88
+	state.player.currentHealth = 61
+
+	saveLocalRun(state, {storage})
+	const metadata = getLocalRunMetadata(undefined, {storage})
+
+	t.is(metadata.seed, 'summary-save')
+	t.is(metadata.health, 61)
+	t.is(metadata.maxHealth, state.player.maxHealth)
+	t.is(metadata.gold, 88)
+	t.is(metadata.deckSize, state.deck.length)
+	t.false('state' in metadata)
+})
+
+test('clearing and corrupt saves fail safely', (t) => {
+	const storage = memoryStorage()
+	const game = createNewGame(false, {seed: 'clear-save'})
+
+	saveLocalRun(game.state, {storage})
+	t.truthy(loadLocalRun(undefined, {storage}))
+	t.true(clearLocalRun(undefined, {storage}))
+	t.is(loadLocalRun(undefined, {storage}), null)
+
+	storage.setItem(localSaveKey(), '{ definitely not json')
+	t.is(loadLocalRun(undefined, {storage}), null)
+	t.is(storage.getItem(localSaveKey()), null)
+})
+
+test('createNewGame can hydrate a local resume state without rebuilding the run', (t) => {
+	const original = structuredClone(createNewGame(false, {seed: 'resume-state'}).state)
+	original.gold = 222
+	original.player.currentHealth = 43
+
+	const resumed = createNewGame(false, {resumeState: original})
+
+	t.is(resumed.seed, 'resume-state')
+	t.is(resumed.state, original)
+	t.is(resumed.state.gold, 222)
+	t.is(resumed.state.player.currentHealth, 43)
 })
 
 // Set() serialization no longer needed - we don't use Set/Map in game state
