@@ -1,0 +1,187 @@
+/* Portrait follow-up based on real-device testing.
+ * Keep the player's vital information in the thumb zone and prevent the
+ * Mechanics MVP resources from reading like a second full-width HUD. */
+
+@media (max-width: 700px) and (orientation: portrait) {
+	/* Do not use the upper player lane as a visual container on phones. The
+	 * actual player Target stays in the DOM so tap-to-play/self targeting keeps
+	 * using the existing target model. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child {
+		position: static;
+		display: contents;
+	}
+
+	/* Position the real player target directly in the bottom action row. This is
+	 * deliberately applied to the Target itself instead of moving its parent;
+	 * that avoids layout/cascade differences between Safari versions. */
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		> .Target[data-type="player"] {
+		position: fixed;
+		top: auto;
+		left: calc(var(--safe-left) + 4.1rem);
+		right: calc(var(--safe-right) + 8.2rem);
+		bottom: calc(var(--safe-bottom) + 0.42rem);
+		z-index: 46;
+		width: auto;
+		max-width: none;
+		min-height: 0;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		box-shadow: none;
+		backdrop-filter: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		> .Target[data-type="player"]
+		.Target-header {
+		display: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		> .Target[data-type="player"]
+		.Healthbar {
+		width: 100%;
+		height: 1.5rem;
+		margin: 0;
+		border-width: 2px;
+		border-radius: 999px;
+		overflow: hidden;
+		box-shadow: 0 0.18rem 0.55rem rgb(0 0 0 / 32%);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		> .Target[data-type="player"]
+		.Healthbar-label {
+		margin: 0;
+		font-size: 0.74rem;
+		line-height: 1.22rem;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		> .Target[data-type="player"]
+		.Healthbar-label
+		span {
+		transform: none;
+	}
+
+	/* Player powers are contextual detail, not another permanent row. They stay
+	 * just above HP and only exist when a power is active. */
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		> .Target[data-type="player"]
+		.Target-powers {
+		position: absolute;
+		left: 50%;
+		bottom: calc(100% + 0.18rem);
+		width: max-content;
+		max-width: min(58vw, 14rem);
+		margin: 0;
+		padding: 0.08rem 0.18rem;
+		transform: translateX(-50%);
+		overflow-x: auto;
+		flex-wrap: nowrap;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-panel-strong), transparent 16%);
+		scrollbar-width: none;
+		white-space: nowrap;
+		backdrop-filter: blur(7px);
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		> .Target[data-type="player"]
+		.Target-powers::-webkit-scrollbar {
+		display: none;
+	}
+
+	.App:has(> .Targets):not(:has(.VictoryRoom))
+		> .Targets
+		> .Targets-group:first-child
+		> .Target[data-type="player"]
+		.Target-powers:empty {
+		display: none;
+	}
+
+	/* The old player slot no longer consumes vertical battlefield space. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child {
+		top: calc(var(--safe-top) + var(--combat-topbar-height) + 0.5rem);
+	}
+
+	/* Heat / Drones / Void form a lightweight context cluster above the hand.
+	 * The previous full-width dark container read like a central status bar and
+	 * visually split the battlefield in half. */
+	body:has(.App > .Targets) .MechanicsMvpHud {
+		top: auto;
+		bottom: calc(var(--safe-bottom) + var(--mobile-combat-action-height) + var(--mobile-card-height) + 1.55rem);
+		width: auto;
+		max-width: min(48vw, 11.5rem);
+		padding: 0;
+		border: 0;
+		background: transparent;
+		box-shadow: none;
+		backdrop-filter: none;
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-resources {
+		gap: 0.2rem;
+		justify-content: center;
+		overflow: visible;
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-resource {
+		grid-template-columns: auto auto;
+		grid-template-areas:
+			"icon value"
+			"pips pips";
+		gap: 0.08rem 0.2rem;
+		min-height: 2rem;
+		padding: 0.18rem 0.3rem;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--color-panel-strong), transparent 10%);
+		box-shadow: 0 0.15rem 0.45rem rgb(0 0 0 / 22%);
+		font-size: 0.64rem;
+		backdrop-filter: blur(7px);
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-resource strong {
+		display: none;
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-pips {
+		min-width: 2.5rem;
+		gap: 1px;
+	}
+
+	body:has(.App > .Targets) .MechanicsMvpHud-pip {
+		width: 0.2rem;
+		height: 0.16rem;
+	}
+
+	/* Drone and Void capacity are already explicit in N/max. Keep the miniature
+	 * meter only for Heat because the 8+ danger threshold carries extra meaning. */
+	body:has(.App > .Targets)
+		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"])
+		.MechanicsMvpHud-pips {
+		display: none;
+	}
+
+	body:has(.App > .Targets)
+		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"]) {
+		grid-template-areas: "icon value";
+		min-height: 1.9rem;
+	}
+}
