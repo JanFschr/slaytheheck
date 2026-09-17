@@ -14,10 +14,7 @@
 	/* Position the real player target directly in the bottom action row. This is
 	 * deliberately applied to the Target itself instead of moving its parent;
 	 * that avoids layout/cascade differences between Safari versions. */
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		> .Target[data-type="player"] {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child > .Target[data-type="player"] {
 		position: fixed;
 		top: auto;
 		left: calc(var(--safe-left) + 4.1rem);
@@ -78,8 +75,7 @@
 
 	/* Player powers are contextual detail, not another permanent row. They stay
 	 * just above HP and only exist when a power is active. */
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets
 		> .Targets-group:first-child
 		> .Target[data-type="player"]
 		.Target-powers {
@@ -173,14 +169,12 @@
 
 	/* Drone and Void capacity are already explicit in N/max. Keep the miniature
 	 * meter only for Heat because the 8+ danger threshold carries extra meaning. */
-	body:has(.App > .Targets)
-		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"])
+	body:has(.App > .Targets) .MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"])
 		.MechanicsMvpHud-pips {
 		display: none;
 	}
 
-	body:has(.App > .Targets)
-		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"]) {
+	body:has(.App > .Targets) .MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"]) {
 		grid-template-areas: "icon value";
 		min-height: 1.9rem;
 	}
