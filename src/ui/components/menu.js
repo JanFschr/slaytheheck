@@ -18,15 +18,16 @@ import {StrategicRoomPortal} from './strategic-room.js'
 export default function Menu({gameState}) {
 	const [muted, setMuted] = useState(false)
 	const [saveStatus, setSaveStatus] = useState('')
+	const localSaveEnabled = gameState?.localSaveEnabled !== false
 
 	useEffect(() => {
-		if (!gameState?.player) return
+		if (!gameState?.player || !localSaveEnabled) return
 		if (gameState.player.currentHealth < 1 || gameState.won) {
 			clearLocalRun(gameState.contentPack)
 			return
 		}
 		saveLocalRun(gameState)
-	}, [gameState])
+	}, [gameState, localSaveEnabled])
 
 	function toggleSound() {
 		toggleMute(!muted)
@@ -39,7 +40,7 @@ export default function Menu({gameState}) {
 	}
 
 	function abandonGame() {
-		clearLocalRun(gameState.contentPack)
+		if (localSaveEnabled) clearLocalRun(gameState.contentPack)
 		window.location.href = import.meta.env.BASE_URL || '/'
 	}
 
@@ -53,11 +54,17 @@ export default function Menu({gameState}) {
 			<br />
 			<div class="Box">
 				<ul class="Options">
-					<li><strong>Local autosave is on.</strong> This run is stored only in this browser.</li>
-					<li>
-						<button class="Button" onClick=${saveNow}>Save locally now</button>
-						${saveStatus && html`<small> ${saveStatus}</small>`}
-					</li>
+					${
+						localSaveEnabled
+							? html`
+								<li><strong>Local autosave is on.</strong> This run is stored only in this browser.</li>
+								<li>
+									<button class="Button" onClick=${saveNow}>Save locally now</button>
+									${saveStatus && html`<small> ${saveStatus}</small>`}
+								</li>
+							`
+							: html`<li><strong>Dev run.</strong> Local autosave is disabled so every reload starts clean.</li>`
+					}
 					<li>
 						<button
 							class="Button"

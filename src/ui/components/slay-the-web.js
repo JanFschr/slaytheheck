@@ -13,8 +13,16 @@ const GameModes = {
 	win: 'win',
 }
 
+function contentConfig() {
+	return globalThis.__SLAY_CONTENT_PACK__ || {}
+}
+
 function activeContentPack() {
-	return globalThis.__SLAY_CONTENT_PACK__?.id
+	return contentConfig().id
+}
+
+function localSavesEnabled() {
+	return contentConfig().localSave !== false
 }
 
 function stageLocalRun(contentPack) {
@@ -32,13 +40,13 @@ export default class SlayTheWeb extends Component {
 	constructor() {
 		super()
 		const urlParams = new URLSearchParams(window.location.search)
-		const contentConfig = globalThis.__SLAY_CONTENT_PACK__ || {}
-		const initialGameMode = urlParams.has('debug') || contentConfig.autoStart ? GameModes.gameplay : GameModes.splash
+		const config = contentConfig()
+		const initialGameMode = urlParams.has('debug') || config.autoStart ? GameModes.gameplay : GameModes.splash
 
 		// Dedicated auto-start content packs resume their own local slot unless an
-		// explicit seed or URL save was requested.
-		if (contentConfig.autoStart && !urlParams.has('seed') && !window.location.hash) {
-			stageLocalRun(contentConfig.id)
+		// explicit seed/URL save was requested or the route disables local saves.
+		if (config.autoStart && localSavesEnabled() && !urlParams.has('seed') && !window.location.hash) {
+			stageLocalRun(config.id)
 		}
 
 		this.state = {
@@ -54,7 +62,7 @@ export default class SlayTheWeb extends Component {
 
 	handleNewGame(selectedDeck) {
 		// await initSounds()
-		clearLocalRun(activeContentPack())
+		if (localSavesEnabled()) clearLocalRun(activeContentPack())
 		delete globalThis.__SLAY_RESUME_STATE__
 		this.setState({
 			gameMode: GameModes.gameplay,
@@ -72,17 +80,17 @@ export default class SlayTheWeb extends Component {
 	handleContinue() {
 		// URL saves remain backwards compatible and take precedence. Otherwise stage
 		// the browser-local save so createNewGame can hydrate it on mount.
-		if (!window.location.hash) stageLocalRun(activeContentPack())
+		if (localSavesEnabled() && !window.location.hash) stageLocalRun(activeContentPack())
 		this.setState({gameMode: GameModes.gameplay})
 	}
 
 	handleWin() {
-		clearLocalRun(activeContentPack())
+		if (localSavesEnabled()) clearLocalRun(activeContentPack())
 		this.setState({gameMode: GameModes.win})
 	}
 
 	handleLoose() {
-		clearLocalRun(activeContentPack())
+		if (localSavesEnabled()) clearLocalRun(activeContentPack())
 		this.setState({gameMode: GameModes.splash})
 	}
 

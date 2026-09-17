@@ -2,7 +2,9 @@ import test from 'ava'
 import {getBuildRewards} from '../src/content/build-rewards.js'
 import {mechanicsMvpCardDefinitions} from '../src/content/mechanics-mvp-cards.js'
 import {
+	createMechanicsMvpDevDungeon,
 	createMechanicsMvpDungeon,
+	mechanicsMvpDevSeed,
 	mechanicsMvpId,
 	mechanicsMvpStarterDeck,
 } from '../src/content/mechanics-mvp.js'
@@ -71,6 +73,41 @@ test('same MVP seed reproduces routes and encounters', (t) => {
 	const boss = a.graph.at(-1)[0].room.monsters[0]
 	t.is(boss.name, 'Core Architect')
 	t.is(boss.phases.length, 3)
+})
+
+test('fixed dev run is linear and covers all strategic systems', (t) => {
+	const dungeon = createMechanicsMvpDevDungeon()
+	t.is(dungeon.seed, mechanicsMvpDevSeed)
+	t.is(dungeon.paths.length, 1)
+	t.deepEqual(
+		dungeon.graph.slice(1, -1).map((floor) => floor[0].room.type),
+		['monster', 'event', 'merchant', 'monster', 'treasure', 'campfire'],
+	)
+	t.is(dungeon.graph[4][0].type, 'E')
+	t.is(dungeon.graph.at(-1)[0].room.monsters[0].name, 'Core Architect')
+})
+
+test('dev profile boots the same clean testing run without local autosave', (t) => {
+	const first = createNewGame(false, {
+		seed: mechanicsMvpDevSeed,
+		contentPack: mechanicsMvpId,
+		profile: 'dev',
+		localSave: false,
+	})
+	const second = createNewGame(false, {
+		seed: mechanicsMvpDevSeed,
+		contentPack: mechanicsMvpId,
+		profile: 'dev',
+		localSave: false,
+	})
+
+	t.is(first.state.runProfile, 'dev')
+	t.false(first.state.localSaveEnabled)
+	t.deepEqual(first.state.dungeon, second.state.dungeon)
+	t.deepEqual(
+		first.state.deck.map((card) => card.definitionId),
+		second.state.deck.map((card) => card.definitionId),
+	)
 })
 
 test('MVP reward pools stay inside MVP content', (t) => {

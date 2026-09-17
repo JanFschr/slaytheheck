@@ -1,116 +1,125 @@
-# Slay the Web
+# Slay the Heck
 
-A single player deck-building roguelike video card game for the web based on Slay The Spire,  
-a fantastic video game designed by [MegaCrit](https://www.megacrit.com/).
+Slay the Heck is a mobile-first browser deck-building roguelike based on the open-source [Slay the Web](https://github.com/oskarrough/slaytheweb) project.
 
-### [Play on slaytheweb.cards](https://www.slaytheweb.cards/)
+The current fork is being used to evolve the original engine into a more deterministic, data-driven roguelike with touch-first combat, seeded runs, build items, strategic map rooms and a small mechanics test pack before larger deck archetypes are built.
 
-### [Chat on #slaytheweb:matrix.org](https://matrix.to/#/#slaytheweb:matrix.org)
+## Play
 
-<a href="https://slaytheweb.cards"><img src="https://i.imgur.com/m9CRCsa.png" alt="Screenshot of Slay the Web" width="640"></a>
+- Main game: https://janfschr.github.io/slaytheheck/
+- Mechanics MVP: https://janfschr.github.io/slaytheheck/mvp/
+- Fixed developer test run: https://janfschr.github.io/slaytheheck/mvp-dev/
 
-## Background
+The Mechanics MVP is intentionally small. It contains Heat, Drone and Void mechanics plus matching relics/equipment so new systems can be tested before committing to a full content set.
 
-After many runs in the Spire, I got into the theory behind the game. Inspired by the STS modding community, I thought it'd be fun and a great learning experience to try and implement the core logic of the game in JavaScript for the web. And that is what _Slay the Web_ is: a kind of stable, UI agnostic game engine with an example UI for the web.
+The fixed developer run always uses seed `mechanics-mvp-dev-v1` and forces this route:
 
-## Updates
+```text
+Start
+  ↓
+Combat: Scrap Hound + Heat Leech
+  ↓
+Event: Calibration Shrine
+  ↓
+Merchant
+  ↓
+Elite: Reactor Sentinel
+  ↓
+Treasure
+  ↓
+Campfire
+  ↓
+Boss: Core Architect
+```
 
-See the CHANGELOG.md file.
+This route disables local autosave on purpose. Reloading it starts the same clean run again, including the same map, encounters, shop inventory and deterministic rewards.
+
+## Current feature set
+
+The fork currently includes:
+
+- portrait and landscape mobile combat layouts
+- touch card selection and fast double-tap play when a card has one valid target
+- stable content IDs, card tags, rarity and keyword metadata
+- deterministic seeded RNG streams for map generation, encounters, card IDs, shuffles, rewards, shops and summons
+- a shared action runtime used by cards, enemies, relics and equipment
+- serializable pause/resume choice actions
+- multi-phase bosses, summons and action-authored enemy intents
+- relic and equipment registries with reward selection and HUD support
+- gold, merchant, event and treasure rooms
+- deterministic strategic map routes
+- browser-local run autosaves and resume
+- URL saves for portable/shareable state
+- the Mechanics MVP content pack with 15 test cards, 3 relics, 3 equipment items, 3 normal enemy identities, an elite and a three-phase boss
+- GitHub Pages CI/build/deploy from `main`
+
+## Local run saves
+
+Active runs are automatically stored in browser `localStorage`. Core and Mechanics MVP runs use separate save slots.
+
+The saved state includes the deterministic seed/RNG state, map position, deck/hand/piles, HP, gold, relics, equipment, resources and pending runtime choices. The splash screen can resume a local run after a reload.
+
+A completed, abandoned or lost run clears its local slot. The fixed `/mvp-dev/` regression route does not write local saves, so it always starts clean.
 
 ## Development
 
-TLDR;
+The project uses Bun, Astro, Preact/HTM, Immer, GSAP, AVA and Biome.
 
-1. Clone the repository
-2. Run `npm install` followed by `npm run dev` to open a local development server.
+```bash
+bun install
+bun run dev
+```
 
-## Documentation
+Before finishing a group of changes, run:
 
-If you're interested in contributing to the game or merely curious how it works:
+```bash
+bun run check
+bun run test
+bun run build
+```
 
-- [The documentation](DOCUMENTATION.md)
+Useful routes while developing:
 
-Or browse the code. Especially the game logic includes tons of comments.
+```text
+/             normal game
+/mvp/         Mechanics MVP; accepts ?seed=<seed>
+/mvp-dev/     fixed regression run using mechanics-mvp-dev-v1
+/debug/       debug UI
+/map-demo/    map demo
+```
 
-See the [open issues](https://github.com/oskarrough/slaytheweb/issues).  
-Have an idea? Please [open a new issue](https://github.com/oskarrough/slaytheweb/issues/new).
+Useful query parameters in the normal game include `?debug`, `?tutorial`, `?iddqd` and `?hand=Strike,Iron Wave`.
 
-There are many areas that would make it more fun to play:
+## Repository structure
 
-- new cards
-- new powers
-- more monsters
-- expand the map into multiple "worlds" (or acts...)
-- better UI and animations
-- optimize UI for mobile
+```text
+src/content   card/enemy/dungeon/event/build-item content
+src/game      deterministic game state and action runtime
+src/ui        Preact/HTM/Astro browser UI
+public        static assets
+tests         AVA regression tests
+notes         design and test-pack notes
+```
 
-## How to release a new version (aka deploy)
+See [DOCUMENTATION.md](DOCUMENTATION.md) for the architecture and [notes/mechanics-mvp.md](notes/mechanics-mvp.md) for the current mechanics test pack.
 
-Every commit to the `main` branch automatically deploys to https://slaytheweb.cards via Cloudflare.
+## Development direction
 
-If you open a PR, it'll give you a preview URL where we can see if things are as expected.
+The runtime foundation is intentionally close to complete. The next major work is gameplay/content rather than adding more abstract engine layers:
 
-To update the `CHANGELOG.md`, run `bun run release` and follow the prompts. We do not use GitHub releases.
+1. use the fixed MVP run to validate Heat, Drone, Void, rewards, economy and boss mechanics
+2. tune or remove weak mechanics based on actual runs
+3. expand the successful mechanics into full deck archetypes and enemy rosters
+4. balance the complete run economy
+5. replace the remaining upstream visual identity with the final theme/content direction
+6. add broader browser/touch regression testing and later progression/daily-run features
 
-## References
+## CI and deployment
 
-<details>
-  <summary>A collection of related links, inspiration and ideas.</summary>
+Pull requests run AVA tests, Biome and the GitHub Pages build. `main` deploys automatically to GitHub Pages at https://janfschr.github.io/slaytheheck/.
 
-- FTL, Into The Breach, Darkest Dungeon, Dungeon of the Endless, Spelunky, Rogue Legacy,
-- [Pollywog Games: A history of roguelite deck building games](https://pollywog.games/rgdb/)
-- http://stfj.net/index2.php?project=art/2011/Scoundrel.pdf
-- http://stfj.net/index2.php?year=2018&project=art/2018/Pocket-Run%20Pool
-- http://www.cardcrawl.com/
-- http://www.cardofdarkness.com/
-- https://freesound.org/
-- https://game-icons.net/
-- https://github.com/RonenNess/RPGUI
-- https://hundredrabbits.itch.io/donsol [Source](https://github.com/hundredrabbits/Donsol/tree/master/desktop/sources/scripts)
-- https://itch.io/games/tag-card-game/tag-roguelike
-- https://nathanwentworth.itch.io/deck-dungeon [Source](https://github.com/nathanwentworth/deck-dungeon/)
-- https://www.reddit.com/r/slaythespire/comments/a7lhpq/any_recommended_games_similar_to_slay_the_spire/
-- https://twitter.com/fabynou/status/1212534790672408578
-- https://www.gamasutra.com/blogs/JoshGe/20181029/329512/How_to_Make_a_Roguelike.php
-- https://www.reddit.com/r/roguelikedev/
-- https://www.reddit.com/r/roguelikes/
-- https://klei.com/games/griftlands
-- https://forgottenarbiter.github.io/Is-Every-Seed-Winnable/
-- https://www.cloudfallstudios.com/blog/2020/11/2/game-design-tips-reverse-engineering-slay-the-spires-decisions
-- https://www.cloudfallstudios.com/blog/2018/5/7/guide-deckbuilder-tips-for-beginners-prompts-for-the-experienced-part-23
-- https://mitadmissions.org/blogs/entry/slay-the-spire-as-metaphor/
+## Upstream and license
 
-### Slay the Spire modding, tools and things
+This repository is a fork of [oskarrough/slaytheweb](https://github.com/oskarrough/slaytheweb). The original project implemented a browser-based deck-building roguelike inspired by Slay the Spire and provides the foundation this fork builds on.
 
-- https://en.wikipedia.org/wiki/Slay_the_Spire
-- https://slay-the-spire.fandom.com/wiki/Slay_the_Spire_Wiki
-- https://spirelogs.com/
-- https://maybelatergames.co.uk/tools/slaythespire/
-- https://github.com/daviscook477/BaseMod
-- https://github.com/Gremious/StS-DefaultModBase
-- https://github.com/Gremious/StS-DefaultModBase/wiki
-- https://github.com/kiooeht/Hubris/
-- https://github.com/kiooeht/StSLib/wiki/Power-Hooks
-- https://www.gdcvault.com/play/1025731/-Slay-the-Spire-Metrics
-- https://github.com/Dementophobia/slay-the-spire-sensei
-- https://www.rockpapershotgun.com/2018/02/19/why-revealing-all-is-the-secret-of-slay-the-spires-success/
-- [Slay the Spire Reference spreadsheet](https://docs.google.com/spreadsheets/u/1/d/1ZsxNXebbELpcCi8N7FVOTNGdX_K9-BRC_LMgx4TORo4/edit?usp=sharing)
-- [Slay the Spire Discord](https://discord.gg/slaythespire)
-- https://github.com/adnzzzzZ/blog
-- https://forgottenarbiter.github.io/Is-Every-Seed-Winnable/ ([discussion](https://news.ycombinator.com/item?id=23910006))
-- https://www.twitch.tv/telnetthespire
-- [Slay the Spire Reference Spreadsheet](https://docs.google.com/spreadsheets/u/1/d/1ZsxNXebbELpcCi8N7FVOTNGdX_K9-BRC_LMgx4TORo4/edit#gid=1146624812)
-- https://alexdriedger.github.io/SlayTheSpireModding/
-
-### Typeface
-
-Licenced from https://mbtype.com/
-
-### Open source artwork
-
-- http://ronenness.github.io/RPGUI/
-- https://github.com/game-icons/icons
-- https://www.fromoldbooks.org/
-- https://www.oldbookart.com/
-
-</details>
+The repository remains licensed under AGPL-3.0-or-later. See [LICENSE](LICENSE). Existing artwork/typeface attribution inherited from upstream should be reviewed before a final reskin or redistribution of replaced assets.

@@ -4,6 +4,7 @@ import {createRng, deriveSeed} from '../game/rng.js'
 import {CampfireRoom, EventRoom, MerchantRoom, MonsterRoom, TreasureRoom} from '../game/rooms.js'
 
 export const mechanicsMvpId = 'mechanics-mvp'
+export const mechanicsMvpDevSeed = 'mechanics-mvp-dev-v1'
 
 export const mechanicsMvpStarterDeck = [
 	'core:strike',
@@ -184,5 +185,41 @@ export function createMechanicsMvpDungeon(options = {}) {
 
 	const bossFloor = dungeon.graph.length - 1
 	assignRoom(dungeon, bossFloor, 0, 'boss', CoreArchitect(createRng(deriveSeed(seed, 'mechanics-mvp-boss'))))
+	return dungeon
+}
+
+/**
+ * A deliberately linear, fixed-seed run for manual regression testing.
+ * Every tester sees the same encounters, shop inventory, rewards and boss RNG.
+ * The route forces all strategic room types to appear in one short run.
+ */
+export function createMechanicsMvpDevDungeon(options = {}) {
+	const seed = String(options.seed ?? mechanicsMvpDevSeed)
+	const dungeon = Dungeon({
+		width: 1,
+		height: 6,
+		minRooms: 1,
+		maxRooms: 1,
+		customPaths: '0',
+		roomTypes: 'M',
+		seed,
+	})
+
+	const encounterRng = createRng(deriveSeed(seed, 'mechanics-mvp-dev', 'opening'))
+	assignRoom(dungeon, 1, 0, 'M', MonsterRoom(ScrapHound(encounterRng), HeatLeech(encounterRng)))
+	assignRoom(dungeon, 2, 0, 'Q', EventRoom('event:calibration-shrine'))
+	assignRoom(dungeon, 3, 0, 'Q', MerchantRoom())
+	assignRoom(dungeon, 4, 0, 'E', ReactorSentinel(createRng(deriveSeed(seed, 'mechanics-mvp-dev', 'elite'))))
+	assignRoom(dungeon, 5, 0, 'Q', TreasureRoom())
+	assignRoom(dungeon, 6, 0, 'C', CampfireRoom())
+
+	const bossFloor = dungeon.graph.length - 1
+	assignRoom(
+		dungeon,
+		bossFloor,
+		0,
+		'boss',
+		CoreArchitect(createRng(deriveSeed(seed, 'mechanics-mvp-dev', 'boss'))),
+	)
 	return dungeon
 }

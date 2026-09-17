@@ -1,5 +1,6 @@
 import {economy} from '../content/economy.js'
 import {
+	createMechanicsMvpDevDungeon,
 	createMechanicsMvpDungeon,
 	mechanicsMvpId,
 	mechanicsMvpModifiers,
@@ -38,7 +39,7 @@ function consumeBrowserResumeState() {
 /**
  * Creates a new game.
  * @param {boolean} debug - whether to log actions to the console
- * @param {{seed?: string|number, contentPack?: string, resumeState?: State}} [options]
+ * @param {{seed?: string|number, contentPack?: string, profile?: string, localSave?: boolean, resumeState?: State}} [options]
  * @returns {Game}
  */
 export default function createNewGame(debug = false, options = {}) {
@@ -47,16 +48,19 @@ export default function createNewGame(debug = false, options = {}) {
 	const resumeState = options.resumeState ?? consumeBrowserResumeState()
 	const contentPack = resumeState?.contentPack ?? options.contentPack ?? browserConfig.id
 	const seed = String(resumeState?.seed ?? options.seed ?? browserConfig.seed ?? createRunSeed())
+	const runProfile = resumeState?.runProfile ?? options.profile ?? browserConfig.profile
+	const localSaveEnabled = resumeState?.localSaveEnabled ?? options.localSave ?? browserConfig.localSave ?? true
 
 	/**
 	 * @returns {State} with a dungeon, start deck and cards drawn
 	 */
 	function createNewState() {
 		let state = actions.createNewState()
-		// Store the seed as ordinary serializable state. Subsystems can derive their
-		// own deterministic RNG stream from it without sharing mutable global RNG.
+		// Store deterministic and run-profile metadata as ordinary serializable state.
 		state.seed = seed
 		state.contentPack = contentPack
+		state.runProfile = runProfile
+		state.localSaveEnabled = localSaveEnabled
 		state.gold = contentPack === mechanicsMvpId ? 100 : economy.startingGold
 		state.relics = []
 		state.equipment = []
@@ -65,7 +69,11 @@ export default function createNewGame(debug = false, options = {}) {
 
 		if (contentPack === mechanicsMvpId) {
 			state.modifiers = structuredClone(mechanicsMvpModifiers)
-			state = actions.setDungeon(state, createMechanicsMvpDungeon({seed}))
+			const dungeon =
+				runProfile === 'dev'
+					? createMechanicsMvpDevDungeon({seed})
+					: createMechanicsMvpDungeon({seed})
+			state = actions.setDungeon(state, dungeon)
 			state = actions.setDeck(state, {cardNames: mechanicsMvpStarterDeck})
 		} else {
 			state = actions.setDungeon(state)
