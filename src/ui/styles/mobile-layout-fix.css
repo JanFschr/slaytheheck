@@ -91,7 +91,12 @@
 	 * component exposes data-room-type so this does not depend on :has(). */
 	.MechanicsMvpHud[data-room-type="monster"] {
 		top: auto !important;
-		bottom: calc(var(--safe-bottom) + var(--mobile-combat-action-height) + var(--mobile-card-height) + 1.55rem) !important;
+		bottom: calc(
+			var(--safe-bottom) +
+			var(--mobile-combat-action-height) +
+			var(--mobile-card-height) +
+			1.55rem
+		) !important;
 		width: auto !important;
 		max-width: none !important;
 		padding: 0 !important;
@@ -143,14 +148,18 @@
 
 	/* Drone and Void already communicate capacity via N/max. Keep the tiny meter
 	 * only for Heat because its 8+ danger threshold adds information. */
-	.MechanicsMvpHud[data-room-type="monster"]
-		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"])
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-resource:is(
+			[data-resource="drones"],
+			[data-resource="corruption"]
+		)
 		.MechanicsMvpHud-pips {
 		display: none !important;
 	}
 
-	.MechanicsMvpHud[data-room-type="monster"]
-		.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"]) {
+	.MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-resource:is(
+		[data-resource="drones"],
+		[data-resource="corruption"]
+	) {
 		grid-template-areas: "icon value" !important;
 		min-height: 1.9rem !important;
 	}
