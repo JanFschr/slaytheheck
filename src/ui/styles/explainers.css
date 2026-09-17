@@ -1,8 +1,10 @@
 :root {
-	--explainer-bg: color-mix(in oklab, var(--color-panel-strong), transparent 2%);
-	--explainer-border: color-mix(in oklab, var(--color-info), transparent 52%);
-	--explainer-text: var(--color-text);
-	--explainer-shadow: 0 0.8rem 1.8rem rgb(0 0 0 / 38%);
+	--explainer-bg: rgb(255 255 255 / 97%);
+	--explainer-border: rgb(20 20 24 / 22%);
+	--explainer-text: #17171b;
+	--explainer-muted: #5d5d66;
+	--explainer-control-bg: #f0f0f3;
+	--explainer-shadow: 0 0.8rem 1.8rem rgb(0 0 0 / 28%);
 	--explainer-radius: 0.75rem;
 	--explainer-z: 200;
 	--modal-overlay-z: 300;
@@ -19,6 +21,25 @@
 	color: var(--explainer-text) !important;
 	box-shadow: var(--explainer-shadow) !important;
 	backdrop-filter: blur(12px);
+}
+
+/* Resource popovers previously inherited the dark game-panel text colors.
+ * Keep their semantic/accent icons, but make all explanatory copy readable on
+ * the shared light surface. */
+.MechanicsMvpHud-popoverHeader > strong,
+.MechanicsMvpHud-popoverValue,
+.MechanicsMvpHud-popover p {
+	color: var(--explainer-text) !important;
+}
+
+.MechanicsMvpHud-popoverValue {
+	color: var(--explainer-muted) !important;
+}
+
+.MechanicsMvpHud-popoverClose,
+.ExplainerPopover-close {
+	background: var(--explainer-control-bg) !important;
+	color: var(--explainer-text) !important;
 }
 
 .tooltipped {
@@ -58,10 +79,10 @@
 }
 
 .driver-popover-footer button {
-	border: 1px solid color-mix(in oklab, var(--color-text), transparent 72%) !important;
+	border: 1px solid var(--explainer-border) !important;
 	border-radius: 999px !important;
-	background: color-mix(in oklab, var(--color-panel), transparent 5%) !important;
-	color: var(--color-text) !important;
+	background: var(--explainer-control-bg) !important;
+	color: var(--explainer-text) !important;
 	font-family: inherit !important;
 	text-shadow: none !important;
 }
@@ -105,8 +126,6 @@
 	appearance: none;
 	border: 0;
 	border-radius: 999px;
-	background: color-mix(in oklab, var(--color-panel), transparent 8%);
-	color: var(--color-text);
 	font: inherit;
 	font-size: 1rem;
 	line-height: 1;
