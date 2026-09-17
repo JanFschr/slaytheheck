@@ -9,6 +9,13 @@
 		--combat-player-height: 0rem;
 	}
 
+	/* The shared fade animation keeps .Targets in its own stacking context even
+	 * after the animation ends. Disable it in portrait combat so the fixed player
+	 * HUD can sit above the sibling bottom action bar as intended. */
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets {
+		animation: none;
+	}
+
 	/* The player target remains a real card target for self-targeting cards, but
 	 * its health now lives between Energy and End Turn in the bottom action bar. */
 	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child {
