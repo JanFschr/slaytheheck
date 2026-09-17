@@ -9,9 +9,7 @@ function isMobileExplainerMode() {
 
 function humanize(value) {
 	if (!value) return ''
-	return value
-		.replace(/[-_]+/g, ' ')
-		.replace(/\b\w/g, (letter) => letter.toUpperCase())
+	return value.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
 function getExplainerTitle(target) {
