@@ -98,20 +98,13 @@
 		overflow: hidden;
 	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		.Healthbar-label {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child .Healthbar-label {
 		margin: 0;
 		font-size: 0.7rem;
 		line-height: 1.12rem;
 	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		.Healthbar-label
-		span {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child .Healthbar-label span {
 		transform: none;
 	}
 
@@ -129,13 +122,15 @@
 	 * The hand and action bar have their own fixed region below it. */
 	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child {
 		position: fixed;
-		top: calc(
-			var(--safe-top) + var(--combat-topbar-height) + var(--combat-player-height) + 0.8rem
-		);
+		top: calc(var(--safe-top) + var(--combat-topbar-height) + var(--combat-player-height) + 0.8rem);
 		left: var(--safe-left);
 		right: var(--safe-right);
 		bottom: calc(
-			var(--safe-bottom) + var(--combat-action-height) + var(--card-height) + var(--combat-context-height) + 0.9rem
+			var(--safe-bottom) +
+			var(--combat-action-height) +
+			var(--card-height) +
+			var(--combat-context-height) +
+			0.9rem
 		);
 		z-index: 10;
 		display: flex;
@@ -157,9 +152,7 @@
 		scrollbar-width: none;
 	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:last-child::-webkit-scrollbar {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child::-webkit-scrollbar {
 		display: none;
 	}
 
@@ -178,18 +171,12 @@
 		scroll-snap-align: center;
 	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:last-child
-		.Target:only-child {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child .Target:only-child {
 		flex-basis: min(44vw, 10.5rem);
 		max-width: min(44vw, 10.5rem);
 	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:last-child:has(> .Target:nth-child(3))
-		.Target {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child:has(> .Target:nth-child(3)) .Target {
 		flex-basis: clamp(6.65rem, 28.5vw, 7.4rem);
 		max-width: clamp(6.65rem, 28.5vw, 7.4rem);
 	}
@@ -254,16 +241,12 @@
 		white-space: nowrap;
 	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		.Target[data-type="enemy"]
-		.Target-intent:has(img[alt="damage"]) {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-intent:has(img[alt="damage"]) {
 		border-color: color-mix(in oklab, var(--color-danger), white 30%);
 		background: color-mix(in oklab, var(--color-danger), var(--color-panel-strong) 55%);
 	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		.Target[data-type="enemy"]
-		.Target-intent:has(img[alt="block"]) {
+	.App:has(> .Targets):not(:has(.VictoryRoom)) .Target[data-type="enemy"] .Target-intent:has(img[alt="block"]) {
 		border-color: color-mix(in oklab, var(--color-info), white 18%);
 	}
 
@@ -374,9 +357,7 @@
 	/* Draw/discard become context chips in the seam between battlefield and hand. */
 	.App:has(> .Targets):not(:has(.VictoryRoom)) > :is(#DrawPile, #DiscardPile) > button {
 		position: fixed;
-		bottom: calc(
-			var(--safe-bottom) + var(--combat-action-height) + var(--card-height) + 1.5rem
-		);
+		bottom: calc(var(--safe-bottom) + var(--combat-action-height) + var(--card-height) + 1.5rem);
 		z-index: 32;
 		min-height: var(--tap-target);
 		max-width: 6.9rem;
@@ -412,19 +393,11 @@
 		padding-block: 0.28rem;
 	}
 
-	body:has(.MechanicsMvpHud)
-		.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child {
+	body:has(.MechanicsMvpHud) .App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:first-child {
 		top: calc(var(--safe-top) + var(--combat-topbar-height) + 3rem);
 	}
 
-	body:has(.MechanicsMvpHud)
-		.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:last-child {
-		top: calc(
-			var(--safe-top) + var(--combat-topbar-height) + var(--combat-player-height) + 3.65rem
-		);
+	body:has(.MechanicsMvpHud) .App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets > .Targets-group:last-child {
+		top: calc(var(--safe-top) + var(--combat-topbar-height) + var(--combat-player-height) + 3.65rem);
 	}
 }
