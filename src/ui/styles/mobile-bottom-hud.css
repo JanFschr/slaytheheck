@@ -20,85 +20,61 @@
 		height: calc(var(--combat-action-height) - 0.55rem);
 		align-items: center;
 		justify-content: center;
-	}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		.Target[data-type="player"] {
-		flex: 1 1 auto;
-		width: 100%;
-		max-width: 8.5rem;
-		min-height: 0;
-		margin: 0;
-		padding: 0;
-		justify-content: center;
-		border: 0;
-		background: transparent;
-		backdrop-filter: none;
-	}
+		& .Target[data-type="player"] {
+			flex: 1 1 auto;
+			width: 100%;
+			max-width: 8.5rem;
+			min-height: 0;
+			margin: 0;
+			padding: 0;
+			justify-content: center;
+			border: 0;
+			background: transparent;
+			backdrop-filter: none;
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		.Target[data-type="player"]
-		.Healthbar {
-		width: 100%;
-		height: 1.4rem;
-		margin: 0;
-		border-width: 2px;
-		border-radius: 999px;
-		overflow: hidden;
-		box-shadow: 0 0.2rem 0.7rem color-mix(in oklab, black, transparent 45%);
-	}
+			& .Healthbar {
+				width: 100%;
+				height: 1.4rem;
+				margin: 0;
+				border-width: 2px;
+				border-radius: 999px;
+				overflow: hidden;
+				box-shadow: 0 0.2rem 0.7rem color-mix(in oklab, black, transparent 45%);
+			}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		.Target[data-type="player"]
-		.Healthbar-label {
-		margin: 0;
-		font-size: 0.72rem;
-		line-height: 1.15rem;
-	}
+			& .Healthbar-label {
+				margin: 0;
+				font-size: 0.72rem;
+				line-height: 1.15rem;
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		.Target[data-type="player"]
-		.Healthbar-label
-		span {
-		transform: none;
-	}
+				& span {
+					transform: none;
+				}
+			}
 
-	/* Player powers remain visible without stealing a permanent row. */
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		.Target[data-type="player"]
-		.Target-powers {
-		position: absolute;
-		left: 50%;
-		bottom: calc(100% + 0.25rem);
-		width: max-content;
-		max-width: min(56vw, 14rem);
-		margin: 0;
-		padding: 0.12rem 0.24rem;
-		transform: translateX(-50%);
-		overflow-x: auto;
-		border-radius: 999px;
-		background: color-mix(in oklab, var(--color-panel-strong), transparent 12%);
-		font-size: 0.58rem;
-		white-space: nowrap;
-		backdrop-filter: blur(8px);
-	}
+			/* Player powers remain visible without stealing a permanent row. */
+			& .Target-powers {
+				position: absolute;
+				left: 50%;
+				bottom: calc(100% + 0.25rem);
+				width: max-content;
+				max-width: min(56vw, 14rem);
+				margin: 0;
+				padding: 0.12rem 0.24rem;
+				transform: translateX(-50%);
+				overflow-x: auto;
+				border-radius: 999px;
+				background: color-mix(in oklab, var(--color-panel-strong), transparent 12%);
+				font-size: 0.58rem;
+				white-space: nowrap;
+				backdrop-filter: blur(8px);
+			}
 
-	.App:has(> .Targets):not(:has(.VictoryRoom))
-		> .Targets
-		> .Targets-group:first-child
-		.Target[data-type="player"]
-		.Target-powers:empty {
-		display: none;
+			& .Target-powers:empty {
+				display: none;
+			}
+		}
 	}
 
 	/* Reclaim the old player-health row for the battlefield. */
