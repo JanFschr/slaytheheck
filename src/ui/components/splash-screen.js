@@ -2,6 +2,7 @@ import {getRuns} from '../../game/backend.js'
 import {timeSince} from '../../utils.js'
 import gsap from '../animations.js'
 import {Component, html} from '../lib.js'
+import {getLocalRunMetadata} from '../save-load.js'
 import {DeckSelector} from './deck-selector.js'
 
 export default class SplashScreen extends Component {
@@ -11,6 +12,7 @@ export default class SplashScreen extends Component {
 			runs: [],
 			selectedDeck: null,
 			selectingDeck: false,
+			savedRun: null,
 		}
 
 		this.handleStartGame = this.handleStartGame.bind(this)
@@ -22,6 +24,7 @@ export default class SplashScreen extends Component {
 		// @ts-expect-error
 		gsap.to(this.base.querySelector('.Splash-spoder'), {delay: 5, x: 420, y: 60, duration: 3})
 		getRuns().then(({runs}) => this.setState({runs}))
+		this.setState({savedRun: getLocalRunMetadata(globalThis.__SLAY_CONTENT_PACK__?.id)})
 	}
 
 	handleDeckSelected(deck) {
@@ -41,6 +44,9 @@ export default class SplashScreen extends Component {
 
 	render(_props, state) {
 		const run = state.runs[0]
+		const hasUrlSave = Boolean(location.hash)
+		const hasSavedRun = hasUrlSave || Boolean(state.savedRun)
+		const save = state.savedRun
 
 		if (state.selectingDeck) {
 			return html`
@@ -68,11 +74,20 @@ export default class SplashScreen extends Component {
 					<h1 class="Title Splash-title">Slay the Web</h1>
 					<ul class="Options">
 						${
-							location.hash
+							hasSavedRun
 								? html`
 									<li>
-										Found a saved game. <button class="Button" autofocus onClick=${this.props.onContinue}>Continue?</button>
+										<button class="Button primary" autofocus onClick=${this.props.onContinue}>Continue saved run</button>
 									</li>
+									${
+										!hasUrlSave &&
+										save &&
+										html`<li>
+											<small>
+												Floor ${save.floor + 1} · ${save.health}/${save.maxHealth} HP · ${save.gold} gold · ${save.deckSize} cards
+											</small>
+										</li>`
+									}
 									<li><button class="Button" onClick=${() => this.props.onNewGame()}>New Game</button></li>
 								`
 								: html`
