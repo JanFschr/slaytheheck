@@ -1,5 +1,6 @@
 import {Component, html, render} from '../lib.js'
 import {clearLocalRun, loadLocalRun} from '../save-load.js'
+import {initializeAppearance} from '../theme.js'
 import GameScreen from './game-screen.js'
 import SplashScreen from './splash-screen.js'
 import WinScreen from './win-screen.js'
@@ -24,6 +25,11 @@ function activeContentPack() {
 function localSavesEnabled() {
 	return contentConfig().localSave !== false
 }
+
+initializeAppearance({
+	theme: contentConfig().theme || 'classic',
+	skin: contentConfig().skin,
+})
 
 function stageLocalRun(contentPack) {
 	const saved = loadLocalRun(contentPack)
