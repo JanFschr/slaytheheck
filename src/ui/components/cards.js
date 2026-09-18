@@ -36,6 +36,7 @@ export function Card(props) {
 			disabled=${isDisabled}
 		>
 			<div class="Card-inner">
+				<span class="Card-inspectHint" aria-hidden="true">⛶</span>
 				<p class="Card-energy EnergyBadge">
 					<span>${card.energy}</span>
 				</p>
