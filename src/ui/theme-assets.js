@@ -13,7 +13,14 @@ const THEME_ASSETS = {
 				frame: 'images/themes/cyberpunk/cards/frame.svg',
 				texture: 'images/themes/cyberpunk/cards/carbon-grid.svg',
 				fallbackArt: 'images/themes/cyberpunk/cards/fallback-art.svg',
-				art: {},
+				art: {
+					'mvp:overclock': 'images/themes/cyberpunk/cards/chrome/overclock.webp',
+					'mvp:vent': 'images/themes/cyberpunk/cards/chrome/vent.webp',
+					'mvp:deploy-drone': 'images/themes/cyberpunk/cards/swarmwright/deploy-drone.webp',
+					'mvp:drone-volley': 'images/themes/cyberpunk/cards/swarmwright/drone-volley.webp',
+					'mvp:blood-bargain': 'images/themes/cyberpunk/cards/null/blood-bargain.webp',
+					'mvp:void-cut': 'images/themes/cyberpunk/cards/null/void-cut.webp',
+				},
 			},
 			ui: {
 				hudTexture: 'images/themes/cyberpunk/ui/hud-grid.svg',
