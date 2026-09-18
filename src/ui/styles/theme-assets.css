@@ -1,0 +1,146 @@
+/*
+ * Theme asset rendering layer.
+ *
+ * The active theme writes URL-valued custom properties on <html>. Component
+ * layout remains unchanged while reskins can swap scene art, frames and HUD
+ * textures independently from color tokens.
+ */
+
+html[data-theme="cyberpunk"] .App-background {
+	--theme-active-combat-background: var(--theme-asset-combat-background);
+	background-image:
+		radial-gradient(circle at 78% 18%, rgb(var(--theme-accent-rgb) / 16%), transparent 21rem),
+		linear-gradient(180deg, rgb(1 5 14 / 8%), rgb(1 4 10 / 58%)),
+		var(--theme-active-combat-background, none),
+		linear-gradient(135deg, #071426 0%, #030711 44%, #08121d 100%);
+	background-blend-mode: screen, normal, normal, normal;
+	background-size: auto, auto, cover, cover;
+	background-position: center, center, center, center;
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="1"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-1,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="2"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-2,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="3"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-3,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="4"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-4,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="5"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-5,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="6"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-6,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="7"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-7,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="8"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-8,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="9"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-9,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="10"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-10,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="11"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-11,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .App-background[data-room-index="12"] {
+	--theme-active-combat-background: var(
+		--theme-asset-combat-background-room-12,
+		var(--theme-asset-combat-background)
+	);
+}
+
+html[data-theme="cyberpunk"] .Card::before {
+	background-image:
+		var(--theme-asset-card-frame, none),
+		linear-gradient(90deg, transparent 0 96%, rgb(var(--theme-accent-rgb) / 20%) 96% 97%, transparent 97%),
+		linear-gradient(180deg, rgb(255 255 255 / 3%), transparent 18% 84%, rgb(var(--theme-accent-rgb) / 7%));
+	background-repeat: no-repeat, no-repeat, no-repeat;
+	background-position: center, center, center;
+	background-size: 100% 100%, 100% 100%, 100% 100%;
+}
+
+html[data-theme="cyberpunk"] .Card-inner {
+	background-image:
+		var(--theme-asset-card-texture, none),
+		linear-gradient(165deg, rgb(18 33 48 / 96%), rgb(5 13 24 / 98%) 58%, rgb(4 9 17 / 100%));
+	background-repeat: repeat, no-repeat;
+	background-size: 28px 28px, cover;
+}
+
+html[data-theme="cyberpunk"] .Target[data-type="enemy"] {
+	background-image:
+		var(--theme-asset-enemy-texture, none),
+		linear-gradient(180deg, rgb(5 14 25 / 35%), rgb(2 8 15 / 68%));
+	background-repeat: no-repeat, no-repeat;
+	background-position: center, center;
+	background-size: 100% 100%, cover;
+}
+
+html[data-theme="cyberpunk"] .MechanicsMvpHud {
+	background-image:
+		var(--theme-asset-hud-texture, none),
+		linear-gradient(100deg, rgb(3 11 21 / 92%), rgb(10 25 40 / 76%));
+	background-repeat: repeat, no-repeat;
+	background-size: 36px 36px, cover;
+}
+
+html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) {
+	background-image:
+		var(--theme-asset-panel-texture, none),
+		linear-gradient(145deg, rgb(13 29 45 / 94%), rgb(3 10 20 / 97%));
+	background-repeat: repeat, no-repeat;
+	background-size: 42px 42px, cover;
+}
