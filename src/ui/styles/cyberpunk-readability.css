@@ -1,0 +1,162 @@
+/*
+ * Cyberpunk readability pass.
+ *
+ * Keeps the cyberpunk mood while ensuring cards, dialog surfaces and mobile HUD
+ * remain readable above decorative grids, glows and scene effects.
+ */
+
+html[data-theme="cyberpunk"] {
+	--theme-grid: rgb(var(--theme-accent-rgb) / 2.2%);
+	--theme-glow: 0 0 0.8rem rgb(var(--theme-accent-rgb) / 10%);
+	--theme-line: rgb(113 228 255 / 24%);
+	--theme-line-strong: rgb(113 228 255 / 48%);
+}
+
+/* Background effects stay atmospheric, not dominant. */
+html[data-theme="cyberpunk"] .App-background::before {
+	opacity: 0.46;
+}
+
+html[data-theme="cyberpunk"] .App-background::after {
+	opacity: 0.58;
+}
+
+/* Keep the hand in its own visual layer above ambient decoration. */
+html[data-theme="cyberpunk"] .Hand {
+	position: relative;
+	z-index: 2;
+	isolation: isolate;
+}
+
+/* Cards use an opaque technical surface instead of translucent glass. */
+html[data-theme="cyberpunk"] .Card {
+	background: #050b13;
+	border-color: rgb(var(--theme-accent-rgb) / 42%);
+	box-shadow:
+		0 0.7rem 1.45rem rgb(0 0 0 / 52%),
+		0 0 0 1px rgb(var(--theme-accent-rgb) / 6%);
+}
+
+/* The decorative frame must never wash out the actual content. */
+html[data-theme="cyberpunk"] .Card::before {
+	opacity: 0.5;
+	border-color: rgb(255 255 255 / 3%);
+}
+
+/* Put the opaque gradient above the texture to mute the grid inside cards. */
+html[data-theme="cyberpunk"] .Card-inner {
+	background-image:
+		linear-gradient(165deg, rgb(15 27 40 / 97%), rgb(4 11 20 / 99%) 58%, rgb(2 7 13 / 100%)),
+		var(--theme-asset-card-texture, none);
+	background-repeat: no-repeat, repeat;
+	background-size:
+		cover,
+		32px 32px;
+	color: #f3fbff;
+}
+
+html[data-theme="cyberpunk"] .Card-media {
+	isolation: isolate;
+	overflow: hidden;
+	background: #02060d;
+	border-bottom-color: rgb(var(--theme-accent-rgb) / 24%);
+}
+
+/* Keep art vivid enough to read on a phone. */
+html[data-theme="cyberpunk"] .Card-media img {
+	filter: saturate(0.96) contrast(1.06) brightness(1.02);
+}
+
+/* Retain a lower-edge fade for text separation, but nearly remove scanlines. */
+html[data-theme="cyberpunk"] .Card-media::after {
+	background:
+		linear-gradient(180deg, transparent 62%, rgb(2 7 16 / 18%) 76%, rgb(2 7 16 / 62%) 100%),
+		repeating-linear-gradient(180deg, transparent 0 5px, rgb(var(--theme-accent-rgb) / 0.8%) 5px 6px);
+}
+
+/* Text content must paint above the decorative frame layer. */
+html[data-theme="cyberpunk"] :is(.Card-name, .Card-type, .Card-description, .Card-energy) {
+	position: relative;
+	z-index: 5;
+}
+
+html[data-theme="cyberpunk"] .Card-name {
+	color: #f7fcff;
+	text-shadow:
+		0 1px 2px rgb(0 0 0 / 92%),
+		0 0 0.45rem rgb(var(--theme-accent-rgb) / 10%);
+}
+
+html[data-theme="cyberpunk"] .Card-description {
+	margin: 0.22rem 0.22rem 0.3rem;
+	padding: 0.32rem 0.28rem 0.38rem;
+	border-top: 1px solid rgb(var(--theme-accent-rgb) / 10%);
+	background: rgb(2 7 14 / 78%);
+	color: #edf7fb;
+	text-shadow: 0 1px 1px rgb(0 0 0 / 88%);
+}
+
+/* Type labels stay useful but stop competing with the card title and art. */
+html[data-theme="cyberpunk"] .Card-type {
+	border-color: rgb(var(--theme-accent-rgb) / 28%);
+	background: rgb(5 17 28 / 97%);
+	color: #d7f7ff;
+	box-shadow: none;
+}
+
+html[data-theme="cyberpunk"] .Card[data-card-type="attack"] .Card-type {
+	border-color: rgb(255 87 111 / 36%);
+	background: rgb(47 10 22 / 97%);
+	color: #ffe2e8;
+}
+
+html[data-theme="cyberpunk"] .Card[data-card-type="power"] .Card-type {
+	border-color: rgb(var(--theme-accent-2-rgb) / 38%);
+	background: rgb(34 13 47 / 97%);
+	color: #f6e8ff;
+}
+
+/* Cost diamonds should read crisply without a large neon halo. */
+html[data-theme="cyberpunk"] .EnergyBadge {
+	background: linear-gradient(135deg, rgb(var(--theme-accent-rgb) / 34%), rgb(3 17 27 / 100%));
+	border-color: rgb(var(--theme-accent-rgb) / 44%);
+	box-shadow:
+		0 0 0 1px rgb(0 0 0 / 88%),
+		0 0 0.38rem rgb(var(--theme-accent-rgb) / 12%);
+}
+
+/* Dialogs and text panels need their own opaque reading surface. */
+html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) {
+	background-image:
+		linear-gradient(145deg, rgb(9 22 35 / 97%), rgb(2 8 16 / 99%)),
+		var(--theme-asset-panel-texture, none);
+	background-repeat: no-repeat, repeat;
+	background-size:
+		cover,
+		56px 56px;
+	color: #eef9ff;
+	box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 46%);
+}
+
+/* Fix dark legacy heading colors inside themed panels. */
+html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) :is(h1, h2, h3, h4) {
+	color: #f2fbff;
+	text-shadow:
+		0 1px 2px rgb(0 0 0 / 90%),
+		0 0 0.55rem rgb(var(--theme-accent-rgb) / 10%);
+}
+
+html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) :is(p, li) {
+	color: #deedf5;
+}
+
+/* The HUD texture can remain present, but should not compete with values. */
+html[data-theme="cyberpunk"] .MechanicsMvpHud {
+	background-image:
+		linear-gradient(100deg, rgb(3 11 21 / 96%), rgb(9 23 37 / 92%)),
+		var(--theme-asset-hud-texture, none);
+	background-repeat: no-repeat, repeat;
+	background-size:
+		cover,
+		52px 52px;
+}
