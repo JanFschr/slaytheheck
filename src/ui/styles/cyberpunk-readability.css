@@ -127,7 +127,8 @@ html[data-theme="cyberpunk"] .EnergyBadge {
 
 /* Dialogs and text panels need their own opaque reading surface. */
 html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) {
-	background-image: linear-gradient(145deg, rgb(9 22 35 / 97%), rgb(2 8 16 / 99%)), var(--theme-asset-panel-texture, none);
+	background-image:
+		linear-gradient(145deg, rgb(9 22 35 / 97%), rgb(2 8 16 / 99%)), var(--theme-asset-panel-texture, none);
 	background-repeat: no-repeat, repeat;
 	background-size:
 		cover,
@@ -150,7 +151,8 @@ html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) :is
 
 /* The HUD texture can remain present, but should not compete with values. */
 html[data-theme="cyberpunk"] .MechanicsMvpHud {
-	background-image: linear-gradient(100deg, rgb(3 11 21 / 96%), rgb(9 23 37 / 92%)), var(--theme-asset-hud-texture, none);
+	background-image:
+		linear-gradient(100deg, rgb(3 11 21 / 96%), rgb(9 23 37 / 92%)), var(--theme-asset-hud-texture, none);
 	background-repeat: no-repeat, repeat;
 	background-size:
 		cover,
