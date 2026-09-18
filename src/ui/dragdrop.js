@@ -1,6 +1,7 @@
 import {Draggable} from 'gsap/Draggable.js'
 import {cardHasValidTarget, getTargetStringFromElement} from '../game/utils-state.js'
 import gsap from './animations.js'
+import {openCardFocus} from './components/card-focus.js'
 import * as sounds from './sounds.js'
 
 /** Class to add to the element we are dragging over */
@@ -104,7 +105,8 @@ function enableTapToPlay(container, targets, cards, afterRelease, onInspect) {
 
 			const alreadySelected = card.classList.contains(selectedClass)
 			if (alreadySelected) {
-				onInspect?.(card.dataset.id)
+				if (onInspect) onInspect(card.dataset.id)
+				else openCardFocus(container, card.dataset.id)
 				return
 			}
 
