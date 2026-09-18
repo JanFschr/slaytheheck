@@ -1,3 +1,5 @@
+import {applyThemeAssetVariables} from './theme-assets.js'
+
 const STORAGE_KEY = 'slaytheheck.appearance.v1'
 
 export const APPEARANCE_OPTIONS = [
@@ -70,6 +72,7 @@ export function setAppearance(nextAppearance, {persist = true} = {}) {
 		root.dataset.theme = appearance.theme
 		root.dataset.skin = appearance.skin
 		root.style.colorScheme = 'dark'
+		applyThemeAssetVariables(appearance)
 	}
 
 	if (persist && typeof localStorage !== 'undefined') {
