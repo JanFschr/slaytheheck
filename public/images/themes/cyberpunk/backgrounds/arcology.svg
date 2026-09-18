@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1920"><stop stop-color="#071426"/><stop offset=".55" stop-color="#030812"/><stop offset="1" stop-color="#01040A"/></linearGradient>
+    <radialGradient id="cyan" cx="0" cy="0" r="1" gradientTransform="translate(790 410) rotate(90) scale(520)"><stop stop-color="#39E7FF" stop-opacity=".24"/><stop offset="1" stop-color="#39E7FF" stop-opacity="0"/></radialGradient>
+    <radialGradient id="pink" cx="0" cy="0" r="1" gradientTransform="translate(230 980) rotate(90) scale(470)"><stop stop-color="#FF46C8" stop-opacity=".14"/><stop offset="1" stop-color="#FF46C8" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="90" height="90" patternUnits="userSpaceOnUse"><path d="M90 0H0v90" fill="none" stroke="#7CEEFF" stroke-opacity=".035"/></pattern>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#sky)"/>
+  <rect width="1080" height="1920" fill="url(#cyan)"/><rect width="1080" height="1920" fill="url(#pink)"/><rect width="1080" height="1920" fill="url(#grid)"/>
+  <g fill="#06101B" stroke="#123249" stroke-width="4">
+    <path d="M0 520 140 430l120 58 95-180 155 86 120-228 160 168 124-92 156 116v1562H0V520Z"/>
+    <path d="M88 1920V760l170-82 110 62v1180H88ZM404 1920V612l168-126 138 116v1318H404ZM750 1920V702l136-94 126 66v1246H750Z" fill="#030A12"/>
+  </g>
+  <g fill="#53E9FF" fill-opacity=".55">
+    <rect x="124" y="834" width="74" height="7"/><rect x="126" y="1042" width="132" height="7"/><rect x="459" y="764" width="116" height="8"/><rect x="495" y="1120" width="154" height="8"/><rect x="806" y="886" width="118" height="8"/>
+  </g>
+  <g fill="#FF46C8" fill-opacity=".42"><rect x="238" y="898" width="48" height="6"/><rect x="626" y="938" width="60" height="6"/><rect x="910" y="1086" width="52" height="6"/></g>
+  <g stroke="#7CEEFF" stroke-opacity=".12"><path d="M0 1330h1080M0 1490h1080M0 1650h1080"/><path d="M190 520v1400M540 350v1570M875 470v1450"/></g>
+  <path d="M0 1760c230-110 420-92 600-30s318 20 480-54v244H0v-160Z" fill="#010308" opacity=".92"/>
+</svg>
