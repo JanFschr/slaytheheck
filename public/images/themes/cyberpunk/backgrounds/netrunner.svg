@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1920"><stop stop-color="#03141A"/><stop offset=".55" stop-color="#02070D"/><stop offset="1" stop-color="#010305"/></linearGradient><pattern id="p" width="72" height="72" patternUnits="userSpaceOnUse"><path d="M72 0H0v72" fill="none" stroke="#35F6FF" stroke-opacity=".055"/></pattern><radialGradient id="g" cx="0" cy="0" r="1" gradientTransform="translate(670 600) rotate(90) scale(660)"><stop stop-color="#35F6FF" stop-opacity=".2"/><stop offset="1" stop-color="#35F6FF" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1080" height="1920" fill="url(#b)"/><rect width="1080" height="1920" fill="url(#p)"/><rect width="1080" height="1920" fill="url(#g)"/>
+  <g stroke="#91FF45" stroke-opacity=".2" fill="none"><path d="M80 380h220v140h180v160h250v-110h270"/><path d="M120 940h180v-90h220v180h180v-140h260"/><circle cx="300" cy="520" r="8" fill="#91FF45"/><circle cx="730" cy="570" r="8" fill="#91FF45"/><circle cx="520" cy="1030" r="8" fill="#91FF45"/></g>
+  <g fill="#061018" stroke="#0D3440" stroke-width="4"><path d="M0 1240 160 1110l140 70 150-220 170 118 150-164 150 90 160-64v980H0v-680Z"/></g>
+  <g fill="#35F6FF" fill-opacity=".5"><rect x="150" y="1320" width="120" height="7"/><rect x="444" y="1200" width="144" height="7"/><rect x="760" y="1280" width="112" height="7"/></g>
+</svg>
