@@ -27,6 +27,7 @@
 @import "./theme-assets.css";
 @import "./cyberpunk-readability.css";
 @import "./controls.css";
+@import "./card-focus.css";
 
 /* Cost diamonds intentionally sit outside the card frame. */
 html[data-theme="cyberpunk"] .Card {
