@@ -1,5 +1,5 @@
 import {canPlay} from '../../game/conditions.js'
-import {html, Component} from '../lib.js'
+import {Component, html} from '../lib.js'
 import {resolveCardArt} from '../theme-assets.js'
 
 export default class Cards extends Component {
