@@ -8,11 +8,6 @@ const THEME_ASSETS = {
 		base: {
 			backgrounds: {
 				combat: 'images/themes/cyberpunk/backgrounds/arcology.svg',
-				rooms: {
-					1: 'images/themes/cyberpunk/backgrounds/arcology.svg',
-					2: 'images/themes/cyberpunk/backgrounds/arcology.svg',
-					3: 'images/themes/cyberpunk/backgrounds/arcology.svg',
-				},
 			},
 			cards: {
 				frame: 'images/themes/cyberpunk/cards/frame.svg',
