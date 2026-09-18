@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1920"><stop stop-color="#150A22"/><stop offset=".56" stop-color="#070712"/><stop offset="1" stop-color="#020307"/></linearGradient><radialGradient id="g" cx="0" cy="0" r="1" gradientTransform="translate(540 620) rotate(90) scale(620)"><stop stop-color="#C475FF" stop-opacity=".22"/><stop offset="1" stop-color="#C475FF" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1080" height="1920" fill="url(#b)"/><rect width="1080" height="1920" fill="url(#g)"/>
+  <g fill="none" stroke="#C475FF" stroke-opacity=".16"><rect x="160" y="360" width="760" height="980" rx="48"/><rect x="240" y="440" width="600" height="820" rx="34"/><rect x="320" y="520" width="440" height="660" rx="24"/></g>
+  <g fill="#3FFFD0" fill-opacity=".5"><circle cx="540" cy="720" r="12"/><circle cx="540" cy="960" r="9"/><circle cx="420" cy="840" r="8"/><circle cx="660" cy="840" r="8"/></g>
+  <g stroke="#3FFFD0" stroke-opacity=".16"><path d="M540 732v216M428 840h224M540 960l-120 180M540 960l120 180"/></g>
+  <g fill="#050711" stroke="#2B1B41" stroke-width="4"><path d="M0 1370 180 1240l150 90 170-180 170 130 170-140 240 150v630H0v-550Z"/></g>
+  <g fill="#C475FF" fill-opacity=".42"><rect x="176" y="1450" width="118" height="7"/><rect x="470" y="1390" width="138" height="7"/><rect x="792" y="1480" width="106" height="7"/></g>
+</svg>
