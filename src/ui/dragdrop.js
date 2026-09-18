@@ -7,7 +7,6 @@ import * as sounds from './sounds.js'
 const overClass = 'is-dragOver'
 const selectedClass = 'is-tapSelected'
 const tapTargetClass = 'is-tapTarget'
-const quickTapThresholdMs = 325
 
 /** Makes the card fly back into the hand */
 function animateCardToHand(draggable) {
@@ -58,22 +57,20 @@ function selectCardForTap(container, card, targets) {
 }
 
 /**
- * @param {HTMLElement} card
- * @param {NodeListOf<HTMLElement>} targets
- */
-function getValidTapTargets(card, targets) {
-	return Array.from(targets).filter((target) => canDropOnTarget(card, target))
-}
-
-/**
  * Adds tap/keyboard card play. This is the primary interaction on touch devices
  * and an accessible alternative to dragging on desktop.
+ *
+ * First tap selects a card and exposes valid targets. A second tap on the same
+ * selected card opens the card focus viewer. Playing is always explicit: tap a
+ * highlighted target after selecting the card. This deliberately avoids long
+ * press because mobile Safari reserves that gesture for browser behavior.
  * @param {Element} container
  * @param {NodeListOf<HTMLElement>} targets
  * @param {NodeListOf<HTMLElement>} cards
  * @param {Function} afterRelease
+ * @param {Function} [onInspect]
  */
-function enableTapToPlay(container, targets, cards, afterRelease) {
+function enableTapToPlay(container, targets, cards, afterRelease, onInspect) {
 	const playOnTarget = (targetEl) => {
 		/** @type {HTMLElement | null} */
 		const selectedCard = container.querySelector(`.Hand .Card.${selectedClass}`)
@@ -102,45 +99,25 @@ function enableTapToPlay(container, targets, cards, afterRelease) {
 		if (card.dataset.tapPlayEnabled) return
 		card.dataset.tapPlayEnabled = 'true'
 
-		const selectOrConfirm = () => {
-			if (card.hasAttribute('disabled') || card.dataset.wasDragged === 'true') return
-
-			const now = typeof performance === 'undefined' ? Date.now() : performance.now()
-			const lastTapAt = Number(card.dataset.lastTapAt || 0)
-			const isQuickSecondTap = lastTapAt > 0 && now - lastTapAt <= quickTapThresholdMs
-			card.dataset.lastTapAt = String(now)
+		const selectOrInspect = () => {
+			if (card.dataset.wasDragged === 'true') return
 
 			const alreadySelected = card.classList.contains(selectedClass)
-			const cardTarget = card.getAttribute('data-card-target')
-			const validTargets = getValidTapTargets(card, targets)
-
-			// A quick double tap is a shortcut when the target is unambiguous. This
-			// makes a single-enemy fight fast: double tap an Attack to hit it. The
-			// same shortcut naturally activates self-targeting and other one-target
-			// cards without inventing separate gesture rules for each card type.
-			if (isQuickSecondTap && validTargets.length === 1) {
-				if (!alreadySelected) selectCardForTap(container, card, targets)
-				delete card.dataset.lastTapAt
-				playOnTarget(validTargets[0])
+			if (alreadySelected) {
+				onInspect?.(card.dataset.id)
 				return
 			}
 
-			// Self-targeting cards keep the existing second-tap confirmation even
-			// when the second tap is deliberately slower than the quick shortcut.
-			if (alreadySelected && cardTarget === 'player') {
-				const playerTarget = validTargets[0]
-				if (playerTarget) playOnTarget(playerTarget)
-				return
-			}
-
+			// Disabled cards are still inspectable. Selecting one gives the same
+			// discoverable two-tap flow but naturally exposes no playable target.
 			selectCardForTap(container, card, targets)
 		}
 
-		card.addEventListener('click', selectOrConfirm)
+		card.addEventListener('click', selectOrInspect)
 		card.addEventListener('keydown', (event) => {
 			if (event.key !== 'Enter' && event.key !== ' ') return
 			event.preventDefault()
-			selectOrConfirm()
+			selectOrInspect()
 		})
 	})
 }
@@ -150,14 +127,15 @@ function enableTapToPlay(container, targets, cards, afterRelease) {
  * fine pointers additionally get the original drag-and-drop interaction.
  * @param {Element} container
  * @param {Function} afterRelease
+ * @param {Function} [onInspect]
  */
-export default function enableDragDrop(container, afterRelease) {
+export default function enableDragDrop(container, afterRelease, onInspect) {
 	/** @type {NodeListOf<HTMLElement>} */
 	const targets = container.querySelectorAll('.Target')
 	const cards = container.querySelectorAll('.Hand .Card')
 
 	clearTapSelection(container)
-	enableTapToPlay(container, targets, cards, afterRelease)
+	enableTapToPlay(container, targets, cards, afterRelease, onInspect)
 
 	cards.forEach((card) => {
 		const existingDraggable = Draggable.get(card)
