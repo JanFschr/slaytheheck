@@ -102,6 +102,18 @@ export function resolveCardArt(card, appearance = activeAppearance()) {
 	return imageUrl('cards/fallback.jpg')
 }
 
+export function refreshThemedCardImages(appearance = activeAppearance()) {
+	if (typeof document === 'undefined') return
+	for (const image of document.querySelectorAll('img[data-theme-card-art]')) {
+		const card = {
+			definitionId: image.dataset.definitionId,
+			name: image.dataset.cardName,
+			image: image.dataset.cardImage || undefined,
+		}
+		image.src = resolveCardArt(card, appearance)
+	}
+}
+
 function cssUrl(path) {
 	return path ? `url("${assetUrl(path)}")` : null
 }
@@ -123,6 +135,8 @@ export function applyThemeAssetVariables(appearance = activeAppearance()) {
 		if (value) root.style.setProperty(variable, value)
 		else root.style.removeProperty(variable)
 	}
+
+	refreshThemedCardImages(appearance)
 }
 
 export {THEME_ASSETS}
