@@ -6,14 +6,14 @@ This document tracks production batches for cyberpunk card art. The visual stand
 
 The first six artworks are intentionally taken from the current Mechanics MVP starter deck. They cover the three existing mechanic families in pairs, which makes them useful for validating whether one global art style can still support clearly different accent palettes.
 
-| # | Definition ID | Card | Type | Family | Target file |
-|---|---|---|---|---|---|
-| 1 | `mvp:overclock` | Overclock | Skill | Heat / Chrome | `public/images/themes/cyberpunk/cards/chrome/overclock.png` |
-| 2 | `mvp:vent` | Vent | Skill | Heat / Chrome | `public/images/themes/cyberpunk/cards/chrome/vent.png` |
-| 3 | `mvp:deploy-drone` | Deploy Drone | Skill | Drone / Engineering | `public/images/themes/cyberpunk/cards/swarmwright/deploy-drone.png` |
-| 4 | `mvp:drone-volley` | Drone Volley | Attack | Drone / Engineering | `public/images/themes/cyberpunk/cards/swarmwright/drone-volley.png` |
-| 5 | `mvp:blood-bargain` | Blood Bargain | Skill | NULL / Corruption | `public/images/themes/cyberpunk/cards/null/blood-bargain.png` |
-| 6 | `mvp:void-cut` | Void Cut | Attack | NULL / Corruption | `public/images/themes/cyberpunk/cards/null/void-cut.png` |
+| # | Definition ID | Card | Type | Family | Target file | Status |
+|---|---|---|---|---|---|---|
+| 1 | `mvp:overclock` | Overclock | Skill | Heat / Chrome | `public/images/themes/cyberpunk/cards/chrome/overclock.webp` | accepted |
+| 2 | `mvp:vent` | Vent | Skill | Heat / Chrome | `public/images/themes/cyberpunk/cards/chrome/vent.webp` | accepted |
+| 3 | `mvp:deploy-drone` | Deploy Drone | Skill | Drone / Engineering | `public/images/themes/cyberpunk/cards/swarmwright/deploy-drone.webp` | accepted |
+| 4 | `mvp:drone-volley` | Drone Volley | Attack | Drone / Engineering | `public/images/themes/cyberpunk/cards/swarmwright/drone-volley.webp` | accepted |
+| 5 | `mvp:blood-bargain` | Blood Bargain | Skill | NULL / Corruption | `public/images/themes/cyberpunk/cards/null/blood-bargain.webp` | accepted |
+| 6 | `mvp:void-cut` | Void Cut | Attack | NULL / Corruption | `public/images/themes/cyberpunk/cards/null/void-cut.webp` | accepted for in-game test; review fantasy drift after mobile QA |
 
 These six are all present in the current Mechanics MVP starter deck, so accepted art becomes visible immediately in normal MVP combat.
 
@@ -89,12 +89,14 @@ These six are all present in the current Mechanics MVP starter deck, so accepted
 
 Preferred source sheet:
 
-- 3 columns × 2 rows
+- 3 columns × 2 rows for the first exploratory run
 - six independent portrait 3:4 panels
 - no text
 - no card frames
 - no panel-to-panel bleed
 - same rendering/detail style across all six
+
+Actual first-generation output used square cells, so the accepted artworks were center-cropped into 3:4 portrait assets. Future six-card batches should prefer a tall sheet with portrait-safe cells to reduce horizontal crop loss.
 
 Suggested panel order:
 
@@ -118,9 +120,19 @@ The six individual card descriptions above should then be appended as panel-spec
 3. Regenerate the full sheet or individual failures if style/readability is weak.
 4. Split accepted panels into individual 3:4 files.
 5. Crop only within the safe-area rules; do not recompose the image aggressively during splitting.
-6. Save each file at the target path listed above.
-7. Add mappings in `src/ui/theme-assets.js` under the relevant cyberpunk `cards.art` map using the stable `definitionId`.
-8. Verify card rendering on mobile size and in at least one combat hand plus one reward/deck view.
+6. Export production assets as WebP.
+7. Save each file at the target path listed above.
+8. Add mappings in `src/ui/theme-assets.js` under the cyberpunk `base.cards.art` map using the stable `definitionId`. Base-level mapping is deliberate: the current Mechanics MVP mixes these three mechanic families in one deck, so the correct art should appear under every cyberpunk skin.
+9. Verify card rendering on mobile size and in at least one combat hand plus one reward/deck view.
+
+## Batch 001 QA notes
+
+- **Overclock:** strong pass; silhouette, servo glow and heat identity read immediately.
+- **Vent:** pass; controlled steam/pressure release reads clearly and remains distinct from Overclock.
+- **Deploy Drone:** strong pass; foreground drone is clear and engineering palette is consistent.
+- **Drone Volley:** strong pass; coordinated attack direction remains legible after portrait crop.
+- **Blood Bargain:** pass; bodily cost and forbidden-tech mood read clearly without becoming gore-focused.
+- **Void Cut:** usable for the first in-game pass, but re-check at real card size. The blade/action silhouette risks reading as fantasy sword-magic unless the glitch/data-fracture effect remains dominant in the final framed card.
 
 ## Why Strike and Defend are not in Batch 001
 
