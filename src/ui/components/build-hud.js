@@ -16,8 +16,11 @@ function BuildHudContent({gameState}) {
 	const equipment = gameState.equipment || []
 
 	return html`
-		<aside class="BuildHud" aria-label="Current build and gold">
-			<span class="BuildHud-gold" title="Gold">💰 ${gameState.gold || 0}</span>
+		<aside class="BuildHud" aria-label="Current build and credits">
+			<span class="BuildHud-gold" title="Credits">
+				<span class="BuildHud-goldIcon" aria-hidden="true">CR</span>
+				<span>${gameState.gold || 0}</span>
+			</span>
 			${relics.length ? html`<span class="BuildHud-count">Relics ${relics.length}</span>` : null}
 			${relics.map((item) => html`<${ItemChip} item=${item} kind="relic" />`)}
 			${equipment.length ? html`<span class="BuildHud-count">Gear ${equipment.length}</span>` : null}
