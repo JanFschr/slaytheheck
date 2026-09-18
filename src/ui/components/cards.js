@@ -40,7 +40,14 @@ export function Card(props) {
 					<span>${card.energy}</span>
 				</p>
 				<figure class="Card-media">
-					<img src=${image} alt=${card.name} />
+					<img
+						src=${image}
+						alt=${card.name}
+						data-theme-card-art
+						data-definition-id=${card.definitionId || ''}
+						data-card-name=${card.name || ''}
+						data-card-image=${card.image || ''}
+					/>
 				</figure>
 				<p class="Card-type">${card.type}</p>
 				<h3 class="Card-name">${card.name}</h3>
