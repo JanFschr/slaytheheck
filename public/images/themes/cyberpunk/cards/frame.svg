@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1020" fill="none">
+  <defs>
+    <linearGradient id="edge" x1="0" y1="0" x2="600" y2="1020" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9AF4FF" stop-opacity=".85"/>
+      <stop offset=".48" stop-color="#27CDE8" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#FF46C8" stop-opacity=".58"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <path d="M24 84 84 24h432l60 60v852l-60 60H84l-60-60V84Z" stroke="#041019" stroke-width="20" opacity=".95"/>
+  <path d="M28 86 86 28h428l58 58v848l-58 58H86l-58-58V86Z" stroke="url(#edge)" stroke-width="4"/>
+  <path d="M56 112h88l22-22h268l22 22h88M56 908h92l18 22h268l18-22h92" stroke="#7CEEFF" stroke-opacity=".45" stroke-width="3"/>
+  <path d="M46 194h9M46 218h9M46 242h9M545 758h9M545 782h9M545 806h9" stroke="#E8FCFF" stroke-width="5" filter="url(#glow)"/>
+  <path d="M72 70h78M450 950h78" stroke="#FF46C8" stroke-opacity=".65" stroke-width="4"/>
+</svg>
