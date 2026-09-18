@@ -1,126 +1,161 @@
-import {html, useEffect, useRef} from '../lib.js'
-import {Card} from './cards.js'
+let activeFocus = null
 
-export default function CardFocus({cards = [], focusedCardId, gameState, onClose, onFocusCard}) {
-	const rootRef = useRef(null)
-	const pointerStart = useRef(null)
-	const currentIndex = cards.findIndex((card) => card.id === focusedCardId)
-	const card = currentIndex >= 0 ? cards[currentIndex] : null
+function getHandCards(container) {
+	return Array.from(container.querySelectorAll('.Hand .Card'))
+}
 
-	useEffect(() => {
+function cleanClone(card) {
+	const clone = card.cloneNode(true)
+	clone.classList.remove('is-tapSelected')
+	clone.removeAttribute('tabindex')
+	clone.removeAttribute('role')
+	clone.removeAttribute('aria-disabled')
+	clone.removeAttribute('data-tap-play-enabled')
+	clone.querySelector('.Card-inspectHint')?.remove()
+	clone.dataset.cardFocusClone = 'true'
+	return clone
+}
+
+export function closeCardFocus() {
+	if (!activeFocus) return
+	activeFocus.remove()
+	activeFocus = null
+	document.documentElement.classList.remove('has-card-focus')
+}
+
+export function openCardFocus(container, cardId) {
+	closeCardFocus()
+
+	const cards = getHandCards(container)
+	let currentIndex = cards.findIndex((card) => card.dataset.id === cardId)
+	if (currentIndex < 0) return
+
+	const root = document.createElement('div')
+	root.className = 'CardFocus'
+	root.setAttribute('role', 'dialog')
+	root.setAttribute('aria-modal', 'true')
+	root.tabIndex = -1
+
+	const backdrop = document.createElement('div')
+	backdrop.className = 'CardFocus-backdrop'
+	backdrop.setAttribute('aria-hidden', 'true')
+
+	const close = document.createElement('button')
+	close.className = 'CardFocus-close'
+	close.type = 'button'
+	close.setAttribute('aria-label', 'Close card details')
+	close.textContent = '×'
+
+	const previous = document.createElement('button')
+	previous.className = 'CardFocus-nav CardFocus-nav--previous'
+	previous.type = 'button'
+	previous.setAttribute('aria-label', 'Previous card')
+	previous.textContent = '‹'
+
+	const next = document.createElement('button')
+	next.className = 'CardFocus-nav CardFocus-nav--next'
+	next.type = 'button'
+	next.setAttribute('aria-label', 'Next card')
+	next.textContent = '›'
+
+	const stage = document.createElement('div')
+	stage.className = 'CardFocus-stage'
+
+	const shell = document.createElement('div')
+	shell.className = 'CardFocus-cardShell'
+
+	const meta = document.createElement('div')
+	meta.className = 'CardFocus-meta'
+
+	const position = document.createElement('div')
+	position.className = 'CardFocus-position'
+
+	const hint = document.createElement('div')
+	hint.className = 'CardFocus-hint'
+	hint.textContent = 'Swipe sideways to browse · swipe down to close'
+
+	stage.append(shell, meta, position, hint)
+	root.append(backdrop, close, previous, stage, next)
+	document.body.appendChild(root)
+	activeFocus = root
+	document.documentElement.classList.add('has-card-focus')
+
+	function render(index) {
+		const card = cards[index]
 		if (!card) return
-		requestAnimationFrame(() => rootRef.current?.focus())
-	}, [focusedCardId])
+		currentIndex = index
+		const clone = cleanClone(card)
+		const name = card.querySelector('.Card-name')?.textContent?.trim() || 'Card'
+		const type = card.dataset.cardType || 'card'
+		const rarity = card.dataset.rarity || 'basic'
+		const cost = card.querySelector('.Card-energy span')?.textContent?.trim() || '—'
 
-	if (!card) return null
-
-	const showPrevious = currentIndex > 0
-	const showNext = currentIndex < cards.length - 1
-
-	const focusIndex = (index) => {
-		const nextCard = cards[index]
-		if (nextCard) onFocusCard(nextCard.id)
+		root.setAttribute('aria-label', `${name} card details`)
+		shell.replaceChildren(clone)
+		meta.replaceChildren()
+		for (const text of [type, '•', rarity, '•', `Cost ${cost}`]) {
+			const item = document.createElement('span')
+			item.textContent = text
+			meta.appendChild(item)
+		}
+		position.textContent = `${currentIndex + 1} / ${cards.length}`
+		previous.disabled = currentIndex === 0
+		next.disabled = currentIndex === cards.length - 1
 	}
 
-	const handleKeyDown = (event) => {
+	function move(delta) {
+		const targetIndex = Math.max(0, Math.min(cards.length - 1, currentIndex + delta))
+		if (targetIndex !== currentIndex) render(targetIndex)
+	}
+
+	let pointerStart = null
+	root.addEventListener('pointerdown', (event) => {
+		pointerStart = {x: event.clientX, y: event.clientY}
+	})
+	root.addEventListener('pointerup', (event) => {
+		if (!pointerStart) return
+		const deltaX = event.clientX - pointerStart.x
+		const deltaY = event.clientY - pointerStart.y
+		pointerStart = null
+		const horizontal = Math.abs(deltaX) > Math.abs(deltaY)
+		if (horizontal && Math.abs(deltaX) > 52) {
+			move(deltaX > 0 ? -1 : 1)
+			return
+		}
+		if (!horizontal && deltaY > 72) closeCardFocus()
+	})
+
+	root.addEventListener('keydown', (event) => {
 		if (event.key === 'Escape') {
 			event.preventDefault()
 			event.stopPropagation()
-			onClose()
-			return
+			closeCardFocus()
 		}
-		if (event.key === 'ArrowLeft' && showPrevious) {
+		if (event.key === 'ArrowLeft') {
 			event.preventDefault()
-			event.stopPropagation()
-			focusIndex(currentIndex - 1)
+			move(-1)
 		}
-		if (event.key === 'ArrowRight' && showNext) {
+		if (event.key === 'ArrowRight') {
 			event.preventDefault()
-			event.stopPropagation()
-			focusIndex(currentIndex + 1)
+			move(1)
 		}
-	}
+	})
 
-	const handlePointerDown = (event) => {
-		pointerStart.current = {x: event.clientX, y: event.clientY}
-	}
+	close.addEventListener('click', (event) => {
+		event.stopPropagation()
+		closeCardFocus()
+	})
+	previous.addEventListener('click', (event) => {
+		event.stopPropagation()
+		move(-1)
+	})
+	next.addEventListener('click', (event) => {
+		event.stopPropagation()
+		move(1)
+	})
+	backdrop.addEventListener('click', closeCardFocus)
+	stage.addEventListener('click', (event) => event.stopPropagation())
 
-	const handlePointerUp = (event) => {
-		const start = pointerStart.current
-		pointerStart.current = null
-		if (!start) return
-
-		const deltaX = event.clientX - start.x
-		const deltaY = event.clientY - start.y
-		const horizontal = Math.abs(deltaX) > Math.abs(deltaY)
-
-		if (horizontal && Math.abs(deltaX) > 52) {
-			if (deltaX > 0 && showPrevious) focusIndex(currentIndex - 1)
-			if (deltaX < 0 && showNext) focusIndex(currentIndex + 1)
-			return
-		}
-
-		if (!horizontal && deltaY > 72) onClose()
-	}
-
-	return html`
-		<div
-			ref=${rootRef}
-			class="CardFocus"
-			role="dialog"
-			aria-modal="true"
-			aria-label=${`${card.name} card details`}
-			tabIndex="-1"
-			onKeyDown=${handleKeyDown}
-			onPointerDown=${handlePointerDown}
-			onPointerUp=${handlePointerUp}
-			onClick=${(event) => {
-				if (event.target === event.currentTarget) onClose()
-			}}
-		>
-			<div class="CardFocus-backdrop" aria-hidden="true"></div>
-			<button class="CardFocus-close" type="button" aria-label="Close card details" onClick=${onClose}>×</button>
-
-			<button
-				class="CardFocus-nav CardFocus-nav--previous"
-				type="button"
-				aria-label="Previous card"
-				disabled=${!showPrevious}
-				onClick=${(event) => {
-					event.stopPropagation()
-					focusIndex(currentIndex - 1)
-				}}
-			>
-				‹
-			</button>
-
-			<div class="CardFocus-stage" onClick=${(event) => event.stopPropagation()}>
-				<div class="CardFocus-cardShell">
-					<${Card} card=${card} gameState=${gameState} />
-				</div>
-				<div class="CardFocus-meta" aria-label="Card metadata">
-					<span>${card.type}</span>
-					<span aria-hidden="true">•</span>
-					<span>${card.rarity || 'basic'}</span>
-					<span aria-hidden="true">•</span>
-					<span>Cost ${card.energy}</span>
-				</div>
-				<div class="CardFocus-position">${currentIndex + 1} / ${cards.length}</div>
-				<div class="CardFocus-hint">Swipe sideways to browse · swipe down to close</div>
-			</div>
-
-			<button
-				class="CardFocus-nav CardFocus-nav--next"
-				type="button"
-				aria-label="Next card"
-				disabled=${!showNext}
-				onClick=${(event) => {
-					event.stopPropagation()
-					focusIndex(currentIndex + 1)
-				}}
-			>
-				›
-			</button>
-		</div>
-	`
+	render(currentIndex)
+	requestAnimationFrame(() => root.focus())
 }
