@@ -21,10 +21,8 @@ html[data-theme="cyberpunk"] .App-background::after {
 	opacity: 0.58;
 }
 
-/* Keep the hand in its own visual layer above ambient decoration. */
+/* Do not change Hand positioning here. Mobile combat owns that layout. */
 html[data-theme="cyberpunk"] .Hand {
-	position: relative;
-	z-index: 2;
 	isolation: isolate;
 }
 
@@ -81,26 +79,37 @@ html[data-theme="cyberpunk"] :is(.Card-name, .Card-type, .Card-description, .Car
 }
 
 html[data-theme="cyberpunk"] .Card-name {
+	margin: 0.38rem 0.24rem 0.14rem;
+	padding: 0;
 	color: #f7fcff;
+	font-weight: 800;
+	line-height: 1.05;
+	text-wrap: balance;
 	text-shadow:
 		0 1px 2px rgb(0 0 0 / 92%),
 		0 0 0.45rem rgb(var(--theme-accent-rgb) / 10%);
 }
 
 html[data-theme="cyberpunk"] .Card-description {
-	margin: 0.22rem 0.22rem 0.3rem;
-	padding: 0.32rem 0.28rem 0.38rem;
+	flex: 1;
+	margin: 0 0.22rem 0.3rem;
+	padding: 0.34rem 0.28rem 0.38rem;
 	border-top: 1px solid rgb(var(--theme-accent-rgb) / 10%);
 	background: rgb(2 7 14 / 78%);
 	color: #edf7fb;
+	line-height: 1.16;
+	text-align: center;
 	text-shadow: 0 1px 1px rgb(0 0 0 / 88%);
 }
 
 /* Type labels stay useful but stop competing with the card title and art. */
 html[data-theme="cyberpunk"] .Card-type {
+	margin-top: -0.62rem;
+	padding: 0.14rem 0.42rem 0.17rem;
 	border-color: rgb(var(--theme-accent-rgb) / 28%);
 	background: rgb(5 17 28 / 97%);
 	color: #d7f7ff;
+	line-height: 1;
 	box-shadow: none;
 }
 
@@ -127,6 +136,8 @@ html[data-theme="cyberpunk"] .EnergyBadge {
 
 /* Dialogs and text panels need their own opaque reading surface. */
 html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) {
+	padding: clamp(0.85rem, 3.5vw, 1.15rem);
+	border-radius: 0.65rem;
 	background-image:
 		linear-gradient(145deg, rgb(9 22 35 / 97%), rgb(2 8 16 / 99%)), var(--theme-asset-panel-texture, none);
 	background-repeat: no-repeat, repeat;
@@ -137,9 +148,21 @@ html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) {
 	box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 46%);
 }
 
-/* Fix dark legacy heading colors inside themed panels. */
+/* Establish one consistent rhythm inside every panel. */
+html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) > :first-child {
+	margin-top: 0;
+}
+
+html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) > :last-child {
+	margin-bottom: 0;
+}
+
 html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) :is(h1, h2, h3, h4) {
-	color: #f2fbff;
+	margin: 0 0 0.62rem;
+	color: #f2fbff !important;
+	font-weight: 800;
+	line-height: 1.06;
+	text-wrap: balance;
 	text-shadow:
 		0 1px 2px rgb(0 0 0 / 90%),
 		0 0 0.55rem rgb(var(--theme-accent-rgb) / 10%);
@@ -147,6 +170,168 @@ html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) :is
 
 html[data-theme="cyberpunk"] :is(.Box, .Box--text, .MechanicsMvpHud-popover) :is(p, li) {
 	color: #deedf5;
+	line-height: 1.45;
+}
+
+html[data-theme="cyberpunk"] :is(.Box, .Box--text) > p {
+	margin: 0.52rem 0 0.82rem;
+}
+
+html[data-theme="cyberpunk"] .Options {
+	gap: 0.48rem;
+	margin: 0.82rem 0 0;
+}
+
+html[data-theme="cyberpunk"] .Options li {
+	margin: 0;
+}
+
+html[data-theme="cyberpunk"] .Options .Button {
+	display: flex;
+	min-height: 2.8rem;
+	align-items: center;
+	justify-content: center;
+	padding: 0.65rem 0.85rem;
+	line-height: 1.15;
+	text-align: center;
+}
+
+/* Start room gets a deliberate hero layout rather than generic Box spacing. */
+html[data-theme="cyberpunk"] .StartRoom {
+	width: 100%;
+	min-height: 100dvh;
+	padding: clamp(1rem, 5vw, 2rem);
+}
+
+html[data-theme="cyberpunk"] .StartRoom-panel {
+	width: min(100%, 34rem);
+	margin: auto;
+	padding: clamp(1.15rem, 5vw, 1.7rem);
+	text-align: center;
+}
+
+html[data-theme="cyberpunk"] .StartRoom-title {
+	margin-bottom: 0.72rem !important;
+	color: #f4fbff !important;
+	font-size: clamp(2rem, 8.5vw, 3rem);
+	letter-spacing: 0.045em;
+	text-align: center;
+}
+
+html[data-theme="cyberpunk"] .StartRoom-copy {
+	max-width: 34ch;
+	margin: 0 auto 1rem !important;
+	font-size: clamp(0.95rem, 3.7vw, 1.1rem);
+	line-height: 1.52 !important;
+	text-align: center;
+}
+
+html[data-theme="cyberpunk"] .StartRoom-actions {
+	margin-top: 1rem;
+}
+
+/* Cyberpunk map: functional routing diagram, not the legacy green board. */
+html[data-theme="cyberpunk"] .MapContainer {
+	width: 100%;
+	max-width: 46rem;
+	margin-inline: auto;
+	padding: 0.75rem;
+	z-index: 20;
+}
+
+html[data-theme="cyberpunk"] slay-map {
+	--pathColor: rgb(var(--theme-accent-rgb) / 48%);
+	--pathWidth: 1.5px;
+	--highlight: #e5fbff;
+	--nodeSize: 1.15rem;
+	width: 100%;
+	border: 1px solid rgb(var(--theme-accent-rgb) / 28%);
+	border-radius: 0.85rem;
+	outline: none;
+	background:
+		radial-gradient(circle at 50% 0%, rgb(var(--theme-accent-rgb) / 8%), transparent 34%),
+		repeating-linear-gradient(90deg, transparent 0 3.95rem, rgb(var(--theme-accent-rgb) / 3%) 4rem),
+		repeating-linear-gradient(0deg, transparent 0 3.95rem, rgb(var(--theme-accent-rgb) / 3%) 4rem),
+		linear-gradient(180deg, rgb(6 17 29 / 98%), rgb(2 8 16 / 99%));
+	box-shadow:
+		0 1rem 2.4rem rgb(0 0 0 / 44%),
+		inset 0 0 2rem rgb(var(--theme-accent-rgb) / 3%);
+}
+
+html[data-theme="cyberpunk"] slay-map-row {
+	min-height: 4rem;
+}
+
+html[data-theme="cyberpunk"] slay-map-node {
+	width: 3rem;
+	height: 3rem;
+	border: 1px solid rgb(var(--theme-accent-rgb) / 18%);
+	border-radius: 0.62rem;
+	background: rgb(4 13 23 / 96%);
+	box-shadow:
+		0 0.2rem 0.55rem rgb(0 0 0 / 35%),
+		inset 0 0 0 1px rgb(255 255 255 / 2%);
+}
+
+html[data-theme="cyberpunk"] slay-map-node[node-type] span {
+	width: 2.2rem;
+	height: 2.2rem;
+	border: 1px solid rgb(var(--theme-accent-rgb) / 16%);
+	border-radius: 0.42rem;
+	background: rgb(5 16 27 / 98%);
+}
+
+html[data-theme="cyberpunk"] slay-map-node:not([did-visit]) {
+	opacity: 0.48;
+}
+
+html[data-theme="cyberpunk"] slay-map-node[did-visit] {
+	opacity: 0.62;
+}
+
+html[data-theme="cyberpunk"] slay-map-node[current][type] {
+	border-color: rgb(var(--theme-accent-rgb) / 78%);
+	background: rgb(7 25 38 / 99%);
+	opacity: 1;
+	box-shadow:
+		0 0 0 2px rgb(var(--theme-accent-rgb) / 13%),
+		0 0 1rem rgb(var(--theme-accent-rgb) / 20%);
+}
+
+html[data-theme="cyberpunk"] slay-map-node[can-visit] {
+	border-color: rgb(var(--theme-accent-rgb) / 52%);
+	opacity: 1;
+	box-shadow: 0 0 0.8rem rgb(var(--theme-accent-rgb) / 10%);
+}
+
+html[data-theme="cyberpunk"] slay-map-node[can-visit]:active {
+	transform: scale(0.96);
+}
+
+html[data-theme="cyberpunk"] slay-map-node[node-type="start"],
+html[data-theme="cyberpunk"] slay-map-node[node-type="boss"] {
+	width: 4.5rem;
+	height: 4.5rem;
+}
+
+html[data-theme="cyberpunk"] slay-map-node[node-type="boss"] {
+	border-width: 2px;
+	border-color: rgb(var(--theme-accent-2-rgb) / 64%);
+	font-size: 2.4rem;
+	animation: none;
+}
+
+html[data-theme="cyberpunk"] slay-map svg.paths line {
+	stroke: var(--pathColor);
+	stroke-width: var(--pathWidth);
+	stroke-dasharray: 5 7;
+	stroke-linecap: round;
+}
+
+html[data-theme="cyberpunk"] .MapFooter {
+	padding: 0.7rem 0.15rem 0;
+	color: #cfeaf4;
+	font-size: 0.78rem;
 }
 
 /* The HUD texture can remain present, but should not compete with values. */
@@ -157,4 +342,97 @@ html[data-theme="cyberpunk"] .MechanicsMvpHud {
 	background-size:
 		cover,
 		52px 52px;
+}
+
+@media (max-width: 700px) and (orientation: portrait) {
+	/* Combat is a single viewport. The previous readability rule accidentally
+	 * turned the fixed hand back into normal flow and forced vertical scrolling. */
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) {
+		height: 100dvh;
+		min-height: 100dvh;
+		overflow: hidden;
+	}
+
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets {
+		height: 100%;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > .Hand {
+		position: fixed;
+		z-index: 25;
+	}
+
+	/* A little less overlap is worth more than squeezing four fully visible
+	 * cards into one screen: titles and descriptions stay legible. */
+	html[data-theme="cyberpunk"] .Hand .Card {
+		margin-left: -0.28rem !important;
+	}
+
+	html[data-theme="cyberpunk"] .Hand .Card:first-child {
+		margin-left: 0 !important;
+	}
+
+	html[data-theme="cyberpunk"] .Hand .Cards {
+		padding-inline: 0.5rem !important;
+	}
+
+	html[data-theme="cyberpunk"] .Hand .Card-name {
+		margin: 0.3rem 0.16rem 0.12rem;
+		font-size: clamp(0.72rem, 3vw, 0.84rem) !important;
+		line-height: 1.02 !important;
+	}
+
+	html[data-theme="cyberpunk"] .Hand .Card-description {
+		margin-inline: 0.12rem;
+		padding: 0.28rem 0.2rem 0.32rem;
+		font-size: clamp(0.55rem, 2.15vw, 0.63rem) !important;
+		line-height: 1.12 !important;
+	}
+
+	/* Keep the start screen comfortably inside the safe viewport. */
+	html[data-theme="cyberpunk"] .StartRoom {
+		min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+		padding: calc(var(--safe-top) + 0.8rem) 0.8rem calc(var(--safe-bottom) + 0.8rem);
+	}
+
+	html[data-theme="cyberpunk"] .StartRoom-panel {
+		width: min(100%, 29rem);
+	}
+
+	/* Compact map rows on phones while retaining enough separation for touch. */
+	html[data-theme="cyberpunk"] .MapContainer {
+		padding: calc(var(--safe-top) + 0.5rem) 0.45rem calc(var(--safe-bottom) + 0.65rem);
+	}
+
+	html[data-theme="cyberpunk"] slay-map {
+		min-height: max(100dvh, calc(var(--rows) * 3.8rem));
+		padding: 0.65rem 0.25rem;
+		border-radius: 0.7rem;
+	}
+
+	html[data-theme="cyberpunk"] slay-map-row {
+		min-height: clamp(3.15rem, 7.5dvh, 4rem);
+	}
+
+	html[data-theme="cyberpunk"] slay-map-node {
+		width: 2.65rem;
+		height: 2.65rem;
+	}
+
+	html[data-theme="cyberpunk"] slay-map-node[node-type] span {
+		width: 2rem;
+		height: 2rem;
+	}
+
+	html[data-theme="cyberpunk"] slay-map-node[node-type="start"],
+	html[data-theme="cyberpunk"] slay-map-node[node-type="boss"] {
+		width: 3.5rem;
+		height: 3.5rem;
+	}
+
+	html[data-theme="cyberpunk"] slay-map-node[node-type="boss"] {
+		font-size: 1.9rem;
+	}
 }
