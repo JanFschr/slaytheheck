@@ -3,6 +3,10 @@ html.has-card-focus body {
 	overflow: hidden;
 }
 
+.Hand .Card {
+	touch-action: manipulation;
+}
+
 .Hand .Card .Card-inspectHint {
 	display: none;
 }
@@ -13,19 +17,20 @@ html.has-card-focus body {
 	right: 0.34rem;
 	z-index: 9;
 	display: grid;
-	width: 1.7rem;
+	width: 1.9rem;
 	height: 1.7rem;
 	place-items: center;
 	border: 1px solid rgb(var(--theme-accent-rgb) / 48%);
 	border-radius: 0.34rem;
-	background: rgb(3 11 19 / 92%);
+	background: rgb(3 11 19 / 94%);
 	color: #e9fbff;
 	font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-	font-size: 0.8rem;
+	font-size: 0.68rem;
 	font-weight: 800;
 	line-height: 1;
 	box-shadow: 0 0.18rem 0.52rem rgb(0 0 0 / 30%);
-	pointer-events: none;
+	cursor: zoom-in;
+	pointer-events: auto;
 }
 
 .CardFocus {
