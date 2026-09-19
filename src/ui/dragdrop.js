@@ -8,6 +8,7 @@ import * as sounds from './sounds.js'
 const overClass = 'is-dragOver'
 const selectedClass = 'is-tapSelected'
 const tapTargetClass = 'is-tapTarget'
+const inspectDoubleTapThresholdMs = 350
 
 /** Makes the card fly back into the hand */
 function animateCardToHand(draggable) {
@@ -58,13 +59,22 @@ function selectCardForTap(container, card, targets) {
 }
 
 /**
+ * @param {HTMLElement} card
+ * @param {NodeListOf<HTMLElement>} targets
+ */
+function getValidTapTargets(card, targets) {
+	return Array.from(targets).filter((target) => canDropOnTarget(card, target))
+}
+
+/**
  * Adds tap/keyboard card play. This is the primary interaction on touch devices
  * and an accessible alternative to dragging on desktop.
  *
- * First tap selects a card and exposes valid targets. A second tap on the same
- * selected card opens the card focus viewer. Playing is always explicit: tap a
- * highlighted target after selecting the card. This deliberately avoids long
- * press because mobile Safari reserves that gesture for browser behavior.
+ * A normal tap keeps the original play flow: first tap selects, then tap a
+ * highlighted target; self-target cards may be confirmed by a later second tap.
+ * A true quick double tap (<= 350ms) opens the card focus viewer instead. This
+ * deliberately avoids long press because mobile Safari reserves that gesture.
+ * The visible inspect hint is also an explicit one-tap shortcut to the viewer.
  * @param {Element} container
  * @param {NodeListOf<HTMLElement>} targets
  * @param {NodeListOf<HTMLElement>} cards
@@ -72,6 +82,11 @@ function selectCardForTap(container, card, targets) {
  * @param {Function} [onInspect]
  */
 function enableTapToPlay(container, targets, cards, afterRelease, onInspect) {
+	const inspect = (card) => {
+		if (onInspect) onInspect(card.dataset.id)
+		else openCardFocus(container, card.dataset.id)
+	}
+
 	const playOnTarget = (targetEl) => {
 		/** @type {HTMLElement | null} */
 		const selectedCard = container.querySelector(`.Hand .Card.${selectedClass}`)
@@ -100,26 +115,58 @@ function enableTapToPlay(container, targets, cards, afterRelease, onInspect) {
 		if (card.dataset.tapPlayEnabled) return
 		card.dataset.tapPlayEnabled = 'true'
 
-		const selectOrInspect = () => {
+		const selectOrConfirm = (event) => {
 			if (card.dataset.wasDragged === 'true') return
 
-			const alreadySelected = card.classList.contains(selectedClass)
-			if (alreadySelected) {
-				if (onInspect) onInspect(card.dataset.id)
-				else openCardFocus(container, card.dataset.id)
+			// The small inspect affordance is deliberately explicit. It should never
+			// accidentally confirm/play the selected card beneath it.
+			if (event?.target?.closest?.('.Card-inspectHint')) {
+				event.preventDefault()
+				event.stopPropagation()
+				delete card.dataset.lastTapAt
+				inspect(card)
 				return
 			}
 
-			// Disabled cards are still inspectable. Selecting one gives the same
-			// discoverable two-tap flow but naturally exposes no playable target.
+			const now = typeof performance === 'undefined' ? Date.now() : performance.now()
+			const lastTapAt = Number(card.dataset.lastTapAt || 0)
+			const isInspectDoubleTap = lastTapAt > 0 && now - lastTapAt <= inspectDoubleTapThresholdMs
+			card.dataset.lastTapAt = String(now)
+
+			if (isInspectDoubleTap) {
+				delete card.dataset.lastTapAt
+				inspect(card)
+				return
+			}
+
+			const alreadySelected = card.classList.contains(selectedClass)
+			const cardTarget = card.getAttribute('data-card-target')
+			const validTargets = getValidTapTargets(card, targets)
+
+			// Preserve the established slower second-tap behavior for self-target
+			// cards. A quick second tap has already been consumed by inspect above.
+			if (alreadySelected && cardTarget === 'player' && !card.hasAttribute('disabled')) {
+				const playerTarget = validTargets[0]
+				if (playerTarget) playOnTarget(playerTarget)
+				return
+			}
+
+			// Disabled cards can still be selected and inspected via double tap/hint,
+			// but naturally expose no playable target.
 			selectCardForTap(container, card, targets)
 		}
 
-		card.addEventListener('click', selectOrInspect)
+		card.addEventListener('click', selectOrConfirm)
 		card.addEventListener('keydown', (event) => {
 			if (event.key !== 'Enter' && event.key !== ' ') return
 			event.preventDefault()
-			selectOrInspect()
+			// Keyboard users do not have a meaningful double-tap gesture. A second
+			// activation on a selected card opens inspect; first activation selects.
+			if (card.classList.contains(selectedClass)) {
+				inspect(card)
+				return
+			}
+			selectCardForTap(container, card, targets)
 		})
 	})
 }
