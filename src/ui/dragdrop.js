@@ -71,14 +71,14 @@ function getValidTapTargets(card, targets) {
  * and an accessible alternative to dragging on desktop.
  *
  * Interaction grammar:
- * - Single tap: select/raise the card and expose valid targets.
- * - Quick double tap (<= 350ms): play immediately when there is exactly one
+ * - First tap: select/raise the card and expose valid targets.
+ * - Quick second tap (<= 350ms): play immediately when there is exactly one
  *   valid target (for example a self card or an attack in a single-enemy fight).
+ * - Deliberate/slower second tap on the already selected card: inspect it in the
+ *   fullscreen card focus viewer.
  * - Tap a highlighted target: play the selected card on that target.
- * - Tap the visible inspect affordance: open the card focus viewer.
+ * - Tap the visible inspect affordance: inspect immediately.
  *
- * A slower second tap on an already selected card does NOT play it. This keeps
- * accidental confirmations separate from the deliberate double-tap gesture.
  * Long press is intentionally unused because mobile Safari reserves it.
  * @param {Element} container
  * @param {NodeListOf<HTMLElement>} targets
@@ -88,6 +88,7 @@ function getValidTapTargets(card, targets) {
  */
 function enableTapToPlay(container, targets, cards, afterRelease, onInspect) {
 	const inspect = (card) => {
+		delete card.dataset.lastTapAt
 		if (onInspect) onInspect(card.dataset.id)
 		else openCardFocus(container, card.dataset.id)
 	}
@@ -120,49 +121,52 @@ function enableTapToPlay(container, targets, cards, afterRelease, onInspect) {
 		if (card.dataset.tapPlayEnabled) return
 		card.dataset.tapPlayEnabled = 'true'
 
-		const selectOrPlay = (event) => {
+		const selectPlayOrInspect = (event) => {
 			if (card.dataset.wasDragged === 'true') return
 
 			// Inspect is explicit and never doubles as a play confirmation.
 			if (event?.target?.closest?.('.Card-inspectHint')) {
 				event.preventDefault()
 				event.stopPropagation()
-				delete card.dataset.lastTapAt
 				inspect(card)
 				return
 			}
 
 			const now = typeof performance === 'undefined' ? Date.now() : performance.now()
 			const lastTapAt = Number(card.dataset.lastTapAt || 0)
-			const isQuickSecondTap = lastTapAt > 0 && now - lastTapAt <= quickTapThresholdMs
-			card.dataset.lastTapAt = String(now)
-
+			const elapsed = lastTapAt > 0 ? now - lastTapAt : Number.POSITIVE_INFINITY
+			const isQuickSecondTap = elapsed <= quickTapThresholdMs
 			const alreadySelected = card.classList.contains(selectedClass)
 			const validTargets = getValidTapTargets(card, targets)
 
-			// Double tap means PLAY. Only auto-resolve when the target is unambiguous.
-			// With multiple enemies the card stays selected and the user chooses one.
-			if (isQuickSecondTap && !card.hasAttribute('disabled')) {
+			// Quick double tap means PLAY. Only auto-resolve when the target is
+			// unambiguous. With multiple targets the card remains selected so the
+			// player can choose the target explicitly.
+			if (alreadySelected && isQuickSecondTap && !card.hasAttribute('disabled')) {
 				delete card.dataset.lastTapAt
-				if (!alreadySelected) selectCardForTap(container, card, targets)
-				if (validTargets.length === 1) {
-					playOnTarget(validTargets[0])
-				}
+				if (validTargets.length === 1) playOnTarget(validTargets[0])
 				return
 			}
 
-			// A normal tap selects. A later second tap merely keeps the card selected;
-			// playing requires either a true double tap or a target tap.
-			if (!alreadySelected) selectCardForTap(container, card, targets)
+			// A slower second tap on the same selected card is the inspect gesture.
+			// This must be checked before any legacy self-target confirmation path.
+			if (alreadySelected) {
+				inspect(card)
+				return
+			}
+
+			// First tap only selects. Store its time so a genuinely quick second tap
+			// can be distinguished from a deliberate second tap for inspect.
+			card.dataset.lastTapAt = String(now)
+			selectCardForTap(container, card, targets)
 		}
 
-		card.addEventListener('click', selectOrPlay)
+		card.addEventListener('click', selectPlayOrInspect)
 		card.addEventListener('keydown', (event) => {
 			if (event.key !== 'Enter' && event.key !== ' ') return
 			event.preventDefault()
-			const validTargets = getValidTapTargets(card, targets)
-			if (card.classList.contains(selectedClass) && !card.hasAttribute('disabled') && validTargets.length === 1) {
-				playOnTarget(validTargets[0])
+			if (card.classList.contains(selectedClass)) {
+				inspect(card)
 				return
 			}
 			selectCardForTap(container, card, targets)
