@@ -1,0 +1,85 @@
+@media (max-width: 700px) and (orientation: portrait) {
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Overlay-content {
+		box-sizing: border-box;
+		padding-top: calc(var(--safe-top) + 3.35rem);
+		padding-right: calc(var(--safe-right) + 0.65rem);
+		padding-bottom: calc(var(--safe-bottom) + 1rem);
+		padding-left: calc(var(--safe-left) + 0.65rem);
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Cards {
+		display: grid !important;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		align-items: stretch;
+		justify-content: stretch;
+		gap: 0.7rem;
+		min-height: 0;
+		margin: 0 !important;
+		padding: 0;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Card {
+		box-sizing: border-box;
+		width: 100% !important;
+		height: auto !important;
+		min-width: 0 !important;
+		min-height: 15rem !important;
+		max-width: none !important;
+		margin: 0 !important;
+		align-self: stretch;
+		transform: none !important;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Card-inner {
+		min-width: 0;
+		height: 100%;
+		overflow: hidden;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Card-media img {
+		height: clamp(6rem, 24vw, 7.4rem) !important;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Card-type {
+		font-size: 0.56rem !important;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Card-name {
+		margin: 0 !important;
+		padding: 0.46rem 0.35rem 0.18rem !important;
+		font-size: clamp(0.78rem, 3.35vw, 0.9rem) !important;
+		line-height: 1.06 !important;
+		overflow-wrap: anywhere;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Card-description {
+		min-height: 0 !important;
+		margin: 0.12rem 0.25rem 0.35rem !important;
+		padding: 0.36rem 0.3rem !important;
+		flex: 1 1 auto;
+		font-size: clamp(0.62rem, 2.55vw, 0.7rem) !important;
+		line-height: 1.2 !important;
+		overflow-wrap: anywhere;
+		white-space: normal;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Card-energy {
+		width: 1.65rem !important;
+		height: 1.65rem !important;
+		min-width: 1.65rem !important;
+		min-height: 1.65rem !important;
+		font-size: 0.72rem !important;
+	}
+}
+
+@media (max-width: 350px) and (orientation: portrait) {
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Cards {
+		grid-template-columns: 1fr;
+	}
+
+	:is(#Deck, #DrawPile, #DiscardPile, #ExhaustPile)[open] .Card {
+		min-height: 17rem !important;
+	}
+}
