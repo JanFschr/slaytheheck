@@ -1,62 +1,39 @@
-/*
- * Unified cyberpunk HUD control grammar.
- *
- * The UI deliberately avoids a generic "everything is a pill" mobile look.
- * Navigation and context controls are compact technical tiles; only true bars
- * keep fully rounded geometry. Exact heights are shared per information layer.
- */
-
+/* Shared cyberpunk HUD geometry. Keep the shapes simple and exact. */
 html[data-theme="cyberpunk"] {
-	--hud-nav-height: 2.75rem;
-	--hud-context-height: 2.375rem;
-	--hud-action-height: 2.75rem;
-	--hud-radius: 0.38rem;
-	--hud-radius-sm: 0.32rem;
+	--hud-top-height: 2.55rem;
+	--hud-top-width: 3.75rem;
+	--hud-context-height: 2.25rem;
+	--hud-context-width: 4rem;
+	--hud-action-height: 2.7rem;
+	--hud-radius: 0.45rem;
 	--hud-bg: rgb(3 10 18 / 96%);
-	--hud-bg-raised: rgb(6 18 29 / 98%);
-	--hud-border: rgb(125 218 240 / 24%);
-	--hud-border-interactive: rgb(125 218 240 / 36%);
-	--hud-border-active: rgb(var(--theme-accent-rgb) / 68%);
+	--hud-bg-active: rgb(7 20 31 / 98%);
+	--hud-border: rgb(126 221 242 / 34%);
+	--hud-border-active: rgb(var(--theme-accent-rgb) / 72%);
 	--hud-text: #eef9fd;
-	--hud-text-muted: #9fb5c0;
-	--hud-shadow: 0 0.2rem 0.55rem rgb(0 0 0 / 32%);
-	--hud-inset: inset 0 1px 0 rgb(226 249 255 / 5%);
-	--hud-context-bottom: calc(
-		var(--safe-bottom) +
-		var(--mobile-combat-action-height) +
-		var(--mobile-card-height) +
-		1.3rem
-	);
+	--hud-muted: #a9bec8;
+	--hud-shadow: 0 0.18rem 0.5rem rgb(0 0 0 / 32%);
+	--hud-context-bottom: calc(var(--safe-bottom) + var(--mobile-combat-action-height) + var(--mobile-card-height) + 1.3rem);
 }
-
-/* -------------------------------------------------------------------------- */
-/* Shared technical surface                                                    */
-/* -------------------------------------------------------------------------- */
 
 html[data-theme="cyberpunk"] :is(.Button, .Overlay > button) {
 	box-sizing: border-box;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 0.32rem;
-	min-height: var(--hud-nav-height);
-	padding: 0.38rem 0.68rem;
-	border: 1px solid var(--hud-border-interactive);
+	gap: 0.25rem;
+	border: 1px solid var(--hud-border);
 	border-radius: var(--hud-radius);
-	background:
-		linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 5%), transparent 48%),
-		var(--hud-bg);
+	background: var(--hud-bg);
 	color: var(--hud-text);
-	font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-	font-size: 0.78rem;
+	font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 	font-weight: 650;
 	line-height: 1;
-	letter-spacing: 0.015em;
 	text-align: center;
 	text-decoration: none;
 	text-shadow: none;
-	box-shadow: var(--hud-inset), var(--hud-shadow);
-	backdrop-filter: blur(10px);
+	box-shadow: var(--hud-shadow);
+	backdrop-filter: blur(9px);
 }
 
 html[data-theme="cyberpunk"] :is(.Button, .Overlay > button) u {
@@ -65,148 +42,58 @@ html[data-theme="cyberpunk"] :is(.Button, .Overlay > button) u {
 
 html[data-theme="cyberpunk"] :is(.Button, .Overlay > button):is(:hover, :focus-visible) {
 	border-color: var(--hud-border-active);
-	background:
-		linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 10%), transparent 50%),
-		var(--hud-bg-raised);
-	color: #fff;
+	background: var(--hud-bg-active);
 	outline: none;
-	box-shadow:
-		var(--hud-inset),
-		var(--hud-shadow),
-		0 0 0 1px rgb(var(--theme-accent-rgb) / 11%);
-}
-
-html[data-theme="cyberpunk"] :is(.Button, .Overlay > button):active {
-	transform: translateY(1px);
-	box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%), 0 0.08rem 0.25rem rgb(0 0 0 / 36%);
 }
 
 html[data-theme="cyberpunk"] .Overlay[open] > button {
 	border-color: var(--hud-border-active);
-	background:
-		linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 13%), transparent 55%),
-		var(--hud-bg-raised);
-	box-shadow: var(--hud-inset), var(--hud-shadow), 0 0 0 1px rgb(var(--theme-accent-rgb) / 12%);
+	background: var(--hud-bg-active);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Top navigation                                                              */
-/* -------------------------------------------------------------------------- */
-
-html[data-theme="cyberpunk"] :is(#Menu, #ExhaustPile, #Deck, #Map) > button {
-	height: var(--hud-nav-height);
-	min-height: var(--hud-nav-height);
-	max-height: var(--hud-nav-height);
-	border-radius: var(--hud-radius);
-	white-space: nowrap;
-	text-transform: uppercase;
-	letter-spacing: 0.045em;
-}
-
-html[data-theme="cyberpunk"] #Menu > button {
-	width: var(--hud-nav-height);
-	min-width: var(--hud-nav-height);
-	padding-inline: 0;
-}
-
-/* Gold is information, not a button, but it shares the top-row geometry. */
 html[data-theme="cyberpunk"] .BuildHud {
 	box-sizing: border-box;
-	height: var(--hud-nav-height);
-	min-height: var(--hud-nav-height);
-	max-height: var(--hud-nav-height);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 0.3rem;
-	padding: 0.3rem 0.58rem;
-	border: 1px solid color-mix(in oklab, var(--color-gold), transparent 72%);
+	border: 1px solid var(--hud-border);
 	border-radius: var(--hud-radius);
-	background:
-		linear-gradient(180deg, color-mix(in oklab, var(--color-gold), transparent 94%), transparent 54%),
-		var(--hud-bg);
-	box-shadow: var(--hud-inset), var(--hud-shadow);
-	backdrop-filter: blur(10px);
+	background: var(--hud-bg);
+	box-shadow: var(--hud-shadow);
+	backdrop-filter: blur(9px);
 }
 
 html[data-theme="cyberpunk"] .BuildHud-gold {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 0.32rem;
+	gap: 0.22rem;
 	color: var(--hud-text);
-	font-size: 0.76rem;
-	font-weight: 720;
+	font-size: 0.68rem;
+	font-weight: 750;
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
-	letter-spacing: 0.03em;
 }
 
 html[data-theme="cyberpunk"] .BuildHud-goldIcon {
 	color: var(--color-gold);
-	font-size: 0.61rem;
+	font-size: 0.55rem;
 	font-weight: 850;
 	letter-spacing: 0.08em;
 }
 
-html[data-theme="cyberpunk"] .BuildHud-chip {
-	height: 1.65rem;
-	min-height: 1.65rem;
-	padding: 0.12rem 0.3rem;
-	border: 1px solid var(--hud-border);
-	border-radius: var(--hud-radius-sm);
-	background: rgb(7 18 29 / 94%);
-	box-shadow: none;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Context row: draw / resources / discard                                    */
-/* -------------------------------------------------------------------------- */
-
-html[data-theme="cyberpunk"] :is(#DrawPile, #DiscardPile) > button {
-	height: var(--hud-context-height);
-	min-height: var(--hud-context-height);
-	max-height: var(--hud-context-height);
-	padding-inline: 0.58rem;
-	border-color: var(--hud-border);
-	border-radius: var(--hud-radius-sm);
-	background: var(--hud-bg);
-	color: var(--hud-text-muted);
-	font-size: 0.69rem;
-	font-weight: 620;
-	letter-spacing: 0.015em;
-	box-shadow: var(--hud-inset), 0 0.13rem 0.4rem rgb(0 0 0 / 26%);
-}
-
-html[data-theme="cyberpunk"] :is(#DrawPile, #DiscardPile)[open] > button {
-	color: var(--hud-text);
-}
-
-/* Resource tiles use the exact same height as Draw/Discard. Semantic color is
- * carried by the icon, border and a small bottom meter, not a different shape. */
 html[data-theme="cyberpunk"] .MechanicsMvpHud-resource {
 	position: relative;
 	box-sizing: border-box;
 	display: inline-flex !important;
 	align-items: center !important;
 	justify-content: center !important;
-	gap: 0.22rem !important;
-	width: 3.45rem;
-	height: var(--hud-context-height) !important;
-	min-width: 3.45rem;
-	min-height: var(--hud-context-height) !important;
-	max-height: var(--hud-context-height) !important;
-	padding: 0.18rem 0.32rem 0.26rem !important;
-	border: 1px solid color-mix(in oklab, var(--resource-color), transparent 58%);
-	border-radius: var(--hud-radius-sm) !important;
-	background:
-		linear-gradient(180deg, color-mix(in oklab, var(--resource-color), transparent 95%), transparent 55%),
-		var(--hud-bg) !important;
+	gap: 0.18rem !important;
+	border: 1px solid rgb(126 221 242 / 28%);
+	border-radius: var(--hud-radius) !important;
+	background: var(--hud-bg) !important;
 	color: var(--hud-text);
-	font-size: 0.68rem !important;
-	font-weight: 650;
-	line-height: 1 !important;
-	box-shadow: var(--hud-inset), 0 0.13rem 0.4rem rgb(0 0 0 / 24%) !important;
+	box-shadow: var(--hud-shadow) !important;
 	white-space: nowrap;
 }
 
@@ -216,181 +103,153 @@ html[data-theme="cyberpunk"] .MechanicsMvpHud-resource strong {
 
 html[data-theme="cyberpunk"] .MechanicsMvpHud-icon {
 	color: var(--resource-color);
-	font-size: 0.78rem;
-	font-weight: 900;
+	font-size: 0.72rem;
 	line-height: 1;
 }
 
 html[data-theme="cyberpunk"] .MechanicsMvpHud-value {
-	font-size: 0.68rem;
-	font-weight: 700;
+	font-size: 0.62rem;
+	font-weight: 750;
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
 }
 
-/* Heat's threshold pips become an inset baseline and therefore never increase
- * the tile's height. Other resources communicate capacity through N/max. */
 html[data-theme="cyberpunk"] .MechanicsMvpHud-pips {
 	position: absolute !important;
-	left: 0.34rem;
-	right: 0.34rem;
-	bottom: 0.2rem;
+	left: 0.3rem;
+	right: 0.3rem;
+	bottom: 0.16rem;
 	display: flex !important;
-	align-items: center;
-	justify-content: center;
-	gap: 1px !important;
-	min-width: 0 !important;
 	height: 2px;
+	min-width: 0 !important;
+	gap: 1px !important;
 	pointer-events: none;
 }
 
 html[data-theme="cyberpunk"] .MechanicsMvpHud-pip {
-	flex: 1 1 0 !important;
 	width: auto !important;
 	height: 2px !important;
+	flex: 1 1 0 !important;
 	border-radius: 0 !important;
-	background: color-mix(in oklab, var(--resource-color), transparent 83%);
 }
 
-html[data-theme="cyberpunk"] .MechanicsMvpHud-pip.is-filled {
-	background: var(--resource-color);
-}
-
-html[data-theme="cyberpunk"] .MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"])
+html[data-theme="cyberpunk"]
+	.MechanicsMvpHud-resource:is([data-resource="drones"], [data-resource="corruption"])
 	.MechanicsMvpHud-pips {
 	display: none !important;
 }
 
 html[data-theme="cyberpunk"] .MechanicsMvpHud-resource[aria-expanded="true"] {
-	border-color: color-mix(in oklab, var(--resource-color), white 12%);
-	background:
-		linear-gradient(180deg, color-mix(in oklab, var(--resource-color), transparent 88%), transparent 58%),
-		var(--hud-bg-raised) !important;
-	box-shadow: var(--hud-inset), 0 0 0 1px color-mix(in oklab, var(--resource-color), transparent 76%) !important;
+	border-color: var(--hud-border-active);
+	background: var(--hud-bg-active) !important;
 }
 
-html[data-theme="cyberpunk"] .MechanicsMvpHud-resource[data-danger="true"] {
-	box-shadow: var(--hud-inset), 0 0 0 1px color-mix(in oklab, var(--color-heat-danger), transparent 66%) !important;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Enemy intents / status                                                     */
-/* -------------------------------------------------------------------------- */
-
-html[data-theme="cyberpunk"] .Target-intent {
-	min-height: 1.55rem;
-	padding: 0.13rem 0.32rem;
-	border-width: 1px;
-	border-radius: 0.3rem;
-	box-shadow: none;
-}
-
+html[data-theme="cyberpunk"] .Target-intent,
 html[data-theme="cyberpunk"] .Target-power {
-	border-width: 1px;
-	border-radius: 0.28rem;
+	border-radius: 0.36rem;
 	box-shadow: none;
 }
-
-/* -------------------------------------------------------------------------- */
-/* Bottom action row                                                          */
-/* -------------------------------------------------------------------------- */
 
 html[data-theme="cyberpunk"] .EndTurn {
-	min-width: 6.4rem;
 	height: var(--hud-action-height);
 	min-height: var(--hud-action-height);
 	max-height: var(--hud-action-height);
-	padding-inline: 0.9rem;
-	border-color: rgb(var(--theme-accent-rgb) / 58%);
+	min-width: 6.2rem;
+	padding: 0 0.8rem;
+	border-color: var(--hud-border-active);
 	border-radius: var(--hud-radius);
-	background:
-		linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 12%), transparent 58%),
-		rgb(3 13 23 / 98%);
-	color: #f3fcff;
-	font-size: 0.86rem;
-	font-weight: 740;
-	letter-spacing: 0.02em;
-	box-shadow: var(--hud-inset), 0 0.2rem 0.6rem rgb(0 0 0 / 34%);
+	background: rgb(4 16 27 / 98%);
+	color: #f5fcff;
+	font-size: 0.82rem;
+	font-weight: 750;
 	animation: none;
-}
-
-html[data-theme="cyberpunk"] .EndTurn:is(:hover, :focus-visible) {
-	border-color: rgb(var(--theme-accent-rgb) / 78%);
-	background:
-		linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 18%), transparent 58%),
-		rgb(4 18 30 / 100%);
-	box-shadow: var(--hud-inset), var(--hud-shadow), 0 0 0.65rem rgb(var(--theme-accent-rgb) / 13%);
 }
 
 html[data-theme="cyberpunk"] .no-energy .EndTurn {
 	animation: none !important;
-	border-color: rgb(var(--theme-accent-rgb) / 80%);
-	background:
-		linear-gradient(180deg, rgb(var(--theme-accent-rgb) / 17%), transparent 58%),
-		rgb(4 18 30 / 100%);
-	color: #f7fdff;
-	text-shadow: none;
-	box-shadow: var(--hud-inset), var(--hud-shadow), 0 0 0 1px rgb(var(--theme-accent-rgb) / 14%);
+	background: rgb(6 23 36 / 100%);
+	color: #f5fcff;
 }
 
-/* Energy remains the one deliberately non-rectangular readout. */
 html[data-theme="cyberpunk"] .Targets + .Split > .EnergyBadge {
-	border-width: 2px;
 	border-color: rgb(var(--theme-accent-rgb) / 48%);
 	background: rgb(4 17 27 / 97%);
-	color: #eafaff;
-	box-shadow: 0 0.16rem 0.5rem rgb(0 0 0 / 32%);
 	font-variant-numeric: tabular-nums;
+	box-shadow: var(--hud-shadow);
 }
-
-html[data-theme="cyberpunk"] .no-energy > .EnergyBadge {
-	border-color: rgb(255 90 120 / 52%);
-	background: rgb(22 13 22 / 97%);
-	color: #ff9bb0;
-}
-
-html[data-theme="cyberpunk"] :is(.MechanicsMvpHud-value, .BuildHud-gold, .Healthbar-label, .EnergyBadge) {
-	font-variant-numeric: tabular-nums;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Real-device portrait normalization                                         */
-/* -------------------------------------------------------------------------- */
 
 @media (max-width: 700px) and (orientation: portrait) {
-	/* One exact top baseline and one exact height for every top-level control. */
-	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom))
-		> :is(#Menu, #ExhaustPile, #Deck, #Map)
-		> button {
-		top: calc(var(--safe-top) + 0.24rem) !important;
-		height: var(--hud-nav-height) !important;
-		min-height: var(--hud-nav-height) !important;
-		max-height: var(--hud-nav-height) !important;
-		padding: 0.3rem 0.5rem !important;
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #Menu > button,
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #ExhaustPile > button,
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #Deck > button,
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #Map > button {
+		top: calc(var(--safe-top) + 0.3rem) !important;
+		width: var(--hud-top-width) !important;
+		height: var(--hud-top-height) !important;
+		min-width: var(--hud-top-width) !important;
+		max-width: var(--hud-top-width) !important;
+		min-height: var(--hud-top-height) !important;
+		max-height: var(--hud-top-height) !important;
+		padding: 0 0.28rem !important;
 		border-radius: var(--hud-radius) !important;
-		font-size: 0.66rem !important;
-		font-weight: 680;
+		font-size: 0.61rem !important;
+		font-weight: 700;
 		line-height: 1 !important;
+		overflow: hidden;
+		text-overflow: clip;
+		white-space: nowrap;
 	}
 
 	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #Menu > button {
-		width: var(--hud-nav-height) !important;
-		min-width: var(--hud-nav-height) !important;
-		max-width: var(--hud-nav-height) !important;
-		padding: 0 !important;
+		left: calc(var(--safe-left) + 0.35rem) !important;
+		font-size: 0 !important;
+	}
+
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #Menu > button::before {
+		content: "☰";
+		font-size: 0.95rem;
+	}
+
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #ExhaustPile > button {
+		left: calc(var(--safe-left) + 4.45rem) !important;
+		font-size: 0 !important;
+	}
+
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #ExhaustPile > button::after {
+		content: "EXH";
+		font-size: 0.61rem;
+		letter-spacing: 0.06em;
+	}
+
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #Map > button {
+		right: calc(var(--safe-right) + 0.35rem) !important;
+	}
+
+	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > #Deck > button {
+		right: calc(var(--safe-right) + 4.45rem) !important;
 	}
 
 	html[data-theme="cyberpunk"] body:has(.App > .Targets) .BuildHud {
-		top: calc(var(--safe-top) + 0.24rem) !important;
+		top: calc(var(--safe-top) + 0.3rem) !important;
 		bottom: auto !important;
-		height: var(--hud-nav-height) !important;
-		min-height: var(--hud-nav-height) !important;
-		max-height: var(--hud-nav-height) !important;
-		padding: 0.28rem 0.5rem !important;
+		left: 50% !important;
+		width: var(--hud-top-width) !important;
+		height: var(--hud-top-height) !important;
+		min-width: var(--hud-top-width) !important;
+		max-width: var(--hud-top-width) !important;
+		min-height: var(--hud-top-height) !important;
+		max-height: var(--hud-top-height) !important;
+		padding: 0 0.25rem !important;
+		overflow: hidden;
+		transform: translateX(-50%) !important;
 		border-radius: var(--hud-radius) !important;
 	}
 
-	/* Context row shares both its baseline and its exact height. */
+	html[data-theme="cyberpunk"] body:has(.App > .Targets) .BuildHud-count,
+	html[data-theme="cyberpunk"] body:has(.App > .Targets) .BuildHud-chip {
+		display: none !important;
+	}
+
 	html[data-theme="cyberpunk"] .MechanicsMvpHud[data-room-type="monster"] {
 		bottom: var(--hud-context-bottom) !important;
 	}
@@ -399,39 +258,43 @@ html[data-theme="cyberpunk"] :is(.MechanicsMvpHud-value, .BuildHud-gold, .Health
 		display: flex !important;
 		align-items: center !important;
 		justify-content: center !important;
+		height: var(--hud-context-height) !important;
 		gap: 0.18rem !important;
-		height: var(--hud-context-height);
 	}
 
 	html[data-theme="cyberpunk"] .MechanicsMvpHud[data-room-type="monster"] .MechanicsMvpHud-resource {
-		display: inline-flex !important;
-		width: 3.45rem !important;
+		width: var(--hud-context-width) !important;
 		height: var(--hud-context-height) !important;
-		min-width: 3.45rem !important;
+		min-width: var(--hud-context-width) !important;
+		max-width: var(--hud-context-width) !important;
 		min-height: var(--hud-context-height) !important;
 		max-height: var(--hud-context-height) !important;
-		padding: 0.16rem 0.3rem 0.25rem !important;
-		border-radius: var(--hud-radius-sm) !important;
-		font-size: 0.67rem !important;
+		padding: 0.12rem 0.22rem 0.22rem !important;
+		border-radius: var(--hud-radius) !important;
 	}
 
-	html[data-theme="cyberpunk"] .App > :is(#DrawPile, #DiscardPile) > button {
+	html[data-theme="cyberpunk"] .App > #DrawPile > button,
+	html[data-theme="cyberpunk"] .App > #DiscardPile > button {
 		bottom: var(--hud-context-bottom) !important;
+		width: var(--hud-context-width) !important;
 		height: var(--hud-context-height) !important;
+		min-width: var(--hud-context-width) !important;
+		max-width: var(--hud-context-width) !important;
 		min-height: var(--hud-context-height) !important;
 		max-height: var(--hud-context-height) !important;
-		padding-inline: 0.52rem !important;
-		border-radius: var(--hud-radius-sm) !important;
-		font-size: 0.66rem !important;
+		padding: 0 0.15rem !important;
+		border-radius: var(--hud-radius) !important;
+		font-size: 0.56rem !important;
+		font-weight: 700;
 		line-height: 1 !important;
+		text-align: center;
+		white-space: nowrap;
 	}
 
 	html[data-theme="cyberpunk"] .App:has(> .Targets):not(:has(.VictoryRoom)) > .Targets + .Split .EndTurn {
 		height: var(--hud-action-height) !important;
 		min-height: var(--hud-action-height) !important;
 		max-height: var(--hud-action-height) !important;
-		padding-inline: 0.8rem !important;
 		border-radius: var(--hud-radius) !important;
-		font-size: 0.82rem !important;
 	}
 }
