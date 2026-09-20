@@ -8,7 +8,7 @@ import * as sounds from './sounds.js'
 const overClass = 'is-dragOver'
 const selectedClass = 'is-tapSelected'
 const tapTargetClass = 'is-tapTarget'
-const quickTapThresholdMs = 350
+const quickTapThresholdMs = 300
 
 /** Makes the card fly back into the hand */
 function animateCardToHand(draggable) {
@@ -72,12 +72,11 @@ function getValidTapTargets(card, targets) {
  *
  * Interaction grammar:
  * - First tap: select/raise the card and expose valid targets.
- * - Quick second tap (<= 350ms): play immediately when there is exactly one
- *   valid target (for example a self card or an attack in a single-enemy fight).
- * - Deliberate/slower second tap on the already selected card: inspect it in the
- *   fullscreen card focus viewer.
+ * - Quick second tap (<= 300ms): play immediately when there is exactly one
+ *   valid target.
+ * - Deliberate/slower second tap on the selected card: inspect it.
  * - Tap a highlighted target: play the selected card on that target.
- * - Tap the visible inspect affordance: inspect immediately.
+ * - Tap the visible VIEW affordance: inspect immediately.
  *
  * Long press is intentionally unused because mobile Safari reserves it.
  * @param {Element} container
@@ -124,7 +123,6 @@ function enableTapToPlay(container, targets, cards, afterRelease, onInspect) {
 		const selectPlayOrInspect = (event) => {
 			if (card.dataset.wasDragged === 'true') return
 
-			// Inspect is explicit and never doubles as a play confirmation.
 			if (event?.target?.closest?.('.Card-inspectHint')) {
 				event.preventDefault()
 				event.stopPropagation()
@@ -139,24 +137,17 @@ function enableTapToPlay(container, targets, cards, afterRelease, onInspect) {
 			const alreadySelected = card.classList.contains(selectedClass)
 			const validTargets = getValidTapTargets(card, targets)
 
-			// Quick double tap means PLAY. Only auto-resolve when the target is
-			// unambiguous. With multiple targets the card remains selected so the
-			// player can choose the target explicitly.
 			if (alreadySelected && isQuickSecondTap && !card.hasAttribute('disabled')) {
 				delete card.dataset.lastTapAt
 				if (validTargets.length === 1) playOnTarget(validTargets[0])
 				return
 			}
 
-			// A slower second tap on the same selected card is the inspect gesture.
-			// This must be checked before any legacy self-target confirmation path.
 			if (alreadySelected) {
 				inspect(card)
 				return
 			}
 
-			// First tap only selects. Store its time so a genuinely quick second tap
-			// can be distinguished from a deliberate second tap for inspect.
 			card.dataset.lastTapAt = String(now)
 			selectCardForTap(container, card, targets)
 		}
@@ -193,17 +184,13 @@ export default function enableDragDrop(container, afterRelease, onInspect) {
 		const existingDraggable = Draggable.get(card)
 		if (existingDraggable) existingDraggable.kill()
 
-		// Dragging fights horizontal hand scrolling on phones/tablets. Tap-to-play
-		// stays enabled everywhere, so only create Draggable for fine pointers.
 		if (hasCoarsePointer()) return
 
 		Draggable.create(card, {
 			onDragStart() {
 				card.dataset.wasDragged = 'true'
 				clearTapSelection(container)
-				// Kill any animations trying to move this card
 				gsap.killTweensOf(this.target)
-				// Reset to proper hand position
 				this.startX = 0
 				this.startY = 0
 				sounds.selectCard()
@@ -227,8 +214,6 @@ export default function enableDragDrop(container, afterRelease, onInspect) {
 
 			onRelease() {
 				const cardEl = this.target
-
-				// Find the (first) DOM element we dropped the card on.
 				let targetEl
 				for (const t of targets) {
 					if (this.hitTest(t, '40%')) {
@@ -237,7 +222,6 @@ export default function enableDragDrop(container, afterRelease, onInspect) {
 					}
 				}
 
-				// Either trigger the callback with a valid target, or animate the card back into the hand.
 				if (canDropOnTarget(cardEl, targetEl)) {
 					const targetString = getTargetStringFromElement(targetEl)
 					afterRelease(cardEl.dataset.id, targetString, cardEl)
@@ -246,7 +230,6 @@ export default function enableDragDrop(container, afterRelease, onInspect) {
 					sounds.cardToHand()
 				}
 
-				// Remove active class from any other targets.
 				targets.forEach((t) => {
 					t.classList.remove(overClass)
 				})
