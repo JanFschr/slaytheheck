@@ -13,7 +13,12 @@ html[data-theme="cyberpunk"] {
 	--hud-text: #eef9fd;
 	--hud-muted: #a9bec8;
 	--hud-shadow: 0 0.18rem 0.5rem rgb(0 0 0 / 32%);
-	--hud-context-bottom: calc(var(--safe-bottom) + var(--mobile-combat-action-height) + var(--mobile-card-height) + 1.3rem);
+	--hud-context-bottom: calc(
+		var(--safe-bottom) +
+		var(--mobile-combat-action-height) +
+		var(--mobile-card-height) +
+		1.3rem
+	);
 }
 
 html[data-theme="cyberpunk"] :is(.Button, .Overlay > button) {
